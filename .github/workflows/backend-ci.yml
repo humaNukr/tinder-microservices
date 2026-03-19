@@ -14,16 +14,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: 'gradle'
 
       - name: Make gradlew executable
         working-directory: ./auth-service
         run: chmod +x ./gradlew
+
+      - name: Start Infrastructure (Docker Compose)
+        run: |
+          docker compose up -d
+          sleep 10
 
       - name: Check Code Style (Spotless)
         working-directory: ./auth-service
