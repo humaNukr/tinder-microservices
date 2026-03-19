@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation Code</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #fd297b 0%, #ff655b 100%);
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+            color: #333333;
+        }
+        .content p {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #555555;
+            margin-bottom: 25px;
+        }
+        .otp-box {
+            background-color: #f8f9fa;
+            border: 2px dashed #ff655b;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 0 auto 25px auto;
+            max-width: 250px;
+        }
+        .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #fd297b;
+            letter-spacing: 4px;
+            margin: 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #999999;
+            border-top: 1px solid #eeeeee;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Mini-Tinder</h1>
+    </div>
+    <div class="content">
+        <h2>Your Access Code</h2>
+        <p>Hello! We received a request to log into your account. Please use this code to confirm:</p>
+
+        <div class="otp-box">
+            <p class="otp-code" th:text="${OTP_CODE}"></p>
+        </div>
+
+        <p><strong>The code is valid for only 5 minutes.</strong> Do not share it with anyone..</p>
+    </div>
+    <div class="footer">
+        <p>If you did not make this request, simply ignore this email. Your account is safe.</p>
+        <p>&copy; 2026 Mini-Tinder App. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>
