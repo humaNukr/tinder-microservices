@@ -23,7 +23,7 @@ jobs:
 
       - name: Make gradlew executable
         working-directory: ./auth-service
-        run: chmod +x ./gradlewэ
+        run: chmod +x ./gradlew
 
       - name: Start Infrastructure (Docker Compose)
         run: |
