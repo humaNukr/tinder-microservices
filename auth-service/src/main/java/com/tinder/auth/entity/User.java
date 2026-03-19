@@ -36,8 +36,9 @@ public class User {
 	@Column(unique = true, nullable = false)
 	private String email;
 
+	@Builder.Default
 	@Column(nullable = false)
-	private boolean isEmailVerified;
+	private boolean isEmailVerified = false;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
@@ -47,5 +48,6 @@ public class User {
 		USER, ADMIN
 	}
 
+	@Builder.Default
 	private boolean isDeleted = false;
 }
