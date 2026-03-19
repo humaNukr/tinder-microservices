@@ -1,0 +1,10 @@
+postgres_data/
+minio_data/
+kafka_data/
+
+target/
+build/
+*.jar
+
+.idea/
+*.iml
