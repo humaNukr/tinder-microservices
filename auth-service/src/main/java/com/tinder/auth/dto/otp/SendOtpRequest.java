@@ -1,4 +1,6 @@
 package com.tinder.auth.dto.otp;
 
-public record SendOtpRequest(String destination) {
+import jakarta.validation.constraints.NotBlank;
+
+public record SendOtpRequest(@NotBlank String destination) {
 }
