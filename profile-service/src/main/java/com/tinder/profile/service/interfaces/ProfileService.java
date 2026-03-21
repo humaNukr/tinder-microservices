@@ -6,4 +6,5 @@ import com.tinder.profile.dto.ProfileResponse;
 
 public interface ProfileService {
     ProfileResponse createProfile(CreateProfileRequest request);
+    ProfileResponse getMyProfile();
 }

@@ -3,6 +3,7 @@ package com.tinder.profile.service.impl;
 import com.tinder.profile.domain.Profile;
 import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.ProfileResponse;
+import com.tinder.profile.exception.ProfileNotFoundException;
 import com.tinder.profile.mapper.ProfileMapper;
 import com.tinder.profile.repository.ProfileRepository;
 import com.tinder.profile.service.interfaces.ProfileService;
@@ -22,16 +23,29 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public ProfileResponse createProfile(CreateProfileRequest request) {
-        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
-        UUID userId = UUID.fromString(userIdStr);
+        UUID userId = getUserIdFromAuthentication();
 
         if (profileRepository.existsByUserId(userId)) {
-            throw new IllegalStateException("There is already a profile with userId " + userIdStr);
+            throw new IllegalStateException("There is already a profile with userId " + userId);
         }
         Profile profile = profileMapper.toModel(request);
         profile.setUserId(userId);
         profile.setPhotos(new ArrayList<>());
 
         return profileMapper.toDto(profileRepository.save(profile));
+    }
+
+    @Override
+    public ProfileResponse getMyProfile() {
+        UUID userId = getUserIdFromAuthentication();
+
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ProfileNotFoundException("Профіль не знайдено. Будь ласка, пройдіть онбординг."));
+
+        return profileMapper.toDto(profile);
+    }
+
+    private UUID getUserIdFromAuthentication() {
+        return UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
     }
 }
