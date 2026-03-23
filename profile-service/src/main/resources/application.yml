@@ -13,5 +13,11 @@ spring:
     virtual:
       enabled: true
 
+minio:
+  url: http://localhost:9000
+  access-key: admin
+  secret-key: password123
+  bucket-name: tinder-media
+
 jwt:
   secret: ${JWT_SECRET}

@@ -21,13 +21,13 @@ public class JwtServiceImpl implements JwtService {
 	public String generateAccessToken(User user) {
 		return Jwts.builder().subject(user.getId().toString()).claim("email", user.getEmail())
 				.claim("role", user.getRole().name()).issuedAt(new Date())
-				.expiration(new Date(System.currentTimeMillis() + jwtProperties.getAccessTokenExpirationMs()))
+				.expiration(new Date(System.currentTimeMillis() + jwtProperties.accessTokenExpirationMs()))
 				.signWith(getSignInKey()).compact();
 	}
 
 	public String generateRefreshToken(User user) {
 		return Jwts.builder().subject(user.getId().toString()).issuedAt(new Date())
-				.expiration(new Date(System.currentTimeMillis() + jwtProperties.getRefreshTokenExpirationMs()))
+				.expiration(new Date(System.currentTimeMillis() + jwtProperties.refreshTokenExpirationMs()))
 				.signWith(getSignInKey()).compact();
 	}
 
@@ -36,7 +36,7 @@ public class JwtServiceImpl implements JwtService {
 	}
 
 	private SecretKey getSignInKey() {
-		byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());
+		byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.secret());
 		return Keys.hmacShaKeyFor(keyBytes);
 	}
 }

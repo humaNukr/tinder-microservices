@@ -10,8 +10,10 @@ import com.tinder.profile.service.interfaces.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,6 +24,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileMapper profileMapper;
 
     @Override
+    @Transactional
     public ProfileResponse createProfile(CreateProfileRequest request) {
         UUID userId = getUserIdFromAuthentication();
 
@@ -36,16 +39,35 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProfileResponse getMyProfile() {
         UUID userId = getUserIdFromAuthentication();
 
-        Profile profile = profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ProfileNotFoundException("Профіль не знайдено. Будь ласка, пройдіть онбординг."));
+        Profile profile = getProfile(userId);
 
         return profileMapper.toDto(profile);
     }
 
+    @Override
+    @Transactional
+    public void addPhotosToProfile(UUID userId, List<String> photoUrls) {
+        UUID profileId = getUserIdFromAuthentication();
+
+        if (!profileId.equals(userId)) {
+            throw new IllegalArgumentException("User id is not the same as the requested profile id");
+        }
+
+        Profile profile = getProfile(userId);
+        profile.getPhotos().addAll(photoUrls);
+        profileRepository.save(profile);
+    }
+
     private UUID getUserIdFromAuthentication() {
         return UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
+    }
+
+    private Profile getProfile(UUID userId) {
+        return profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ProfileNotFoundException("Profile with id " + userId + " not found"));
     }
 }

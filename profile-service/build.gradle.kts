@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb:3.5.12")
     implementation("org.mapstruct:mapstruct:1.6.3")
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+    implementation("io.minio:minio:9.0.0")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
@@ -39,6 +40,7 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.testcontainers:minio:1.21.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
