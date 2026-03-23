@@ -35,7 +35,7 @@ public class EmailOtpSender implements OtpSender {
 			MimeMessage message = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-			helper.setFrom(mailProperties.getUsername());
+			helper.setFrom(mailProperties.username());
 			helper.setTo(destination);
 			helper.setSubject("Your confirmation code");
 			helper.setText(htmlBody, true);

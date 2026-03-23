@@ -1,0 +1,23 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: profile-service
+
+  data:
+    mongodb:
+      uri: mongodb://admin:password@localhost:27017/profile_db?authSource=admin
+
+  threads:
+    virtual:
+      enabled: true
+
+minio:
+  url: http://localhost:9000
+  access-key: admin
+  secret-key: password123
+  bucket-name: tinder-media
+
+jwt:
+  secret: ${JWT_SECRET}
