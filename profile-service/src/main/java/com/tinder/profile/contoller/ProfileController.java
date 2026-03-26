@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,13 +22,14 @@ public class ProfileController {
 
     @PostMapping("/onboarding")
     @ResponseStatus(HttpStatus.CREATED)
-    public ProfileResponse createProfile(@RequestBody @Valid CreateProfileRequest request) {
-        return profileService.createProfile(request);
+    public ProfileResponse createProfile(@RequestBody @Valid CreateProfileRequest request,
+                                         @RequestHeader("X-User-Id") String userId) {
+        return profileService.createProfile(userId, request);
     }
 
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    public ProfileResponse getProfile() {
-        return profileService.getMyProfile();
+    public ProfileResponse getProfile(@RequestHeader("X-User-Id") String userId) {
+        return profileService.getMyProfile(userId);
     }
 }

@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProfileService {
-    ProfileResponse createProfile(CreateProfileRequest request);
+    ProfileResponse createProfile(String userId, CreateProfileRequest request);
 
-    ProfileResponse getMyProfile();
+    ProfileResponse getMyProfile(String userId);
 
     void addPhotosToProfile(UUID userId, List<String> photoUrls);
 }

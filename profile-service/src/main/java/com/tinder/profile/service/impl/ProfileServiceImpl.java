@@ -3,12 +3,12 @@ package com.tinder.profile.service.impl;
 import com.tinder.profile.domain.Profile;
 import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.ProfileResponse;
+import com.tinder.profile.exception.EmptyOrNullValueException;
 import com.tinder.profile.exception.ProfileNotFoundException;
 import com.tinder.profile.mapper.ProfileMapper;
 import com.tinder.profile.repository.ProfileRepository;
 import com.tinder.profile.service.interfaces.ProfileService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,14 +25,14 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional
-    public ProfileResponse createProfile(CreateProfileRequest request) {
-        UUID userId = getUserIdFromAuthentication();
+    public ProfileResponse createProfile(String userId, CreateProfileRequest request) {
+        UUID userIdUUID = UUID.fromString(userId);
 
-        if (profileRepository.existsByUserId(userId)) {
+        if (profileRepository.existsByUserId(userIdUUID)) {
             throw new IllegalStateException("There is already a profile with userId " + userId);
         }
         Profile profile = profileMapper.toModel(request);
-        profile.setUserId(userId);
+        profile.setUserId(userIdUUID);
         profile.setPhotos(new ArrayList<>());
 
         return profileMapper.toDto(profileRepository.save(profile));
@@ -40,10 +40,10 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProfileResponse getMyProfile() {
-        UUID userId = getUserIdFromAuthentication();
+    public ProfileResponse getMyProfile(String userId) {
+        UUID userIdUUID = UUID.fromString(userId);
 
-        Profile profile = getProfile(userId);
+        Profile profile = getProfile(userIdUUID);
 
         return profileMapper.toDto(profile);
     }
@@ -51,19 +51,13 @@ public class ProfileServiceImpl implements ProfileService {
     @Override
     @Transactional
     public void addPhotosToProfile(UUID userId, List<String> photoUrls) {
-        UUID profileId = getUserIdFromAuthentication();
-
-        if (!profileId.equals(userId)) {
-            throw new IllegalArgumentException("User id is not the same as the requested profile id");
+        if (photoUrls == null || photoUrls.isEmpty()) {
+            throw new EmptyOrNullValueException("Photos can't be empty or null");
         }
 
         Profile profile = getProfile(userId);
         profile.getPhotos().addAll(photoUrls);
         profileRepository.save(profile);
-    }
-
-    private UUID getUserIdFromAuthentication() {
-        return UUID.fromString(SecurityContextHolder.getContext().getAuthentication().getName());
     }
 
     private Profile getProfile(UUID userId) {

@@ -19,10 +19,7 @@ public class ProfilePhotoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public void uploadPhotos(@RequestPart("files") List<MultipartFile> files) {
-        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
-        UUID userId = UUID.fromString(userIdStr);
-
+    public void uploadPhotos(@RequestPart("files") List<MultipartFile> files, @RequestHeader("X-User-Id") String userId) {
         profilePhotoFacade.uploadAndAttachPhotos(files, userId);
     }
 }

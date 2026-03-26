@@ -25,16 +25,17 @@ public class ProfilePhotoFacadeImpl implements ProfilePhotoFacade {
     private final ProfileService profileService;
 
     @Override
-    public void uploadAndAttachPhotos(List<MultipartFile> files, UUID userId) {
+    public void uploadAndAttachPhotos(List<MultipartFile> files, String userId) {
         List<String> uploadedKeys = new ArrayList<>();
+        UUID userIdUUID = UUID.fromString(userId);
 
         try {
             for (MultipartFile file : files) {
-                String fileKey = storageService.upload(file, userId);
+                String fileKey = storageService.upload(file, userIdUUID);
                 uploadedKeys.add(fileKey);
             }
 
-            profileService.addPhotosToProfile(userId, uploadedKeys);
+            profileService.addPhotosToProfile(userIdUUID, uploadedKeys);
 
         } catch (Exception e) {
             log.error("Error during photo upload. Rolling back saved files in MinIO...", e);
