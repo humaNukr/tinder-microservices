@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProfilePhotoFacade {
-    void uploadAndAttachPhotos(List<MultipartFile> files, UUID userId);
+    void uploadAndAttachPhotos(List<MultipartFile> files, String userId);
 
     InputStream downloadPhoto(String fileKey);
 }

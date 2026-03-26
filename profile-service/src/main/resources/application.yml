@@ -18,6 +18,3 @@ minio:
   access-key: admin
   secret-key: password123
   bucket-name: tinder-media
-
-jwt:
-  secret: ${JWT_SECRET}
