@@ -1,0 +1,19 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: swipe-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/swipe_db
+    username: user
+    password: password
+
+  threads:
+    virtual:
+      enabled: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml

@@ -19,5 +19,10 @@ spring:
               predicates:
                 - Path=/api/v1/profiles/**
 
+            - id: swipe-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/v1/swipe/**
+
 jwt:
   secret: ${JWT_SECRET}
