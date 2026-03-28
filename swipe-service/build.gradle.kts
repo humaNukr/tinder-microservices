@@ -7,7 +7,7 @@ plugins {
 
 group = "com.tinder"
 version = "0.0.1-SNAPSHOT"
-description = "profile-service"
+description = "swipe-service"
 
 java {
     toolchain {
@@ -26,20 +26,20 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-mongodb:3.5.12")
-    implementation("org.mapstruct:mapstruct:1.6.3")
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
-    implementation("io.minio:minio:9.0.0")
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.liquibase:liquibase-core")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-60:3.9.4")
+
     compileOnly("org.projectlombok:lombok")
-    runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+
+    runtimeOnly("org.postgresql:postgresql")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.testcontainers:minio:1.21.4")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
 }
 
 tasks.withType<Test> {

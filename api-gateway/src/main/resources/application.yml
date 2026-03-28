@@ -12,12 +12,17 @@ spring:
             - id: auth-service
               uri: http://localhost:8081
               predicates:
-                - Path=/api/v1/auth/**
+                - Path=/api/v1/auth,/api/v1/auth/**
 
             - id: profile-service
               uri: http://localhost:8082
               predicates:
-                - Path=/api/v1/profiles/**
+                - Path=/api/v1/profiles,/api/v1/profiles/**
+
+            - id: swipe-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/v1/swipes,/api/v1/swipes/**
 
 jwt:
   secret: ${JWT_SECRET}

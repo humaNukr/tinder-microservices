@@ -1,0 +1,34 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: swipe-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/swipe_db
+    username: user
+    password: password
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+
+  threads:
+    virtual:
+      enabled: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+outbox:
+  scheduler:
+    batch-size: 50
+    batch-processing-time: 5 #seconds
+    fixed-delay: 2000 #ms
