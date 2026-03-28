@@ -19,7 +19,8 @@ public interface SwipeRepository extends JpaRepository<Swipe, SwipeId> {
             DO UPDATE SET
                 is_liked_by_user1 = :isLiked,
                 updated_at = NOW()
-            RETURNING is_liked_by_user1, is_liked_by_user2
+            RETURNING is_liked_by_user1 AS "isLikedByUser1", 
+                      is_liked_by_user2 AS "isLikedByUser2"
             """, nativeQuery = true)
     SwipeStatusProjection upsertSwipeByUser1(
             @Param("user1Id") UUID user1Id,
@@ -33,7 +34,8 @@ public interface SwipeRepository extends JpaRepository<Swipe, SwipeId> {
             DO UPDATE SET
                 is_liked_by_user2 = :isLiked,
                 updated_at = NOW()
-            RETURNING is_liked_by_user1, is_liked_by_user2
+            RETURNING is_liked_by_user1 AS "isLikedByUser1", 
+                      is_liked_by_user2 AS "isLikedByUser2"
             """, nativeQuery = true)
     SwipeStatusProjection upsertSwipeByUser2(
             @Param("user1Id") UUID user1Id,

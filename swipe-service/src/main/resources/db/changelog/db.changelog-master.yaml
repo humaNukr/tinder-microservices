@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: db/changelog/changes/01-create-swipes-table.sql
+  - include:
+      file: db/changelog/changes/02-create-outbox-events-table.sql

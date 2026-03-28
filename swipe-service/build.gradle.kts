@@ -1,7 +1,8 @@
 plugins {
     java
-    id("org.springframework.boot") version "4.0.5"
+    id("org.springframework.boot") version "3.5.12"
     id("io.spring.dependency-management") version "1.1.7"
+    id("com.diffplug.spotless") version "6.25.0"
 }
 
 group = "com.tinder"
@@ -26,16 +27,19 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-liquibase")
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.liquibase:liquibase-core")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-60:3.9.4")
+
     compileOnly("org.projectlombok:lombok")
-    runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-liquibase-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    runtimeOnly("org.postgresql:postgresql")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
 }
 
 tasks.withType<Test> {
