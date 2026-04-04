@@ -1,0 +1,43 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: chat-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/chat_db
+    username: user
+    password: password
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+
+  threads:
+    virtual:
+      enabled: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+app:
+  kafka:
+    topics:
+      match-events: match-events
+    consumer-groups:
+      chat-service: chat-service-group
+
+  redis:
+    chat:
+      channel: chat-channel
+      key-prefix: "chat:"
+      key-suffix: :participants
+      ttl: 7d #Days (duration format)
+

@@ -37,7 +37,7 @@ public class SwipeServiceImpl implements SwipeSevice {
         if (Boolean.TRUE.equals(projection.getIsLikedByUser1()) && Boolean.TRUE.equals(projection.getIsLikedByUser2())
         ) {
             log.info("Match found between {} and {}", actorId, targetId);
-            outboxService.saveEvent("match-events", new MatchEvent(actorId, targetId));
+            outboxService.saveEvent("match-events", new MatchEvent(UUID.randomUUID(), actorId, targetId));
             return new SwipeResponseDto(true);
         }
 
