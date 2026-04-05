@@ -1,5 +1,6 @@
 package com.tinder.notification.entity;
 
+import com.tinder.notification.enums.DeviceType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,8 +28,9 @@ public class DeviceToken {
     @Column(name = "token", nullable = false, unique = true)
     private String token;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "device_type")
-    private String deviceType;
+    private DeviceType deviceType;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
