@@ -7,5 +7,7 @@ public interface DeviceTokenInfo {
 
     UUID getUserId();
 
+    String getDeviceType();
+
     String getToken();
 }
