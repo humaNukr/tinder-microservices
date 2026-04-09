@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("api/v1/notifications")
+@RequestMapping("/api/v1/notifications/tokens")
 @RequiredArgsConstructor
 public class DeviceTokenController {
     private final DeviceTokenService deviceTokenService;
 
-    @PostMapping("/tokens")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void saveToken(
             @RequestHeader("X-User-Id") UUID id,

@@ -12,4 +12,5 @@ CREATE TABLE device_tokens
 );
 
 CREATE INDEX idx_device_tokens_user_id ON device_tokens (user_id);
+-- rollback DROP INDEX idx_device_tokens_user_id;
 -- rollback DROP TABLE device_tokens;
