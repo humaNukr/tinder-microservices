@@ -2,6 +2,7 @@ package com.tinder.notification.service.impl;
 
 import com.tinder.notification.dto.NotificationResponseDto;
 import com.tinder.notification.entity.Notification;
+import com.tinder.notification.enums.NotificationType;
 import com.tinder.notification.exception.AccessDeniedException;
 import com.tinder.notification.exception.EntityNotFoundException;
 import com.tinder.notification.mapper.NotificationMapper;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -43,5 +45,18 @@ public class NotificationLogServiceImpl implements NotificationLogService {
             throw new AccessDeniedException("Notification's userId and received UsedId don't match");
         }
         notification.setRead(true);
+    }
+
+    @Override
+    @Transactional
+    public void createNotification(UUID userId, String title, String body, NotificationType type, Map<String, Object> metadata) {
+        Notification notification = Notification.builder()
+                .userId(userId)
+                .title(title)
+                .body(body)
+                .type(type)
+                .metadata(metadata)
+                .build();
+        notificationRepository.save(notification);
     }
 }

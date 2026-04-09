@@ -1,13 +1,12 @@
 package com.tinder.notification.processor;
 
-import com.tinder.notification.provider.PushSender;
-import com.tinder.notification.repository.projection.DeviceTokenInfo;
-import com.tinder.notification.service.interfaces.DeviceTokenService;
+import com.tinder.notification.enums.NotificationType;
+import com.tinder.notification.service.impl.NotificationDeliveryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -15,26 +14,28 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MatchNotificationProcessor {
 
-    private final DeviceTokenService deviceTokenService;
-    private final PushSender pushSender;
+    private final NotificationDeliveryService deliveryService;
 
     public void process(UUID eventId, UUID user1Id, UUID user2Id) {
         log.info("Processing match notification for event: {}", eventId);
 
-        notifyUser(user1Id, "It's a Match!", "You have a new match waiting for you.");
-        notifyUser(user2Id, "It's a Match!", "You have a new match waiting for you.");
-    }
+        String title = "It's a Match! 💖";
+        String body = "You have a new match waiting for you.";
 
-    private void notifyUser(UUID userId, String title, String body) {
-        List<DeviceTokenInfo> tokens = deviceTokenService.getUserTokens(userId);
+        deliveryService.deliver(
+                user1Id,
+                title,
+                body,
+                NotificationType.MATCH,
+                Map.of("eventId", eventId, "matchedUserId", user2Id)
+        );
 
-        if (tokens.isEmpty()) {
-            log.warn("No device tokens found for user: {}. Push skipped.", userId);
-            return;
-        }
-
-        for (DeviceTokenInfo tokenInfo : tokens) {
-            pushSender.sendNotification(tokenInfo.getToken(), title, body);
-        }
+        deliveryService.deliver(
+                user2Id,
+                title,
+                body,
+                NotificationType.MATCH,
+                Map.of("eventId", eventId, "matchedUserId", user1Id)
+        );
     }
 }
