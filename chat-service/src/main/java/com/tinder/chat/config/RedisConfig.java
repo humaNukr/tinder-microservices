@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tinder.chat.message.dto.MessageEventDto;
-import com.tinder.chat.messaging.redis.RedisChatSubscriber;
+import com.tinder.chat.infrastructure.redis.RedisChatSubscriber;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

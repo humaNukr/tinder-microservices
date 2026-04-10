@@ -1,13 +1,14 @@
 package com.tinder.notification.processor;
 
+
 import com.tinder.notification.enums.NotificationType;
+import com.tinder.notification.event.MessageEvent;
 import com.tinder.notification.service.impl.NotificationDeliveryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -16,22 +17,24 @@ public class MessageNotificationProcessor {
 
     private final NotificationDeliveryService deliveryService;
 
-    public void process(UUID messageId, UUID chatId, UUID senderId, UUID recipientId, String textSnippet) {
-        log.info("Processing message notification for chat: {}", chatId);
+    public void process(MessageEvent event) {
+        log.info("Processing message notification for event: {}", event.eventId());
 
         String title = "New Message 💬";
 
-        String body = textSnippet.length() > 30 ? textSnippet.substring(0, 30) + "..." : textSnippet;
+        String snippet = event.contentSnippet();
+        String body = snippet.length() > 50 ? snippet.substring(0, 50) + "..." : snippet;
 
         deliveryService.deliver(
-                recipientId,
+                event.recipientId(),
                 title,
                 body,
                 NotificationType.MESSAGE,
                 Map.of(
-                        "messageId", messageId,
-                        "chatId", chatId,
-                        "senderId", senderId
+                        "eventId", event.eventId(),
+                        "messageId", event.messageId(),
+                        "chatId", event.chatId(),
+                        "senderId", event.senderId()
                 )
         );
     }

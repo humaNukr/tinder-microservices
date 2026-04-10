@@ -41,3 +41,6 @@ app:
       key-suffix: :participants
       ttl: 7d #Days (duration format)
 
+  outbox:
+    poll-interval: 1000
+
