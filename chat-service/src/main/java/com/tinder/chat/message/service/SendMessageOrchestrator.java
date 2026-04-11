@@ -42,7 +42,7 @@ public class SendMessageOrchestrator {
             savedMessage.getChatId(),
             senderId,
             recipientId,
-            savedMessage.getContentType(),
+            savedMessage.getContentType().name(),
             savedMessage.getContent(),
             savedMessage.getCreatedAt()
         );

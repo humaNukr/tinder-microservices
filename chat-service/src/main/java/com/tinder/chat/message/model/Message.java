@@ -1,7 +1,10 @@
 package com.tinder.chat.message.model;
 
+import com.tinder.chat.message.enums.MessageContentType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,8 +37,9 @@ public class Message {
     @Column(name = "sender_id", nullable = false)
     private UUID senderId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "content_type", nullable = false, length = 20)
-    private String contentType;
+    private MessageContentType contentType;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;

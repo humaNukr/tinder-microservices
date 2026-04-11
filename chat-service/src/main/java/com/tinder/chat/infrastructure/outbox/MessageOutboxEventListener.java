@@ -2,8 +2,8 @@ package com.tinder.chat.infrastructure.outbox;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.chat.infrastructure.kafka.contract.MessageSentEvent;
-import com.tinder.chat.message.model.Message;
 import com.tinder.chat.message.event.MessageSavedEvent;
+import com.tinder.chat.message.model.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class MessageOutboxEventListener {
                 message.getChatId(),
                 message.getSenderId(),
                 recipientId,
-                message.getContentType(),
+                message.getContentType().name(),
                 snippet,
                 message.getCreatedAt()
         );

@@ -17,7 +17,6 @@ import java.util.UUID;
 public class OutboxEvent {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "topic", nullable = false)

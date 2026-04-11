@@ -1,10 +1,13 @@
 package com.tinder.chat.message.dto;
 
+import com.tinder.chat.message.enums.MessageContentType;
+import jakarta.validation.constraints.NotNull;
+
 import java.util.UUID;
 
 public record ChatRequestDto(
-        UUID chatId,
-        String payload,
-        String type
+        @NotNull UUID chatId,
+        @NotNull String payload,
+        MessageContentType type
 ) {
 }

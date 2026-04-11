@@ -1,6 +1,7 @@
 package com.tinder.notification.listener;
 
-import com.tinder.notification.event.MessageEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tinder.notification.event.MessageSentEvent;
 import com.tinder.notification.processor.MessageNotificationProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,11 +13,23 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MessageEventListener {
 
-    private final MessageNotificationProcessor messageNotificationProcessor;
+    private final MessageNotificationProcessor notificationFacade;
+    private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "message-events", groupId = "notification-group")
-    public void handleMessageEvent(MessageEvent event) {
-        log.info("Received MessageEvent from Kafka. EventID: {}", event.eventId());
-        messageNotificationProcessor.process(event);
+    @KafkaListener(
+            topics = "${app.kafka.topics.message-events}",
+            groupId = "${app.kafka.consumer-groups.notification-service}"
+    )
+    public void handleMessageEvent(String payload) {
+        try {
+            MessageSentEvent event = objectMapper.readValue(payload, MessageSentEvent.class);
+
+            log.info("Successfully deserialized MessageSentEvent from Kafka. EventID: {}", event.eventId());
+
+            notificationFacade.process(event);
+
+        } catch (Exception e) {
+            log.error("Failed to parse message event payload from Kafka: {}", payload, e);
+        }
     }
 }
