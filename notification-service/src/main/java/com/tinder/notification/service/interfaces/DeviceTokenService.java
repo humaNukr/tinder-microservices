@@ -10,4 +10,6 @@ public interface DeviceTokenService {
     void saveDeviceToken(UUID userId, SaveTokenRequest request);
 
     List<DeviceTokenInfo> getUserTokens(UUID userId);
+
+    void deleteToken(String token);
 }

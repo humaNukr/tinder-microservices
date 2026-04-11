@@ -26,6 +26,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation:4.0.5")
     implementation("org.mapstruct:mapstruct:1.6.3")
     implementation("org.liquibase:liquibase-core")
+    implementation("com.google.firebase:firebase-admin:9.8.0")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")

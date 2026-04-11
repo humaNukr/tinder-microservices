@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,8 +35,14 @@ public class NotificationDeliveryService {
             return;
         }
 
+        Map<String, String> stringData = metadata.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> String.valueOf(entry.getValue()) // Робимо безпечний .toString()
+                ));
+
         for (DeviceTokenInfo tokenInfo : tokens) {
-            pushSender.sendNotification(tokenInfo.getToken(), title, body);
+            pushSender.sendNotification(tokenInfo.getToken(), title, body, stringData);
         }
     }
 }
