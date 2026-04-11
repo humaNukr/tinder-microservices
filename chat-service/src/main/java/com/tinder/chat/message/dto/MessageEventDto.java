@@ -11,4 +11,5 @@ public record MessageEventDto(
         String contentType,
         String content,
         Instant createdAt
-) {}
+) {
+}

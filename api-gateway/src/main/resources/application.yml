@@ -31,6 +31,11 @@ spring:
               predicates:
                 - Path=/ws/chat/**
 
+            - id: notification-service
+              uri: http://localhost:8085
+              predicates:
+                - Path=/api/v1/notifications,/api/v1/notifications/**
+
 
 jwt:
   secret: ${JWT_SECRET}
