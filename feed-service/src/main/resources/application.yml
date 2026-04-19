@@ -1,0 +1,31 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: feed-service
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: feed-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  threads:
+    virtual:
+      enabled: true
+
+app:
+  kafka:
+    topics:
+      swipe-events: swipe-events
+
+  services:
+    profile:
+      url: http://localhost:8082
