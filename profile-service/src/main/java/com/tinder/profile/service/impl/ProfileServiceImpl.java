@@ -2,6 +2,7 @@ package com.tinder.profile.service.impl;
 
 import com.tinder.profile.domain.Profile;
 import com.tinder.profile.dto.CreateProfileRequest;
+import com.tinder.profile.dto.LocationUpdateRequest;
 import com.tinder.profile.dto.ProfileResponse;
 import com.tinder.profile.exception.EmptyOrNullValueException;
 import com.tinder.profile.exception.ProfileNotFoundException;
@@ -9,9 +10,12 @@ import com.tinder.profile.mapper.ProfileMapper;
 import com.tinder.profile.repository.ProfileRepository;
 import com.tinder.profile.service.interfaces.ProfileService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +61,19 @@ public class ProfileServiceImpl implements ProfileService {
 
         Profile profile = getProfile(userId);
         profile.getPhotos().addAll(photoUrls);
+        profileRepository.save(profile);
+    }
+
+    @Override
+    @Transactional
+    public void updateLocation(String userId, LocationUpdateRequest request) {
+        UUID userIdUUID = UUID.fromString(userId);
+
+        GeoJsonPoint point = new GeoJsonPoint(request.longitude(), request.latitude());
+
+        Profile profile = getProfile(userIdUUID);
+        profile.setLocation(point);
+        profile.setLastSeen(LocalDateTime.now());
         profileRepository.save(profile);
     }
 

@@ -1,6 +1,7 @@
 package com.tinder.profile.service.interfaces;
 
 import com.tinder.profile.dto.CreateProfileRequest;
+import com.tinder.profile.dto.LocationUpdateRequest;
 import com.tinder.profile.dto.ProfileResponse;
 
 import java.util.List;
@@ -12,4 +13,6 @@ public interface ProfileService {
     ProfileResponse getMyProfile(String userId);
 
     void addPhotosToProfile(UUID userId, List<String> photoUrls);
+
+    void updateLocation(String userId, LocationUpdateRequest request);
 }
