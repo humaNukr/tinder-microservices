@@ -25,6 +25,7 @@ app:
   kafka:
     topics:
       swipe-events: swipe-events
+      user-activity: user-activity-events
 
   services:
     profile:
