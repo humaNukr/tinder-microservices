@@ -1,4 +1,4 @@
-package com.tinder.feed.event;
+package com.tinder.profile.event;
 
 public enum ActivityType {
     LOGIN,

@@ -32,6 +32,8 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.6.3")
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
     implementation("io.minio:minio:9.0.0")
+    implementation("org.springframework.kafka:spring-kafka")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")

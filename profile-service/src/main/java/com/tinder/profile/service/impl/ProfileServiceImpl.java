@@ -6,9 +6,12 @@ import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.LocationUpdateRequest;
 import com.tinder.profile.dto.ProfileCandidateDto;
 import com.tinder.profile.dto.ProfileResponse;
+import com.tinder.profile.event.ActivityType;
+import com.tinder.profile.event.UserActivityEvent;
 import com.tinder.profile.exception.EmptyOrNullValueException;
 import com.tinder.profile.exception.ProfileNotFoundException;
 import com.tinder.profile.mapper.ProfileMapper;
+import com.tinder.profile.producer.UserActivityProducer;
 import com.tinder.profile.repository.ProfileRepository;
 import com.tinder.profile.repository.ProfileSearchRepository;
 import com.tinder.profile.service.interfaces.ProfileService;
@@ -32,6 +35,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileRepository profileRepository;
     private final ProfileSearchRepository profileSearchRepository;
     private final ProfileMapper profileMapper;
+    private final UserActivityProducer activityProducer;
 
     @Override
     @Transactional
@@ -81,6 +85,7 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setLocation(point);
         profile.setLastSeen(LocalDateTime.now());
         profileRepository.save(profile);
+        activityProducer.publishActivity(userIdUUID, ActivityType.LOCATION_UPDATE);
     }
 
     @Override

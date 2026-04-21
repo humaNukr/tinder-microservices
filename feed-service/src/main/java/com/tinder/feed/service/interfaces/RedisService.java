@@ -15,4 +15,6 @@ public interface RedisService {
     Long getDeckSize(UUID userId);
 
     void addSwipedUserToHistory(UUID swiperId, UUID swipedId);
+
+    void deleteDeck(UUID userId);
 }

@@ -64,4 +64,10 @@ public class RedisServiceImpl implements RedisService {
         redisTemplate.opsForSet().add(historyKey, swipedId.toString());
         redisTemplate.expire(historyKey, Duration.ofDays(30));
     }
+
+    @Override
+    public void deleteDeck(UUID userId) {
+        String deckKey = "user:" + userId + ":deck";
+        redisTemplate.delete(deckKey);
+    }
 }
