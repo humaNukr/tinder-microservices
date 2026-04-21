@@ -30,3 +30,10 @@ app:
     profile:
       url: http://localhost:8082
       candidates-path: /internal/api/v1/profiles/candidates
+      batch-path: /internal/api/v1/profiles/batch
+
+  feed:
+    page-size: 10          # Number of cards returned to the frontend per request
+    deck-size: 100         # Number of cards kept in Redis after generation
+    fetch-limit: 500       # Number of profiles requested from profile-service for selection
+    refill-threshold: 20   # Threshold: if fewer than 20 cards remain in the deck, start background refill

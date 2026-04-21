@@ -1,29 +1,22 @@
 package com.tinder.feed.listener;
 
 import com.tinder.feed.event.SwipeCreatedEvent;
+import com.tinder.feed.service.interfaces.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SwipeHistoryListener {
 
-    private final StringRedisTemplate redisTemplate;
+    private final RedisService redisService;
 
-    @KafkaListener(topics = "swipe-events", groupId = "feed-service-group")
+    @KafkaListener(topics = "${app.kafka.topics.swipe-events}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeSwipeEvent(SwipeCreatedEvent event) {
-        String redisKey = "user:" + event.swiperId() + ":history";
-        String swipedUserId = event.swipedId().toString();
-
-        redisTemplate.opsForSet().add(redisKey, swipedUserId);
-        redisTemplate.expire(redisKey, Duration.ofDays(30));
-
-        log.debug("Added user {} to swipe history of user {}", swipedUserId, event.swiperId());
+        redisService.addSwipedUserToHistory(event.swiperId(), event.swipedId());
+        log.debug("Added user {} to swipe history of user {}", event.swipedId(), event.swiperId());
     }
 }

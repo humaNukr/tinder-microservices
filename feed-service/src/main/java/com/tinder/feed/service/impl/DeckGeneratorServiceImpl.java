@@ -1,12 +1,15 @@
 package com.tinder.feed.service.impl;
 
-import com.tinder.feed.adapter.ProfileClient;
+import com.tinder.feed.adapter.ProfileServiceClient;
+import com.tinder.feed.properties.FeedProperties;
 import com.tinder.feed.service.interfaces.DeckGeneratorService;
+import com.tinder.feed.service.interfaces.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -16,25 +19,31 @@ import java.util.UUID;
 @Slf4j
 public class DeckGeneratorServiceImpl implements DeckGeneratorService {
 
-    private final ProfileClient profileClient;
-    private final RedisTemplate<String, UUID> redisForHistory;
-    private final RedisTemplate<String, List<UUID>> redisForDecks;
+    private final ProfileServiceClient profileClient;
+    private final RedisService redisService;
+    private final FeedProperties feedProperties;
 
     public void generateDeck(UUID userId) {
-        List<UUID> candidates = profileClient.fetchCandidates(userId);
+        List<UUID> mutableCandidates = new ArrayList<>(profileClient.fetchCandidates(userId));
 
-        Set<UUID> swipedUsersIds = redisForHistory.opsForSet().members("user:" + userId + ":history");
+        Set<UUID> swipedUsersIds = redisService.fetchSwipedUsers(userId);
 
         if (swipedUsersIds == null || swipedUsersIds.isEmpty()) {
-            log.info("No candidates found for user {}", userId);
+            log.info("No swipes found for user {}", userId);
         } else {
-            candidates.removeAll(swipedUsersIds);
+            mutableCandidates.removeAll(swipedUsersIds);
         }
 
-        List<UUID> batchCandidates = candidates.subList(0, Math.min(candidates.size(), 50));
+        List<UUID> batchCandidates = mutableCandidates.stream()
+                .limit(feedProperties.deckSize())
+                .toList();
 
-        String deckKey = "user:" + userId + ":deck";
-        redisForDecks.delete(deckKey);
-        redisForDecks.opsForList().rightPush(deckKey, batchCandidates);
+        redisService.saveNewDeck(userId, batchCandidates);
+    }
+
+    @Override
+    @Async
+    public void generateDeckAsync(UUID userId) {
+        generateDeck(userId);
     }
 }
