@@ -32,7 +32,7 @@ public class SwipeServiceImpl implements SwipeSevice {
             throw new IllegalArgumentException("Target Id and actor Id can't be same");
         }
 
-        SwipeStatusProjection projection = actorId.toString().compareTo(targetId.toString()) < 0
+        SwipeStatusProjection projection = actorId.compareTo(targetId) < 0
                 ? swipeRepository.upsertSwipeByUser1(actorId, targetId, liked)
                 : swipeRepository.upsertSwipeByUser2(targetId, actorId, liked);
 

@@ -36,6 +36,11 @@ spring:
               predicates:
                 - Path=/api/v1/notifications,/api/v1/notifications/**
 
+            - id: feed-service
+              uri: http://localhost:8086
+              predicates:
+                - Path=/api/v1/feed,/api/v1/feed/**
+
 
 jwt:
   secret: ${JWT_SECRET}
