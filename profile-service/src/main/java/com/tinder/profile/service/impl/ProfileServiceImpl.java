@@ -51,7 +51,7 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setUserId(userIdUUID);
         profile.setPhotos(new ArrayList<>());
 
-        profile =  profileRepository.save(profile);
+        profile = profileRepository.save(profile);
         ProfileResponse response = profileMapper.toDto(profile);
 
         eventPublisher.publishEvent(new ProfileChangedEvent(response));
@@ -78,7 +78,8 @@ public class ProfileServiceImpl implements ProfileService {
 
         Profile profile = getProfile(userId);
         profile.getPhotos().addAll(photoUrls);
-        profileRepository.save(profile);
+        profile = profileRepository.save(profile);
+        eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
     }
 
     @Override
@@ -91,12 +92,13 @@ public class ProfileServiceImpl implements ProfileService {
         Profile profile = getProfile(userIdUUID);
         profile.setLocation(point);
         profile.setLastSeen(LocalDateTime.now());
-        profileRepository.save(profile);
+        profile = profileRepository.save(profile);
+        eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
         activityProducer.publishActivity(userIdUUID, ActivityType.LOCATION_UPDATE);
     }
 
     @Override
-    public List<UUID> getCandidatesForFeed(UUID userId) {
+    public List<UUID> getCandidatesForFeed(UUID userId, int limit) {
         Profile searcher = getProfile(userId);
 
         UserPreferences prefs = searcher.getPreferences();
@@ -108,12 +110,11 @@ public class ProfileServiceImpl implements ProfileService {
         LocalDate maxBirthDate = now.minusYears(prefs.getMinAge());
         LocalDate minBirthDate = now.minusYears(prefs.getMaxAge() + 1).plusDays(1);
 
-        int targetLimit = 500;
         double currentRadius = prefs.getMaxDistanceKm();
 
         List<ProfileCandidateDto> candidates = profileSearchRepository.findCandidates(
                 prefs.getTargetGender(), minBirthDate, maxBirthDate,
-                searcher.getLocation(), currentRadius, searcher.getInterests(), targetLimit
+                searcher.getLocation(), currentRadius, searcher.getInterests(), limit
         );
 
         if (candidates.size() < 50) {
@@ -125,7 +126,7 @@ public class ProfileServiceImpl implements ProfileService {
 
             candidates = profileSearchRepository.findCandidates(
                     prefs.getTargetGender(), relaxedMinBirth, relaxedMaxBirth,
-                    searcher.getLocation(), relaxedRadius, searcher.getInterests(), targetLimit
+                    searcher.getLocation(), relaxedRadius, searcher.getInterests(), limit
             );
         }
 

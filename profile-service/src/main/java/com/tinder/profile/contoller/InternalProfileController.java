@@ -24,8 +24,11 @@ public class InternalProfileController {
 
     @GetMapping("/candidates")
     @ResponseStatus(HttpStatus.OK)
-    public List<UUID> getCandidatesForUser(@RequestParam UUID userId) {
-        return profileService.getCandidatesForFeed(userId);
+    public List<UUID> getCandidatesForUser(
+            @RequestParam UUID userId,
+            @RequestParam int limit
+    ) {
+        return profileService.getCandidatesForFeed(userId, limit);
     }
 
     @PostMapping("/batch")

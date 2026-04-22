@@ -16,7 +16,7 @@ public interface ProfileService {
 
     void updateLocation(String userId, LocationUpdateRequest request);
 
-    List<UUID> getCandidatesForFeed(UUID id);
+    List<UUID> getCandidatesForFeed(UUID userId, int limit);
 
     List<ProfileResponse> getBatchProfiles(List<UUID> ids);
 }
