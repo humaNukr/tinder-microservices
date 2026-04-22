@@ -1,5 +1,7 @@
 package com.tinder.feed.service.interfaces;
 
+import com.tinder.feed.dto.ProfileResponse;
+
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -17,4 +19,8 @@ public interface RedisService {
     void addSwipedUserToHistory(UUID swiperId, UUID swipedId);
 
     void deleteDeck(UUID userId);
+
+    List<ProfileResponse> getCachedProfiles(List<UUID> usersIds);
+
+    void cacheProfiles(List<ProfileResponse> profiles);
 }

@@ -7,7 +7,7 @@ import com.tinder.profile.dto.LocationUpdateRequest;
 import com.tinder.profile.dto.ProfileCandidateDto;
 import com.tinder.profile.dto.ProfileResponse;
 import com.tinder.profile.event.ActivityType;
-import com.tinder.profile.event.UserActivityEvent;
+import com.tinder.profile.event.ProfileChangedEvent;
 import com.tinder.profile.exception.EmptyOrNullValueException;
 import com.tinder.profile.exception.ProfileNotFoundException;
 import com.tinder.profile.mapper.ProfileMapper;
@@ -17,6 +17,7 @@ import com.tinder.profile.repository.ProfileSearchRepository;
 import com.tinder.profile.service.interfaces.ProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileSearchRepository profileSearchRepository;
     private final ProfileMapper profileMapper;
     private final UserActivityProducer activityProducer;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -49,7 +51,12 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setUserId(userIdUUID);
         profile.setPhotos(new ArrayList<>());
 
-        return profileMapper.toDto(profileRepository.save(profile));
+        profile =  profileRepository.save(profile);
+        ProfileResponse response = profileMapper.toDto(profile);
+
+        eventPublisher.publishEvent(new ProfileChangedEvent(response));
+
+        return response;
     }
 
     @Override

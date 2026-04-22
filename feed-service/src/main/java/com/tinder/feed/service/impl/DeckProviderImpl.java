@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +46,27 @@ public class DeckProviderImpl implements DeckProvider {
             return Collections.emptyList();
         }
 
-        return profileServiceClient.batchProfiles(deckOfUsers);
+        List<ProfileResponse> cachedProfiles = redisService.getCachedProfiles(deckOfUsers);
+
+        if (cachedProfiles == null || cachedProfiles.isEmpty()) {
+            return profileServiceClient.batchProfiles(deckOfUsers);
+        }
+
+        if (cachedProfiles.size() != deckOfUsers.size()) {
+            List<UUID> cachedProfilesIds = cachedProfiles.stream()
+                    .map(ProfileResponse::userId)
+                    .toList();
+
+            List<UUID> missingIds = new ArrayList<>(deckOfUsers);
+            missingIds.removeAll(cachedProfilesIds);
+
+            List<ProfileResponse> restOfProfiles = profileServiceClient.batchProfiles(missingIds);
+
+            redisService.cacheProfiles(restOfProfiles);
+
+            cachedProfiles.addAll(restOfProfiles);
+        }
+
+        return cachedProfiles;
     }
 }

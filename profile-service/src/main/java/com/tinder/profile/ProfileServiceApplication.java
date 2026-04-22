@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@EnableAsync
 public class ProfileServiceApplication {
 
 	public static void main(String[] args) {
