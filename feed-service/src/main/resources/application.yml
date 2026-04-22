@@ -1,0 +1,40 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: feed-service
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: feed-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  threads:
+    virtual:
+      enabled: true
+
+app:
+  kafka:
+    topics:
+      swipe-events: swipe-events
+      user-activity: user-activity-events
+
+  services:
+    profile:
+      url: http://localhost:8082
+      candidates-path: /internal/api/v1/profiles/candidates
+      batch-path: /internal/api/v1/profiles/batch
+
+  feed:
+    page-size: 10          # Number of cards returned to the frontend per request
+    deck-size: 100         # Number of cards kept in Redis after generation
+    fetch-limit: 500       # Number of profiles requested from profile-service for selection
+    refill-threshold: 20   # Threshold: if fewer than 20 cards remain in the deck, start background refill

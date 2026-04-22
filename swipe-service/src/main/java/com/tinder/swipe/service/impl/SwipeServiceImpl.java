@@ -4,6 +4,7 @@ import com.tinder.swipe.dto.swipe.SwipeRequestDto;
 import com.tinder.swipe.dto.swipe.SwipeResponseDto;
 import com.tinder.swipe.dto.swipe.SwipeStatusProjection;
 import com.tinder.swipe.event.MatchEvent;
+import com.tinder.swipe.event.SwipeCreatedEvent;
 import com.tinder.swipe.repository.SwipeRepository;
 import com.tinder.swipe.service.interfaces.OutboxService;
 import com.tinder.swipe.service.interfaces.SwipeSevice;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -33,6 +35,9 @@ public class SwipeServiceImpl implements SwipeSevice {
         SwipeStatusProjection projection = actorId.toString().compareTo(targetId.toString()) < 0
                 ? swipeRepository.upsertSwipeByUser1(actorId, targetId, liked)
                 : swipeRepository.upsertSwipeByUser2(targetId, actorId, liked);
+
+        log.info("Swipe processing by actorId:{} and targetId:{} ", actorId, targetId);
+        outboxService.saveEvent("swipe-events", new SwipeCreatedEvent(actorId, targetId, liked, Instant.now()));
 
         if (Boolean.TRUE.equals(projection.getIsLikedByUser1()) && Boolean.TRUE.equals(projection.getIsLikedByUser2())
         ) {

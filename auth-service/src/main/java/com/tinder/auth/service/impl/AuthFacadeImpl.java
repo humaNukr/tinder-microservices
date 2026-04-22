@@ -3,6 +3,8 @@ package com.tinder.auth.service.impl;
 import com.tinder.auth.dto.AuthResponse;
 import com.tinder.auth.dto.user.UserResult;
 import com.tinder.auth.entity.User;
+import com.tinder.auth.event.ActivityType;
+import com.tinder.auth.producer.UserActivityProducer;
 import com.tinder.auth.service.interfaces.AuthFacade;
 import com.tinder.auth.service.interfaces.JwtService;
 import com.tinder.auth.service.interfaces.OtpService;
@@ -21,6 +23,7 @@ public class AuthFacadeImpl implements AuthFacade {
 	private final TokenService tokenService;
 	private final JwtService jwtService;
 	private final UserService userService;
+	private final UserActivityProducer activityProducer;
 
 	public void sendOtp(String identifier) {
 		otpService.generateAndSendOtp(identifier);
@@ -28,7 +31,6 @@ public class AuthFacadeImpl implements AuthFacade {
 
 	@Override
 	public AuthResponse verifyAndAuthenticate(String email, String code) {
-
 		if (!otpService.validateOtp(email, code)) {
 			throw new BadCredentialsException("Invalid OTP");
 		}
@@ -39,6 +41,8 @@ public class AuthFacadeImpl implements AuthFacade {
 		String refreshToken = jwtService.generateRefreshToken(userResult.user());
 
 		tokenService.storeRefreshTokenToRedis(userResult.user().getId(), refreshToken);
+
+		activityProducer.publishActivity(userResult.user().getId(), ActivityType.LOGIN);
 
 		return new AuthResponse(accessToken, refreshToken, userResult.isNew());
 	}
@@ -59,6 +63,8 @@ public class AuthFacadeImpl implements AuthFacade {
 		String newRefreshToken = jwtService.generateRefreshToken(user);
 
 		tokenService.storeRefreshTokenToRedis(userId, newRefreshToken);
+
+		activityProducer.publishActivity(userId, ActivityType.TOKEN_REFRESH);
 
 		return new AuthResponse(newAccessToken, newRefreshToken, false);
 	}

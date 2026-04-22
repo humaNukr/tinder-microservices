@@ -15,4 +15,8 @@ public interface ProfileService {
     void addPhotosToProfile(UUID userId, List<String> photoUrls);
 
     void updateLocation(String userId, LocationUpdateRequest request);
+
+    List<UUID> getCandidatesForFeed(UUID userId, int limit);
+
+    List<ProfileResponse> getBatchProfiles(List<UUID> ids);
 }
