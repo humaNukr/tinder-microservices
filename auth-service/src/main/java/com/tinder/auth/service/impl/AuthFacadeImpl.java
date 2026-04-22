@@ -19,53 +19,53 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthFacadeImpl implements AuthFacade {
-    private final OtpService otpService;
-    private final TokenService tokenService;
-    private final JwtService jwtService;
-    private final UserService userService;
-    private final UserActivityProducer activityProducer;
+	private final OtpService otpService;
+	private final TokenService tokenService;
+	private final JwtService jwtService;
+	private final UserService userService;
+	private final UserActivityProducer activityProducer;
 
-    public void sendOtp(String identifier) {
-        otpService.generateAndSendOtp(identifier);
-    }
+	public void sendOtp(String identifier) {
+		otpService.generateAndSendOtp(identifier);
+	}
 
-    @Override
-    public AuthResponse verifyAndAuthenticate(String email, String code) {
-        if (!otpService.validateOtp(email, code)) {
-            throw new BadCredentialsException("Invalid OTP");
-        }
+	@Override
+	public AuthResponse verifyAndAuthenticate(String email, String code) {
+		if (!otpService.validateOtp(email, code)) {
+			throw new BadCredentialsException("Invalid OTP");
+		}
 
-        UserResult userResult = userService.findOrCreateUser(email);
+		UserResult userResult = userService.findOrCreateUser(email);
 
-        String accessToken = jwtService.generateAccessToken(userResult.user());
-        String refreshToken = jwtService.generateRefreshToken(userResult.user());
+		String accessToken = jwtService.generateAccessToken(userResult.user());
+		String refreshToken = jwtService.generateRefreshToken(userResult.user());
 
-        tokenService.storeRefreshTokenToRedis(userResult.user().getId(), refreshToken);
+		tokenService.storeRefreshTokenToRedis(userResult.user().getId(), refreshToken);
 
-        activityProducer.publishActivity(userResult.user().getId(), ActivityType.LOGIN);
+		activityProducer.publishActivity(userResult.user().getId(), ActivityType.LOGIN);
 
-        return new AuthResponse(accessToken, refreshToken, userResult.isNew());
-    }
+		return new AuthResponse(accessToken, refreshToken, userResult.isNew());
+	}
 
-    @Override
-    public AuthResponse refreshToken(String requestRefreshToken) {
-        String userIdStr = jwtService.extractUserId(requestRefreshToken);
-        UUID userId = UUID.fromString(userIdStr);
+	@Override
+	public AuthResponse refreshToken(String requestRefreshToken) {
+		String userIdStr = jwtService.extractUserId(requestRefreshToken);
+		UUID userId = UUID.fromString(userIdStr);
 
-        String savedToken = tokenService.getRefreshTokenFromRedis(userId);
-        if (savedToken == null || !savedToken.equals(requestRefreshToken)) {
-            throw new BadCredentialsException("Invalid or revoked refresh token");
-        }
+		String savedToken = tokenService.getRefreshTokenFromRedis(userId);
+		if (savedToken == null || !savedToken.equals(requestRefreshToken)) {
+			throw new BadCredentialsException("Invalid or revoked refresh token");
+		}
 
-        User user = userService.findUserById(userId);
+		User user = userService.findUserById(userId);
 
-        String newAccessToken = jwtService.generateAccessToken(user);
-        String newRefreshToken = jwtService.generateRefreshToken(user);
+		String newAccessToken = jwtService.generateAccessToken(user);
+		String newRefreshToken = jwtService.generateRefreshToken(user);
 
-        tokenService.storeRefreshTokenToRedis(userId, newRefreshToken);
+		tokenService.storeRefreshTokenToRedis(userId, newRefreshToken);
 
-        activityProducer.publishActivity(userId, ActivityType.TOKEN_REFRESH);
+		activityProducer.publishActivity(userId, ActivityType.TOKEN_REFRESH);
 
-        return new AuthResponse(newAccessToken, newRefreshToken, false);
-    }
+		return new AuthResponse(newAccessToken, newRefreshToken, false);
+	}
 }
