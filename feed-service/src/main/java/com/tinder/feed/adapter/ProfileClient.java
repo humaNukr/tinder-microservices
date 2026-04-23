@@ -10,13 +10,12 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProfileClient {
-
-    @GetExchange("${app.services.profile.candidates-path}")
+    @GetExchange("/api/v1/internal/profiles/candidates")
     List<UUID> fetchCandidates(
             @RequestParam("userId") UUID userId,
             @RequestParam("limit") int limit
     );
 
-    @PostExchange("${app.services.profile.batch-path}")
-    List<ProfileResponse> batchProfiles(@RequestBody List<UUID> ids);
+    @PostExchange("/api/v1/internal/profiles/batch")
+    List<ProfileResponse> batchProfiles(@RequestBody List<UUID> userIds);
 }
