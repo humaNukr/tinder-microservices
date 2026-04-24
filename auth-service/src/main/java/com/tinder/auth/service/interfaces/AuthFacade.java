@@ -6,7 +6,7 @@ public interface AuthFacade {
 
 	void sendOtp(String identifier);
 
-	AuthResponse verifyAndAuthenticate(String email, String code);
+	AuthResponse verifyAndAuthenticate(String email, String deviceId, String code);
 
-	AuthResponse refreshToken(String refreshToken);
+	AuthResponse refreshToken(String refreshToken, String deviceId);
 }
