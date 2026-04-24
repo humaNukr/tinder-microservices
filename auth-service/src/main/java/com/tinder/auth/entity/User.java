@@ -25,22 +25,22 @@ import java.util.UUID;
 @Builder
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+	@Column(unique = true, nullable = false)
+	private String email;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean isEmailVerified = false;
+	@Builder.Default
+	@Column(nullable = false)
+	private boolean isEmailVerified = false;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private Role role;
 
-    public enum Role {
-        USER, ADMIN
-    }
+	public enum Role {
+		USER, ADMIN
+	}
 }
