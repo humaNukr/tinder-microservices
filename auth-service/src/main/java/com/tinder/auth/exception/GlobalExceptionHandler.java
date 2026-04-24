@@ -38,6 +38,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
 	}
 
+	@ExceptionHandler(TooManyRequestsException.class)
+	public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
+		return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests");
+	}
+
 	@ExceptionHandler(BadCredentialsException.class)
 	public ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex) {
 		return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());

@@ -6,10 +6,10 @@ import com.tinder.auth.repository.UserRepository;
 import com.tinder.auth.service.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -20,14 +20,16 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public UserResult findOrCreateUser(String email) {
-		Optional<User> existingUser = userRepository.findByEmail(email);
-		if (existingUser.isPresent()) {
-			return new UserResult(existingUser.get(), false);
-		}
-
-		User newUser = User.builder().email(email).role(User.Role.USER).isEmailVerified(true).build();
-		User saved = userRepository.save(newUser);
-		return new UserResult(saved, true);
+		return userRepository.findByEmail(email).map(user -> new UserResult(user, false)).orElseGet(() -> {
+			try {
+				User newUser = User.builder().email(email).role(User.Role.USER).isEmailVerified(true).build();
+				return new UserResult(userRepository.save(newUser), true);
+			} catch (DataIntegrityViolationException e) {
+				User recoveredUser = userRepository.findByEmail(email)
+						.orElseThrow(() -> new IllegalStateException("Potential race condition failed to recover", e));
+				return new UserResult(recoveredUser, false);
+			}
+		});
 	}
 
 	@Override
