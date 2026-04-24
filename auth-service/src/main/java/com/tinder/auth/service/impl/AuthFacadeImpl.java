@@ -30,7 +30,7 @@ public class AuthFacadeImpl implements AuthFacade {
 	}
 
 	@Override
-	public AuthResponse verifyAndAuthenticate(String email, String code) {
+	public AuthResponse verifyAndAuthenticate(String email, String deviceId, String code) {
 		if (!otpService.validateOtp(email, code)) {
 			throw new BadCredentialsException("Invalid OTP");
 		}
@@ -40,7 +40,7 @@ public class AuthFacadeImpl implements AuthFacade {
 		String accessToken = jwtService.generateAccessToken(userResult.user());
 		String refreshToken = jwtService.generateRefreshToken(userResult.user());
 
-		tokenService.storeRefreshTokenToRedis(userResult.user().getId(), refreshToken);
+		tokenService.storeRefreshTokenToRedis(userResult.user().getId(), deviceId, refreshToken);
 
 		activityProducer.publishActivity(userResult.user().getId(), ActivityType.LOGIN);
 
@@ -48,11 +48,11 @@ public class AuthFacadeImpl implements AuthFacade {
 	}
 
 	@Override
-	public AuthResponse refreshToken(String requestRefreshToken) {
+	public AuthResponse refreshToken(String requestRefreshToken, String deviceId) {
 		String userIdStr = jwtService.extractUserId(requestRefreshToken);
 		UUID userId = UUID.fromString(userIdStr);
 
-		String savedToken = tokenService.getRefreshTokenFromRedis(userId);
+		String savedToken = tokenService.getRefreshTokenFromRedis(userId, deviceId);
 		if (savedToken == null || !savedToken.equals(requestRefreshToken)) {
 			throw new BadCredentialsException("Invalid or revoked refresh token");
 		}
@@ -62,7 +62,7 @@ public class AuthFacadeImpl implements AuthFacade {
 		String newAccessToken = jwtService.generateAccessToken(user);
 		String newRefreshToken = jwtService.generateRefreshToken(user);
 
-		tokenService.storeRefreshTokenToRedis(userId, newRefreshToken);
+		tokenService.storeRefreshTokenToRedis(userId, deviceId, newRefreshToken);
 
 		activityProducer.publishActivity(userId, ActivityType.TOKEN_REFRESH);
 
