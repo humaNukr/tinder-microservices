@@ -7,6 +7,7 @@ import com.tinder.auth.event.ActivityType;
 import com.tinder.auth.producer.UserActivityProducer;
 import com.tinder.auth.service.interfaces.AuthFacade;
 import com.tinder.auth.service.interfaces.JwtService;
+import com.tinder.auth.service.interfaces.ExternalTokenVerifier;
 import com.tinder.auth.service.interfaces.OtpService;
 import com.tinder.auth.service.interfaces.TokenService;
 import com.tinder.auth.service.interfaces.UserService;
@@ -24,6 +25,7 @@ public class AuthFacadeImpl implements AuthFacade {
 	private final JwtService jwtService;
 	private final UserService userService;
 	private final UserActivityProducer activityProducer;
+	private final ExternalTokenVerifier googleAuthService;
 
 	public void sendOtp(String identifier) {
 		otpService.generateAndSendOtp(identifier);
@@ -34,17 +36,7 @@ public class AuthFacadeImpl implements AuthFacade {
 		if (!otpService.validateOtp(email, code)) {
 			throw new BadCredentialsException("Invalid OTP");
 		}
-
-		UserResult userResult = userService.findOrCreateUser(email);
-
-		String accessToken = jwtService.generateAccessToken(userResult.user());
-		String refreshToken = jwtService.generateRefreshToken(userResult.user());
-
-		tokenService.storeRefreshTokenToRedis(userResult.user().getId(), deviceId, refreshToken);
-
-		activityProducer.publishActivity(userResult.user().getId(), ActivityType.LOGIN);
-
-		return new AuthResponse(accessToken, refreshToken, userResult.isNew());
+		return processAuthentication(deviceId, email);
 	}
 
 	@Override
@@ -67,5 +59,24 @@ public class AuthFacadeImpl implements AuthFacade {
 		activityProducer.publishActivity(userId, ActivityType.TOKEN_REFRESH);
 
 		return new AuthResponse(newAccessToken, newRefreshToken, false);
+	}
+
+	@Override
+	public AuthResponse authenticateWithGoogle(String idToken, String deviceId) {
+		String email = googleAuthService.verifyTokenAndGetEmail(idToken);
+		return processAuthentication(deviceId, email);
+	}
+
+	private AuthResponse processAuthentication(String deviceId, String email) {
+		UserResult userResult = userService.findOrCreateUser(email);
+
+		String accessToken = jwtService.generateAccessToken(userResult.user());
+		String refreshToken = jwtService.generateRefreshToken(userResult.user());
+
+		tokenService.storeRefreshTokenToRedis(userResult.user().getId(), deviceId, refreshToken);
+
+		activityProducer.publishActivity(userResult.user().getId(), ActivityType.LOGIN);
+
+		return new AuthResponse(accessToken, refreshToken, userResult.isNew());
 	}
 }

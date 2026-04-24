@@ -46,6 +46,9 @@ jwt:
   refresh-token-expiration-ms: 2592000000
 
 app:
+  google:
+    client-id: fake_google_client_id
+
   kafka:
     topics:
       user-activity: user-activity-events

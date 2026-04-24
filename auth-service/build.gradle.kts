@@ -45,6 +45,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("org.springframework.kafka:spring-kafka")
     implementation ("org.liquibase:liquibase-core")
+    implementation("com.google.api-client:google-api-client:2.9.0")
     testImplementation("org.springframework.kafka:spring-kafka-test")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")

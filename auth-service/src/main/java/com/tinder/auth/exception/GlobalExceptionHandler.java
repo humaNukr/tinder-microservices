@@ -38,6 +38,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
 	}
 
+	@ExceptionHandler(ExternalAuthVerificationException.class)
+	public ResponseEntity<Object> handleGoogleTokenVerification(ExternalAuthVerificationException ex) {
+		log.warn("External service token verification failed: {}", ex.getMessage());
+
+		HttpStatus status;
+		switch (ex.getType()) {
+			case NETWORK_ERROR -> status = HttpStatus.SERVICE_UNAVAILABLE;
+			case INVALID_TOKEN -> status = HttpStatus.UNAUTHORIZED;
+			default -> status = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return buildResponse(status, ex.getMessage());
+	}
+
 	@ExceptionHandler(TooManyRequestsException.class)
 	public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
 		return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests");

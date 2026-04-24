@@ -9,4 +9,6 @@ public interface AuthFacade {
 	AuthResponse verifyAndAuthenticate(String email, String deviceId, String code);
 
 	AuthResponse refreshToken(String refreshToken, String deviceId);
+
+	AuthResponse authenticateWithGoogle(String idToken, String deviceId);
 }
