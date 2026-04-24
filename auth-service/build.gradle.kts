@@ -44,6 +44,7 @@ dependencies {
     implementation("jakarta.validation:jakarta.validation-api:3.1.1")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation ("org.liquibase:liquibase-core")
     testImplementation("org.springframework.kafka:spring-kafka-test")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
