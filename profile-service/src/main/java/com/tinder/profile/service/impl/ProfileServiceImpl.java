@@ -52,7 +52,6 @@ public class ProfileServiceImpl implements ProfileService {
         }
         Profile profile = profileMapper.toModel(request);
         profile.setUserId(userIdUUID);
-        profile.setPhotos(new ArrayList<>());
 
         profile = profileRepository.save(profile);
         ProfileResponse response = profileMapper.toDto(profile);

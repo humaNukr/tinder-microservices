@@ -1,13 +1,16 @@
 package com.tinder.profile.mapper;
 
 import com.tinder.profile.config.MapperConfig;
+import com.tinder.profile.domain.Gender;
 import com.tinder.profile.domain.Profile;
+import com.tinder.profile.domain.UserPreferences;
 import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.ProfileResponse;
 import com.tinder.profile.dto.UpdatePreferencesRequest;
 import com.tinder.profile.dto.UpdateProfileRequest;
 import com.tinder.profile.dto.UserPreferencesResponse;
 import com.tinder.profile.properties.MinioProperties;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -42,6 +45,7 @@ public abstract class ProfileMapper {
     @Mapping(target = "preferences.maxDistanceKm", source = "maxDistanceKm")
     public abstract Profile updatePreferencesFromDto(UpdatePreferencesRequest request, @MappingTarget Profile profile);
 
+    @Mapping(target = "preferences.targetGender", source = "targetGender")
     public abstract Profile toModel(CreateProfileRequest request);
 
     @Mapping(source = "gender", target = "gender")
@@ -68,5 +72,27 @@ public abstract class ProfileMapper {
 
         String baseUrl = minioProperties.url() + "/";
         return photoKeys.stream().map(key -> baseUrl + key).toList();
+    }
+
+    @AfterMapping
+    protected void setDefaultPreferences(CreateProfileRequest request, @MappingTarget Profile profile) {
+        int userAge = calculateAge(request.birthDate());
+
+        int minAge = Math.max(18, userAge - 3);
+        int maxAge = userAge + 5;
+        double defaultDistance = 30.0;
+
+        if (profile.getPreferences() != null) {
+            profile.getPreferences().setMinAge(minAge);
+            profile.getPreferences().setMaxAge(maxAge);
+            profile.getPreferences().setMaxDistanceKm(defaultDistance);
+        } else {
+            UserPreferences prefs = new UserPreferences();
+            prefs.setTargetGender(Gender.valueOf(request.targetGender()));
+            prefs.setMinAge(minAge);
+            prefs.setMaxAge(maxAge);
+            prefs.setMaxDistanceKm(defaultDistance);
+            profile.setPreferences(prefs);
+        }
     }
 }
