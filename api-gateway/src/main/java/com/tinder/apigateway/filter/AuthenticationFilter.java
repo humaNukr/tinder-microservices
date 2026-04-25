@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.apigateway.security.JwtUtil;
 import com.tinder.apigateway.security.RouteValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -22,6 +23,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFilter implements GlobalFilter, Ordered {
@@ -37,17 +39,22 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         if (validator.isSecured.test(request)) {
 
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                return onError(exchange, HttpStatus.UNAUTHORIZED, "Authorization required");
+                log.warn("Missing Authorization header for path: {}", request.getURI().getPath());
+                return onError(exchange, HttpStatus.UNAUTHORIZED, "Authorization header is missing");
             }
 
-            String authHeader = request.getHeaders().getOrEmpty(HttpHeaders.AUTHORIZATION).getFirst();
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                authHeader = authHeader.substring(7);
+            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                log.warn("Invalid Authorization header format for path: {}", request.getURI().getPath());
+                return onError(exchange, HttpStatus.UNAUTHORIZED, "Invalid authorization header format");
             }
+
+            String token = authHeader.substring(7);
 
             try {
-                jwtUtil.validateToken(authHeader);
-                String userId = jwtUtil.extractUserId(authHeader);
+                jwtUtil.validateToken(token);
+
+                String userId = jwtUtil.extractUserId(token);
 
                 request = exchange.getRequest()
                         .mutate()
@@ -55,6 +62,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                         .build();
 
             } catch (Exception e) {
+                log.error("Invalid JWT Token: {}", e.getMessage());
                 return onError(exchange, HttpStatus.UNAUTHORIZED, "Invalid or expired JWT token");
             }
         }
@@ -79,12 +87,13 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             DataBuffer buffer = response.bufferFactory().wrap(bytes);
             return response.writeWith(Mono.just(buffer));
         } catch (JsonProcessingException e) {
+            log.error("Error writing JSON response: {}", e.getMessage());
             return response.setComplete();
         }
     }
 
     @Override
     public int getOrder() {
-        return -1; 
+        return -1;
     }
 }
