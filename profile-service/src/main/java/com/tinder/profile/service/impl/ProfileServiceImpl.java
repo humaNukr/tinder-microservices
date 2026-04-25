@@ -6,6 +6,9 @@ import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.LocationUpdateRequest;
 import com.tinder.profile.dto.ProfileCandidateDto;
 import com.tinder.profile.dto.ProfileResponse;
+import com.tinder.profile.dto.UpdatePreferencesRequest;
+import com.tinder.profile.dto.UpdateProfileRequest;
+import com.tinder.profile.dto.UserPreferencesResponse;
 import com.tinder.profile.event.ActivityType;
 import com.tinder.profile.event.ProfileChangedEvent;
 import com.tinder.profile.exception.EmptyOrNullValueException;
@@ -49,7 +52,6 @@ public class ProfileServiceImpl implements ProfileService {
         }
         Profile profile = profileMapper.toModel(request);
         profile.setUserId(userIdUUID);
-        profile.setPhotos(new ArrayList<>());
 
         profile = profileRepository.save(profile);
         ProfileResponse response = profileMapper.toDto(profile);
@@ -68,6 +70,39 @@ public class ProfileServiceImpl implements ProfileService {
 
         return profileMapper.toDto(profile);
     }
+
+    @Override
+    public UserPreferencesResponse getMyPreferences(String userId) {
+        Profile profile = getProfile(UUID.fromString(userId));
+
+        return profileMapper.toUserPreferencesResponse(profile);
+    }
+
+    @Override
+    public UserPreferencesResponse updateMyPreferences(String userId, UpdatePreferencesRequest request) {
+        Profile profile = getProfile(UUID.fromString(userId));
+
+        profile = profileRepository.save(profileMapper.updatePreferencesFromDto(request, profile));
+
+        eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
+
+        return profileMapper.toUserPreferencesResponse(profile);
+    }
+
+    @Override
+    @Transactional
+    public ProfileResponse updateProfile(String userId, UpdateProfileRequest request) {
+        Profile profile = getProfile(UUID.fromString(userId));
+
+        profile = profileRepository.save(profileMapper.updateEntityFromDto(request, profile));
+
+        ProfileResponse response = profileMapper.toDto(profile);
+
+        eventPublisher.publishEvent(new ProfileChangedEvent(response));
+
+        return response;
+    }
+
 
     @Override
     @Transactional
