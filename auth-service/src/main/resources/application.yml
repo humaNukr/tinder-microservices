@@ -47,7 +47,7 @@ jwt:
 
 app:
   google:
-    client-id: fake_google_client_id
+    client-id: ${GOOGLE_CLIENT_ID}
 
   kafka:
     topics:
