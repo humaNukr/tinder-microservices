@@ -3,6 +3,9 @@ package com.tinder.profile.contoller;
 import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.LocationUpdateRequest;
 import com.tinder.profile.dto.ProfileResponse;
+import com.tinder.profile.dto.UpdatePreferencesRequest;
+import com.tinder.profile.dto.UpdateProfileRequest;
+import com.tinder.profile.dto.UserPreferencesResponse;
 import com.tinder.profile.service.interfaces.ProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +27,10 @@ public class ProfileController {
 
     @PostMapping("/onboarding")
     @ResponseStatus(HttpStatus.CREATED)
-    public ProfileResponse createProfile(@RequestBody @Valid CreateProfileRequest request,
-                                         @RequestHeader("X-User-Id") String userId) {
+    public ProfileResponse createProfile(
+            @RequestBody @Valid CreateProfileRequest request,
+            @RequestHeader("X-User-Id") String userId
+    ) {
         return profileService.createProfile(userId, request);
     }
 
@@ -35,11 +40,36 @@ public class ProfileController {
         return profileService.getMyProfile(userId);
     }
 
+    @GetMapping("/me/preferences")
+    @ResponseStatus(HttpStatus.OK)
+    public UserPreferencesResponse getMyPreferences(@RequestHeader("X-User-Id") String userId) {
+        return profileService.getMyPreferences(userId);
+    }
+
+    @PatchMapping("me/preferences")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public UserPreferencesResponse updateMyPreferences(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestBody @Valid UpdatePreferencesRequest request
+    ) {
+        return profileService.updateMyPreferences(userId, request);
+    }
+
+    @PatchMapping("/me")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ProfileResponse updateProfile(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestBody @Valid UpdateProfileRequest request
+    ) {
+        return profileService.updateProfile(userId, request);
+    }
+
+
     @PatchMapping("/me/location")
     @ResponseStatus(HttpStatus.OK)
     public void updateLocation(
             @RequestHeader("X-User-Id") String userId,
-            @Valid LocationUpdateRequest request
+            @RequestBody @Valid LocationUpdateRequest request
     ) {
         profileService.updateLocation(userId, request);
     }
