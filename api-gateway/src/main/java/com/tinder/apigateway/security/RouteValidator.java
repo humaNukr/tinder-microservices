@@ -2,6 +2,7 @@ package com.tinder.apigateway.security;
 
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -9,9 +10,7 @@ import java.util.function.Predicate;
 public class RouteValidator {
 
     public static final List<String> openApiEndpoints = List.of(
-            "/api/v1/auth/refresh",
-            "/api/v1/auth/verify",
-            "/api/v1/auth/send-otp",
+            "/api/v1/auth/",
             "/ws/chat"
     );
 

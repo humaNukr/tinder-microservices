@@ -1,10 +1,12 @@
 package com.tinder.auth.controller;
 
 import com.tinder.auth.dto.AuthResponse;
+import com.tinder.auth.dto.google.GoogleAuthRequest;
 import com.tinder.auth.dto.jwt.RefreshTokenDto;
 import com.tinder.auth.dto.otp.SendOtpRequest;
 import com.tinder.auth.dto.otp.VerifyOtpRequest;
 import com.tinder.auth.service.interfaces.AuthFacade;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -41,5 +43,12 @@ public class AuthController {
 	public AuthResponse refreshJwtToken(@RequestHeader("X-Device-Id") String deviceId,
 			@RequestBody RefreshTokenDto request) {
 		return authFacade.refreshToken(request.refreshToken(), deviceId);
+	}
+
+	@PostMapping("/google")
+	@ResponseStatus(HttpStatus.OK)
+	public AuthResponse authenticateWithGoogle(@RequestHeader("X-Device-Id") String deviceId,
+			@RequestBody @Valid GoogleAuthRequest request) {
+		return authFacade.authenticateWithGoogle(request.idToken(), deviceId);
 	}
 }
