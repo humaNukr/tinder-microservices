@@ -48,8 +48,8 @@ public class ProfileController {
         return profileService.getMyPreferences(userId);
     }
 
-    @PatchMapping("me/preferences")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @PatchMapping("/me/preferences")
+    @ResponseStatus(HttpStatus.OK)
     public UserPreferencesResponse updateMyPreferences(
             @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid UpdatePreferencesRequest request
@@ -58,7 +58,7 @@ public class ProfileController {
     }
 
     @PatchMapping("/me")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ProfileResponse updateProfile(
             @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid UpdateProfileRequest request

@@ -138,6 +138,10 @@ public class ProfileServiceImpl implements ProfileService {
     public List<UUID> getCandidatesForFeed(UUID userId, int limit) {
         Profile searcher = getProfileEntity(userId);
 
+        if (searcher.getLocation() == null) {
+            throw new IllegalStateException("User location is not set. Cannot generate feed.");
+        }
+
         UserPreferences prefs = searcher.getPreferences();
         if (prefs == null) {
             throw new EmptyOrNullValueException("User preferences are missing for user: " + userId);
