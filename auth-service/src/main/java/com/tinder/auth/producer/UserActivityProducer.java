@@ -17,25 +17,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserActivityProducer {
 
-	private final KafkaTemplate<String, Object> kafkaTemplate;
-	private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-	@Value("${app.kafka.topics.user-activity}")
-	private String activityTopic;
+    @Value("${app.kafka.topics.user-activity}")
+    private String activityTopic;
 
-	public void publishActivity(UUID userId, ActivityType type) {
-		try {
-			UserActivityEvent event = new UserActivityEvent(userId, type, Instant.now());
-			kafkaTemplate.send(activityTopic, userId.toString(), objectMapper.writeValueAsString(event))
-					.whenComplete((result, ex) -> {
-						if (ex != null) {
-							log.warn("Failed to send user activity event for user {}: {}", userId, ex.getMessage());
-						} else {
-							log.debug("Published activity {} for user {}", type, userId);
-						}
-					});
-		} catch (Exception e) {
-			log.error("Failed to serialize activity event for user {}", userId, e);
-		}
-	}
+    public void publishActivity(UUID userId, ActivityType type) {
+        try {
+            UserActivityEvent event = new UserActivityEvent(UUID.randomUUID(), userId, type, Instant.now());
+            kafkaTemplate.send(activityTopic, userId.toString(), objectMapper.writeValueAsString(event))
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.warn("Failed to send user activity event for user {}: {}", userId, ex.getMessage());
+                        } else {
+                            log.debug("Published activity {} for user {}", type, userId);
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("Failed to serialize activity event for user {}", userId, e);
+        }
+    }
 }
