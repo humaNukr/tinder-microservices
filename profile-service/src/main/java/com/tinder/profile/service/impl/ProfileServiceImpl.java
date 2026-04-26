@@ -68,6 +68,13 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
+    @Transactional
+    public void deleteProfile(UUID userId) {
+        Profile profile = getProfileEntity(userId);
+        profileRepository.delete(profile);
+    }
+
+    @Override
     public UserPreferencesResponse getMyPreferences(UUID userId) {
         Profile profile = getProfileEntity(userId);
 

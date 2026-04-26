@@ -24,8 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = AuthServiceApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-		"jwt.secret=84356789345678934567893456789456789456789456789", // Будь-який довгий рядок
-		"app.google.client-id=test-client-id"})
+		"jwt.secret=84356789345678934567893456789456789456789456789", "app.google.client-id=test-client-id"})
 @AutoConfigureMockMvc
 @Testcontainers
 public class GoogleAuthIT {

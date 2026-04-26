@@ -18,6 +18,8 @@ public interface ProfileService {
 
     ProfileResponse getMyProfile(UUID userId);
 
+    void deleteProfile(UUID userId);
+
     UserPreferencesResponse getMyPreferences(UUID userId);
 
     UserPreferencesResponse updateMyPreferences(UUID userId, UpdatePreferencesRequest request);

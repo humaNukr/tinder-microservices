@@ -3,10 +3,5 @@ package com.tinder.auth.event;
 import java.time.Instant;
 import java.util.UUID;
 
-public record UserActivityEvent(
-        UUID eventId,
-        UUID userId,
-        ActivityType type,
-        Instant timestamp
-) {
+public record UserActivityEvent(UUID eventId, UUID userId, ActivityType type, Instant timestamp) {
 }
