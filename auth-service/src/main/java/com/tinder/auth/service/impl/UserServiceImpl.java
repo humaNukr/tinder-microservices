@@ -2,7 +2,11 @@ package com.tinder.auth.service.impl;
 
 import com.tinder.auth.dto.user.UserResult;
 import com.tinder.auth.entity.User;
+import com.tinder.auth.event.ActivityType;
+import com.tinder.auth.event.UserActivityEvent;
+import com.tinder.auth.properties.KafkaProperties;
 import com.tinder.auth.repository.UserRepository;
+import com.tinder.auth.service.interfaces.OutboxService;
 import com.tinder.auth.service.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -10,12 +14,15 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
+	private final OutboxService outboxService;
+	private final KafkaProperties kafkaProperties;
 
 	@Override
 	@Transactional
@@ -37,5 +44,17 @@ public class UserServiceImpl implements UserService {
 	public User findUserById(UUID id) {
 		return userRepository.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+	}
+
+	@Override
+	@Transactional
+	public void deleteUser(UUID userId) {
+		if (!userRepository.existsById(userId)) {
+			throw new EntityNotFoundException("User not found with id: " + userId);
+		}
+
+		outboxService.saveEvent(kafkaProperties.userActivity(),
+				new UserActivityEvent(userId, ActivityType.DELETE_ACCOUNT, Instant.now()));
+		userRepository.deleteById(userId);
 	}
 }

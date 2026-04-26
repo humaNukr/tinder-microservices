@@ -6,8 +6,8 @@ import com.tinder.auth.entity.User;
 import com.tinder.auth.event.ActivityType;
 import com.tinder.auth.producer.UserActivityProducer;
 import com.tinder.auth.service.interfaces.AuthFacade;
-import com.tinder.auth.service.interfaces.JwtService;
 import com.tinder.auth.service.interfaces.ExternalTokenVerifier;
+import com.tinder.auth.service.interfaces.JwtService;
 import com.tinder.auth.service.interfaces.OtpService;
 import com.tinder.auth.service.interfaces.TokenService;
 import com.tinder.auth.service.interfaces.UserService;
@@ -41,8 +41,7 @@ public class AuthFacadeImpl implements AuthFacade {
 
 	@Override
 	public AuthResponse refreshToken(String requestRefreshToken, String deviceId) {
-		String userIdStr = jwtService.extractUserId(requestRefreshToken);
-		UUID userId = UUID.fromString(userIdStr);
+		UUID userId = UUID.fromString(jwtService.extractUserId(requestRefreshToken));
 
 		String savedToken = tokenService.getRefreshTokenFromRedis(userId, deviceId);
 		if (savedToken == null || !savedToken.equals(requestRefreshToken)) {
@@ -65,6 +64,17 @@ public class AuthFacadeImpl implements AuthFacade {
 	public AuthResponse authenticateWithGoogle(String idToken, String deviceId) {
 		String email = googleAuthService.verifyTokenAndGetEmail(idToken);
 		return processAuthentication(deviceId, email);
+	}
+
+	@Override
+	public void logout(UUID userId, String deviceId) {
+		tokenService.deleteRefreshTokenFromRedis(userId, deviceId);
+	}
+
+	@Override
+	public void deleteAccount(UUID userId) {
+		tokenService.deleteAllUserTokensFromRedis(userId);
+		userService.deleteUser(userId);
 	}
 
 	private AuthResponse processAuthentication(String deviceId, String email) {
