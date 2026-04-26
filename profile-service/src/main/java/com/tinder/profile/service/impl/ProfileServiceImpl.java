@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,14 +43,12 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional
-    public ProfileResponse createProfile(String userId, CreateProfileRequest request) {
-        UUID userIdUUID = UUID.fromString(userId);
-
-        if (profileRepository.existsByUserId(userIdUUID)) {
+    public ProfileResponse createProfile(UUID userId, CreateProfileRequest request) {
+        if (profileRepository.existsByUserId(userId)) {
             throw new IllegalStateException("There is already a profile with userId " + userId);
         }
         Profile profile = profileMapper.toModel(request);
-        profile.setUserId(userIdUUID);
+        profile.setUserId(userId);
 
         profile = profileRepository.save(profile);
         ProfileResponse response = profileMapper.toDto(profile);
@@ -63,24 +60,30 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional(readOnly = true)
-    public ProfileResponse getMyProfile(String userId) {
-        UUID userIdUUID = UUID.fromString(userId);
+    public ProfileResponse getMyProfile(UUID userId) {
 
-        Profile profile = getProfile(userIdUUID);
+        Profile profile = getProfileEntity(userId);
 
         return profileMapper.toDto(profile);
     }
 
     @Override
-    public UserPreferencesResponse getMyPreferences(String userId) {
-        Profile profile = getProfile(UUID.fromString(userId));
+    @Transactional
+    public void deleteProfile(UUID userId) {
+        Profile profile = getProfileEntity(userId);
+        profileRepository.delete(profile);
+    }
+
+    @Override
+    public UserPreferencesResponse getMyPreferences(UUID userId) {
+        Profile profile = getProfileEntity(userId);
 
         return profileMapper.toUserPreferencesResponse(profile);
     }
 
     @Override
-    public UserPreferencesResponse updateMyPreferences(String userId, UpdatePreferencesRequest request) {
-        Profile profile = getProfile(UUID.fromString(userId));
+    public UserPreferencesResponse updateMyPreferences(UUID userId, UpdatePreferencesRequest request) {
+        Profile profile = getProfileEntity(userId);
 
         profile = profileRepository.save(profileMapper.updatePreferencesFromDto(request, profile));
 
@@ -91,8 +94,8 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional
-    public ProfileResponse updateProfile(String userId, UpdateProfileRequest request) {
-        Profile profile = getProfile(UUID.fromString(userId));
+    public ProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
+        Profile profile = getProfileEntity(userId);
 
         profile = profileRepository.save(profileMapper.updateEntityFromDto(request, profile));
 
@@ -111,7 +114,7 @@ public class ProfileServiceImpl implements ProfileService {
             throw new EmptyOrNullValueException("Photos can't be empty or null");
         }
 
-        Profile profile = getProfile(userId);
+        Profile profile = getProfileEntity(userId);
         profile.getPhotos().addAll(photoUrls);
         profile = profileRepository.save(profile);
         eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
@@ -119,22 +122,21 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     @Transactional
-    public void updateLocation(String userId, LocationUpdateRequest request) {
-        UUID userIdUUID = UUID.fromString(userId);
+    public void updateLocation(UUID userId, LocationUpdateRequest request) {
 
         GeoJsonPoint point = new GeoJsonPoint(request.longitude(), request.latitude());
 
-        Profile profile = getProfile(userIdUUID);
+        Profile profile = getProfileEntity(userId);
         profile.setLocation(point);
         profile.setLastSeen(LocalDateTime.now());
         profile = profileRepository.save(profile);
         eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
-        activityProducer.publishActivity(userIdUUID, ActivityType.LOCATION_UPDATE);
+        activityProducer.publishActivity(userId, ActivityType.LOCATION_UPDATE);
     }
 
     @Override
     public List<UUID> getCandidatesForFeed(UUID userId, int limit) {
-        Profile searcher = getProfile(userId);
+        Profile searcher = getProfileEntity(userId);
 
         UserPreferences prefs = searcher.getPreferences();
         if (prefs == null) {
@@ -178,7 +180,7 @@ public class ProfileServiceImpl implements ProfileService {
         return profiles.stream().map(profileMapper::toDto).toList();
     }
 
-    private Profile getProfile(UUID userId) {
+    public Profile getProfileEntity(UUID userId) {
         return profileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile with id " + userId + " not found"));
     }

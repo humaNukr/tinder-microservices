@@ -5,25 +5,29 @@ import com.tinder.profile.exception.storage.FileUploadException;
 import com.tinder.profile.exception.storage.StorageIOException;
 import com.tinder.profile.properties.MinioProperties;
 import io.minio.BucketExistsArgs;
-import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
+import io.minio.RemoveObjectsArgs;
+import io.minio.Result;
 import io.minio.SetBucketPolicyArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
+import io.minio.messages.DeleteRequest;
+import io.minio.messages.DeleteResult;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MinioStorageServiceImpl implements StorageService {
 
     private final MinioClient minioClient;
@@ -52,35 +56,40 @@ public class MinioStorageServiceImpl implements StorageService {
         return minioProperties.bucketName() + "/" + path;
     }
 
+
     @Override
-    public InputStream downloadFile(String fileKey) {
-        int firstSlashIndex = fileKey.indexOf('/');
-        String bucketName = fileKey.substring(0, firstSlashIndex);
-        String objectName = fileKey.substring(firstSlashIndex + 1);
+    public void deleteFiles(List<String> fileKeys) {
+        if (fileKeys == null || fileKeys.isEmpty()) {
+            return;
+        }
+
+        String bucketName = minioProperties.bucketName();
+
+        List<DeleteRequest.Object> objectsToDelete = fileKeys.stream()
+                .map(fileKey -> {
+                    int firstSlashIndex = fileKey.indexOf('/');
+                    String objectName = fileKey.substring(firstSlashIndex + 1);
+                    return new DeleteRequest.Object(objectName);
+                })
+                .toList();
 
         try {
-            return minioClient.getObject(
-                    GetObjectArgs.builder()
+            Iterable<Result<DeleteResult.Error>> results = minioClient.removeObjects(
+                    RemoveObjectsArgs.builder()
                             .bucket(bucketName)
-                            .object(objectName)
+                            .objects(objectsToDelete)
                             .build()
             );
+
+            for (Result<DeleteResult.Error> result : results) {
+                DeleteResult.Error error = result.get();
+                log.warn("Failed to delete file {}: {}", error.objectName(), error.message());
+            }
         } catch (Exception e) {
-            throw new StorageIOException("Unexpected error while downloading file " + e.getMessage(), e);
+            throw new StorageIOException("Unexpected error during bulk file deletion", e);
         }
     }
 
-    @Override
-    public void deleteFile(String fileKey) {
-        int firstSlashIndex = fileKey.indexOf('/');
-        String bucketName = fileKey.substring(0, firstSlashIndex);
-        String objectName = fileKey.substring(firstSlashIndex + 1);
-        try {
-            minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
-        } catch (MinioException e) {
-            throw new StorageIOException("Error while deleting file " + e.getMessage(), e);
-        }
-    }
 
     @PostConstruct
     private void createBucketIfNotExists() {

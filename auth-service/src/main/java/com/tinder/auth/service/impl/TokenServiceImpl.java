@@ -30,4 +30,16 @@ public class TokenServiceImpl implements TokenService {
 
 		return Optional.ofNullable(token).map(Object::toString).orElse(null);
 	}
+
+	@Override
+	public void deleteRefreshTokenFromRedis(UUID userId, String deviceId) {
+		String key = "user:" + userId + ":sessions";
+		stringRedisTemplate.opsForHash().delete(key, deviceId);
+	}
+
+	@Override
+	public void deleteAllUserTokensFromRedis(UUID userId) {
+		String key = "user:" + userId + ":sessions";
+		stringRedisTemplate.delete(key);
+	}
 }

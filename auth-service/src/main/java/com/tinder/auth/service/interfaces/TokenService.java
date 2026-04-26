@@ -6,4 +6,8 @@ public interface TokenService {
 	void storeRefreshTokenToRedis(UUID userId, String deviceId, String token);
 
 	String getRefreshTokenFromRedis(UUID userId, String deviceId);
+
+	void deleteRefreshTokenFromRedis(UUID userId, String deviceId);
+
+	void deleteAllUserTokensFromRedis(UUID userId);
 }

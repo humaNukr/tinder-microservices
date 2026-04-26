@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/profiles")
 @RequiredArgsConstructor
@@ -29,27 +31,27 @@ public class ProfileController {
     @ResponseStatus(HttpStatus.CREATED)
     public ProfileResponse createProfile(
             @RequestBody @Valid CreateProfileRequest request,
-            @RequestHeader("X-User-Id") String userId
+            @RequestHeader("X-User-Id") UUID userId
     ) {
         return profileService.createProfile(userId, request);
     }
 
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    public ProfileResponse getProfile(@RequestHeader("X-User-Id") String userId) {
+    public ProfileResponse getProfile(@RequestHeader("X-User-Id") UUID userId) {
         return profileService.getMyProfile(userId);
     }
 
     @GetMapping("/me/preferences")
     @ResponseStatus(HttpStatus.OK)
-    public UserPreferencesResponse getMyPreferences(@RequestHeader("X-User-Id") String userId) {
+    public UserPreferencesResponse getMyPreferences(@RequestHeader("X-User-Id") UUID userId) {
         return profileService.getMyPreferences(userId);
     }
 
     @PatchMapping("me/preferences")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public UserPreferencesResponse updateMyPreferences(
-            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid UpdatePreferencesRequest request
     ) {
         return profileService.updateMyPreferences(userId, request);
@@ -58,7 +60,7 @@ public class ProfileController {
     @PatchMapping("/me")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public ProfileResponse updateProfile(
-            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid UpdateProfileRequest request
     ) {
         return profileService.updateProfile(userId, request);
@@ -68,7 +70,7 @@ public class ProfileController {
     @PatchMapping("/me/location")
     @ResponseStatus(HttpStatus.OK)
     public void updateLocation(
-            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid LocationUpdateRequest request
     ) {
         profileService.updateLocation(userId, request);

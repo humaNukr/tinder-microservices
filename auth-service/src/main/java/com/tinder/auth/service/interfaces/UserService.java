@@ -7,5 +7,8 @@ import java.util.UUID;
 
 public interface UserService {
 	UserResult findOrCreateUser(String email);
+
 	User findUserById(UUID id);
+
+	void deleteUser(UUID userId);
 }

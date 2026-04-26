@@ -1,5 +1,6 @@
 package com.tinder.profile.service.interfaces;
 
+import com.tinder.profile.domain.Profile;
 import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.LocationUpdateRequest;
 import com.tinder.profile.dto.ProfileResponse;
@@ -10,23 +11,26 @@ import com.tinder.profile.dto.UserPreferencesResponse;
 import java.util.List;
 import java.util.UUID;
 
-public interface
-ProfileService {
-    ProfileResponse createProfile(String userId, CreateProfileRequest request);
+public interface ProfileService {
+    ProfileResponse createProfile(UUID userId, CreateProfileRequest request);
 
-    ProfileResponse updateProfile(String userId, UpdateProfileRequest request);
+    ProfileResponse updateProfile(UUID userId, UpdateProfileRequest request);
 
-    ProfileResponse getMyProfile(String userId);
+    ProfileResponse getMyProfile(UUID userId);
 
-    UserPreferencesResponse getMyPreferences(String userId);
+    void deleteProfile(UUID userId);
 
-    UserPreferencesResponse updateMyPreferences(String userId, UpdatePreferencesRequest request);
+    UserPreferencesResponse getMyPreferences(UUID userId);
+
+    UserPreferencesResponse updateMyPreferences(UUID userId, UpdatePreferencesRequest request);
 
     void addPhotosToProfile(UUID userId, List<String> photoUrls);
 
-    void updateLocation(String userId, LocationUpdateRequest request);
+    void updateLocation(UUID userId, LocationUpdateRequest request);
 
     List<UUID> getCandidatesForFeed(UUID userId, int limit);
 
     List<ProfileResponse> getBatchProfiles(List<UUID> ids);
+
+    Profile getProfileEntity(UUID userId);
 }

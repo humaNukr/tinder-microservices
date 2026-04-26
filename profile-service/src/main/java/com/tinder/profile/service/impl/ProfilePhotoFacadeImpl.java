@@ -1,6 +1,5 @@
 package com.tinder.profile.service.impl;
 
-import com.tinder.profile.dto.ProfileResponse;
 import com.tinder.profile.exception.storage.FileUploadException;
 import com.tinder.profile.service.interfaces.ProfilePhotoFacade;
 import com.tinder.profile.service.interfaces.ProfileService;
@@ -8,10 +7,8 @@ import com.tinder.profile.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,15 +36,14 @@ public class ProfilePhotoFacadeImpl implements ProfilePhotoFacade {
 
         } catch (Exception e) {
             log.error("Error during photo upload. Rolling back saved files in MinIO...", e);
-            uploadedKeys.forEach(storageService::deleteFile);
+            storageService.deleteFiles(uploadedKeys);
 
             throw new FileUploadException("Failed to upload photos", e);
         }
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public InputStream downloadPhoto(String fileKey) {
-        return storageService.downloadFile(fileKey);
+    public void deletePhotos(List<String> photoKeys) {
+        storageService.deleteFiles(photoKeys);
     }
 }

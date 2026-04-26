@@ -22,7 +22,7 @@ public class UserActivityProducer {
     private String activityTopic;
 
     public void publishActivity(UUID userId, ActivityType type) {
-        UserActivityEvent event = new UserActivityEvent(userId, type, Instant.now());
+        UserActivityEvent event = new UserActivityEvent(UUID.randomUUID(), userId, type, Instant.now());
 
         kafkaTemplate.send(activityTopic, userId.toString(), event)
                 .whenComplete((result, ex) -> {

@@ -10,12 +10,15 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -50,5 +53,19 @@ public class AuthController {
 	public AuthResponse authenticateWithGoogle(@RequestHeader("X-Device-Id") String deviceId,
 			@RequestBody @Valid GoogleAuthRequest request) {
 		return authFacade.authenticateWithGoogle(request.idToken(), deviceId);
+	}
+
+	@PostMapping("/logout")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void logout(@RequestHeader("X-User-Id") UUID userId, @RequestHeader("X-Device-Id") String deviceId) {
+		authFacade.logout(userId, deviceId);
+		log.info("User {} logged out from device {}", userId, deviceId);
+	}
+
+	@DeleteMapping("/me")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteMyAccount(@RequestHeader("X-User-Id") UUID userId) {
+		authFacade.deleteAccount(userId);
+		log.info("User {} initiated account deletion", userId);
 	}
 }
