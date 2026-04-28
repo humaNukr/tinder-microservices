@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -203,6 +204,30 @@ public class ProfileServiceImpl implements ProfileService {
         List<Profile> profiles = profileRepository.findAllByUserIdIn(ids);
 
         return profiles.stream().map(profileMapper::toDto).toList();
+    }
+
+    @Override
+    public List<String> removePhotosFromProfile(UUID userId, List<String> photoUrlsToRemove) {
+        if (photoUrlsToRemove == null || photoUrlsToRemove.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Profile profile = getProfileEntity(userId);
+        List<String> currentPhotos = profile.getPhotos();
+
+        List<String> validPhotosToRemove = photoUrlsToRemove.stream()
+                .filter(currentPhotos::contains)
+                .toList();
+
+        if (validPhotosToRemove.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        currentPhotos.removeAll(validPhotosToRemove);
+        profile = profileRepository.save(profile);
+        eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
+
+        return validPhotosToRemove;
     }
 
     public Profile getProfileEntity(UUID userId) {
