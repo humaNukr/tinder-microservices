@@ -32,5 +32,7 @@ public interface ProfileService {
 
     List<ProfileResponse> getBatchProfiles(List<UUID> ids);
 
+    List<String> removePhotosFromProfile(UUID userId, List<String> photoUrlsToRemove);
+
     Profile getProfileEntity(UUID userId);
 }
