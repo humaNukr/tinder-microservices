@@ -22,4 +22,13 @@ public class ProfilePhotoController {
     public void uploadPhotos(@RequestPart("files") List<MultipartFile> files, @RequestHeader("X-User-Id") String userId) {
         profilePhotoFacade.uploadAndAttachPhotos(files, userId);
     }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePhotos(
+            @RequestBody List<String> photoUrls,
+            @RequestHeader("X-User-Id") UUID userId
+    ) {
+        profilePhotoFacade.deleteSpecificPhotos(photoUrls, userId);
+    }
 }

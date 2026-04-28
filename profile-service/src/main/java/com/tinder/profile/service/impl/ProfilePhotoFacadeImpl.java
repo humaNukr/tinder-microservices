@@ -46,4 +46,13 @@ public class ProfilePhotoFacadeImpl implements ProfilePhotoFacade {
     public void deletePhotos(List<String> photoKeys) {
         storageService.deleteFiles(photoKeys);
     }
+
+    @Override
+    public void deleteSpecificPhotos(List<String> photoUrls, UUID userId) {
+        List<String> removedPhotos = profileService.removePhotosFromProfile(userId, photoUrls);
+
+        if (!removedPhotos.isEmpty()) {
+            deletePhotos(removedPhotos);
+        }
+    }
 }
