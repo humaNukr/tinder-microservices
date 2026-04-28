@@ -19,6 +19,7 @@ public interface SwipeRepository extends JpaRepository<Swipe, SwipeId> {
             DO UPDATE SET
                 is_liked_by_user1 = :isLiked,
                 updated_at = NOW()
+            WHERE swipes.is_liked_by_user1 IS NULL
             RETURNING is_liked_by_user1 AS "isLikedByUser1", 
                       is_liked_by_user2 AS "isLikedByUser2"
             """, nativeQuery = true)
@@ -34,6 +35,7 @@ public interface SwipeRepository extends JpaRepository<Swipe, SwipeId> {
             DO UPDATE SET
                 is_liked_by_user2 = :isLiked,
                 updated_at = NOW()
+            WHERE swipes.is_liked_by_user2 IS NULL
             RETURNING is_liked_by_user1 AS "isLikedByUser1", 
                       is_liked_by_user2 AS "isLikedByUser2"
             """, nativeQuery = true)

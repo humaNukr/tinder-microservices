@@ -27,8 +27,15 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+app:
+  kafka:
+    topics:
+      match: match-events
+      swipe: swipe-events
+
 outbox:
   scheduler:
     batch-size: 50
     batch-processing-time: 5 #seconds
     fixed-delay: 2000 #ms
+    cleanup-cron: "0 0 3 * * *"
