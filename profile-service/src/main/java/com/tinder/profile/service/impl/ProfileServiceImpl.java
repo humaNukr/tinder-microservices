@@ -42,7 +42,6 @@ public class ProfileServiceImpl implements ProfileService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    @Transactional
     public ProfileResponse createProfile(UUID userId, CreateProfileRequest request) {
         if (profileRepository.existsByUserId(userId)) {
             throw new IllegalStateException("There is already a profile with userId " + userId);
@@ -59,7 +58,6 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public ProfileResponse getMyProfile(UUID userId) {
 
         Profile profile = getProfileEntity(userId);
@@ -68,7 +66,6 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    @Transactional
     public void deleteProfile(UUID userId) {
         Profile profile = getProfileEntity(userId);
         profileRepository.delete(profile);
@@ -93,7 +90,6 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    @Transactional
     public ProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
         Profile profile = getProfileEntity(userId);
 
@@ -108,7 +104,6 @@ public class ProfileServiceImpl implements ProfileService {
 
 
     @Override
-    @Transactional
     public void addPhotosToProfile(UUID userId, List<String> photoUrls) {
         if (photoUrls == null || photoUrls.isEmpty()) {
             throw new EmptyOrNullValueException("Photos can't be empty or null");
@@ -121,7 +116,6 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     @Override
-    @Transactional
     public void updateLocation(UUID userId, LocationUpdateRequest request) {
 
         GeoJsonPoint point = new GeoJsonPoint(request.longitude(), request.latitude());
