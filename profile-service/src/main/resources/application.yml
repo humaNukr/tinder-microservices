@@ -27,6 +27,11 @@ app:
     topics:
       user-activity: user-activity-events
 
+  profile:
+    max-photos: 9
+    min-age: 18
+    default-search-radius-km: 50.0
+
 minio:
   url: http://localhost:9000
   access-key: admin

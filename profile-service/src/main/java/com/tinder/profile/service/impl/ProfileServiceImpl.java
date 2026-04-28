@@ -1,5 +1,6 @@
 package com.tinder.profile.service.impl;
 
+import com.tinder.profile.domain.Gender;
 import com.tinder.profile.domain.Profile;
 import com.tinder.profile.domain.UserPreferences;
 import com.tinder.profile.dto.CreateProfileRequest;
@@ -15,6 +16,7 @@ import com.tinder.profile.exception.EmptyOrNullValueException;
 import com.tinder.profile.exception.ProfileNotFoundException;
 import com.tinder.profile.mapper.ProfileMapper;
 import com.tinder.profile.producer.UserActivityProducer;
+import com.tinder.profile.properties.ProfileProperties;
 import com.tinder.profile.repository.ProfileRepository;
 import com.tinder.profile.repository.ProfileSearchRepository;
 import com.tinder.profile.service.interfaces.ProfileService;
@@ -23,10 +25,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +41,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileSearchRepository profileSearchRepository;
     private final ProfileMapper profileMapper;
     private final UserActivityProducer activityProducer;
+    private final ProfileProperties profileProperties;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -46,8 +49,25 @@ public class ProfileServiceImpl implements ProfileService {
         if (profileRepository.existsByUserId(userId)) {
             throw new IllegalStateException("There is already a profile with userId " + userId);
         }
+
+        int age = Period.between(request.birthDate(), LocalDate.now()).getYears();
+        if (age < profileProperties.minAge()) {
+            throw new IllegalArgumentException("User must be at least " + profileProperties.minAge() + " years old");
+        }
+
         Profile profile = profileMapper.toModel(request);
         profile.setUserId(userId);
+
+        UserPreferences defaultPrefs = new UserPreferences();
+        defaultPrefs.setMinAge(profileProperties.minAge());
+        defaultPrefs.setMaxAge(99);
+        defaultPrefs.setMaxDistanceKm(profileProperties.defaultSearchRadiusKm());
+
+        if (request.targetGender() != null) {
+            defaultPrefs.setTargetGender(Gender.valueOf(request.targetGender().toUpperCase()));
+        }
+
+        profile.setPreferences(defaultPrefs);
 
         profile = profileRepository.save(profile);
         ProfileResponse response = profileMapper.toDto(profile);
@@ -110,6 +130,13 @@ public class ProfileServiceImpl implements ProfileService {
         }
 
         Profile profile = getProfileEntity(userId);
+
+        if (profile.getPhotos().size() + photoUrls.size() > profileProperties.maxPhotos()) {
+            throw new IllegalArgumentException(
+                    "Profile cannot have more than " + profileProperties.maxPhotos() + " photos"
+            );
+        }
+
         profile.getPhotos().addAll(photoUrls);
         profile = profileRepository.save(profile);
         eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
