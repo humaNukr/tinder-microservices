@@ -9,6 +9,7 @@ import com.tinder.swipe.exception.SwipeAlreadyExistsException;
 import com.tinder.swipe.properties.KafkaProperties;
 import com.tinder.swipe.repository.SwipeRepository;
 import com.tinder.swipe.service.interfaces.OutboxService;
+import com.tinder.swipe.service.interfaces.SwipeRateLimiterService;
 import com.tinder.swipe.service.interfaces.SwipeSevice;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class SwipeServiceImpl implements SwipeSevice {
     private final SwipeRepository swipeRepository;
     private final OutboxService outboxService;
     private final KafkaProperties kafkaProperties;
+    private final SwipeRateLimiterService rateLimiterService;
 
     @Override
     @Transactional
@@ -35,6 +37,11 @@ public class SwipeServiceImpl implements SwipeSevice {
 
         if (actorId.equals(targetId)) {
             throw new IllegalArgumentException("Actor ID and Target ID cannot be the same");
+        }
+
+        if (isLiked) {
+            boolean isPremium = false;
+            rateLimiterService.checkAndIncrementLikeLimit(actorId, isPremium);
         }
 
         SwipeStatusProjection projection = actorId.compareTo(targetId) < 0
