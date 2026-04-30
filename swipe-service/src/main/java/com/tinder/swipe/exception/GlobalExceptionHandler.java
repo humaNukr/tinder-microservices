@@ -36,6 +36,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
     }
 
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
+        log.warn("Too many requests: {}", ex.getMessage());
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
+
     @ExceptionHandler(SwipeAlreadyExistsException.class)
     public ResponseEntity<Object> handleSwipeAlreadyExists(SwipeAlreadyExistsException ex) {
         log.warn("Swipe conflict: {}", ex.getMessage());

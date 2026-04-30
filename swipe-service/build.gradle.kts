@@ -32,6 +32,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.liquibase:liquibase-core")
     implementation("io.hypersistence:hypersistence-utils-hibernate-60:3.9.4")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

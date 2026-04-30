@@ -32,6 +32,13 @@ app:
     topics:
       match: match-events
       swipe: swipe-events
+  swipe:
+    rate-limit:
+      max-likes-per-day: 100
+
+  redis:
+    prefixes:
+      limit-key-prefix: "swipe:rate_limit:right:"
 
 outbox:
   scheduler:
