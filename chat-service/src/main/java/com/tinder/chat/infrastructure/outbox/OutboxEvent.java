@@ -1,35 +1,45 @@
 package com.tinder.chat.infrastructure.outbox;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.Type;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "outbox_events")
-@Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter
+@Table(name = "outbox_events")
 public class OutboxEvent {
-
     @Id
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "topic", nullable = false)
     private String topic;
 
-    @Column(name = "payload", nullable = false, columnDefinition = "text")
-    private String payload;
+    @Column(name = "payload", nullable = false)
+    @Type(JsonType.class)
+    private Object payload;
 
-    @Column(name = "is_processed", nullable = false)
-    @Builder.Default
-    private boolean processed = false;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
+    @Column(name = "is_sent", nullable = false)
+    @Setter
+    private Boolean isSent = false;
+
+    public OutboxEvent(String topic, Object payload, LocalDateTime createdAt) {
+        this.topic = topic;
+        this.payload = payload;
+        this.createdAt = createdAt;
+    }
 }

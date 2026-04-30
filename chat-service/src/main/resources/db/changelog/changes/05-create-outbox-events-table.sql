@@ -1,15 +1,12 @@
---liquibase formatted sql
+-- liquibase formatted sql
 
 -- changeset humaNukr:05-create-outbox-events-table
 CREATE TABLE outbox_events
 (
-    id           UUID PRIMARY KEY,
-    topic        VARCHAR(255) NOT NULL,
-    payload      TEXT         NOT NULL,
-    is_processed BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    topic      VARCHAR                                   NOT NULL,
+    payload    JSONB                                     NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW() NOT NULL,
+    is_sent    BOOLEAN                     DEFAULT FALSE NOT NULL
 );
-
-CREATE INDEX idx_outbox_events_topic ON outbox_events (topic);
--- rollback DROP INDEX idx_outbox_events_topic;
 -- rollback DROP TABLE outbox_events;

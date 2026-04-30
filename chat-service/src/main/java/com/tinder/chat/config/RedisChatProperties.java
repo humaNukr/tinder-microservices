@@ -10,5 +10,6 @@ public record RedisChatProperties(
         String keyPrefix,
         String keySuffix,
         Duration ttl
-) {}
+) {
+}
 

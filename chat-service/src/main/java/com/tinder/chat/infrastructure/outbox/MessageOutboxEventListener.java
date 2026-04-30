@@ -1,16 +1,16 @@
 package com.tinder.chat.infrastructure.outbox;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tinder.chat.config.KafkaTopicsProperties;
 import com.tinder.chat.infrastructure.kafka.contract.MessageSentEvent;
 import com.tinder.chat.message.event.MessageSavedEvent;
 import com.tinder.chat.message.model.Message;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -18,10 +18,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MessageOutboxEventListener {
 
-    private final OutboxEventRepository outboxEventRepository;
-    private final ObjectMapper objectMapper;
+    private final OutboxRepository outboxRepository;
+    private final KafkaTopicsProperties kafkaTopicsProperties;
 
-    @SneakyThrows
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleMessageSavedEvent(MessageSavedEvent event) {
         Message message = event.savedMessage();
@@ -45,13 +44,9 @@ public class MessageOutboxEventListener {
                 message.getCreatedAt()
         );
 
-        OutboxEvent outboxEvent = OutboxEvent.builder()
-                .id(eventId)
-                .topic("message-events")
-                .payload(objectMapper.writeValueAsString(kafkaEvent))
-                .build();
+        OutboxEvent outboxEvent = new OutboxEvent(kafkaTopicsProperties.messageEvents(), kafkaEvent, LocalDateTime.now());
 
-        outboxEventRepository.save(outboxEvent);
+        outboxRepository.save(outboxEvent);
         log.debug("Outbox event saved for message id: {}", message.getId());
     }
 }

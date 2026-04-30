@@ -1,7 +1,7 @@
 package com.tinder.chat.infrastructure.redis;
 
-import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.chat.port.ChatEventSubscriber;
+import com.tinder.chat.message.dto.MessageEventDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

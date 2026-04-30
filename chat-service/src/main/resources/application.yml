@@ -31,6 +31,7 @@ app:
   kafka:
     topics:
       match-events: match-events
+      message-events: message-events
     consumer-groups:
       chat-service: chat-service-group
 
@@ -42,5 +43,10 @@ app:
       ttl: 7d #Days (duration format)
 
   outbox:
-    poll-interval: 1000
+    scheduler:
+      poll-interval: 1000
+      batch-size: 50
+      batch-processing-time: 5 #seconds
+      fixed-delay: 2000 #ms
+      cleanup-cron: "0 0 3 * * *"
 

@@ -1,15 +1,11 @@
 package com.tinder.chat.chat.service;
 
-import com.tinder.chat.chat.port.ChatParticipantProvider;
 import com.tinder.chat.chat.model.Chat;
 import com.tinder.chat.chat.model.ChatParticipant;
-import com.tinder.chat.chat.repository.ChatParticipantsProjection;
+import com.tinder.chat.chat.port.ChatParticipantProvider;
 import com.tinder.chat.chat.repository.ChatRepository;
-import com.tinder.chat.exception.AccessDeniedException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -41,20 +37,5 @@ public class ChatServiceImpl implements ChatService {
 
         Chat savedChat = chatRepository.save(chat);
         participantProvider.saveParticipants(savedChat.getId(), firstUser, secondUser);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public UUID validateAndGetRecipientId(UUID chatId, UUID senderId) {
-        ChatParticipantsProjection chatParticipantsProjection = chatRepository.findParticipantsById(chatId)
-                .orElseThrow(() -> new EntityNotFoundException("Participants not found for chat: " + chatId));
-
-        if (chatParticipantsProjection.getUser1Id().equals(senderId)) {
-            return chatParticipantsProjection.getUser2Id();
-        } else if (chatParticipantsProjection.getUser2Id().equals(senderId)) {
-            return chatParticipantsProjection.getUser1Id();
-        }
-
-        throw new AccessDeniedException("User " + senderId + " is not a participant of chat " + chatId);
     }
 }
