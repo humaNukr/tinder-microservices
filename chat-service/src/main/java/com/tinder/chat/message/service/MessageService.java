@@ -6,5 +6,5 @@ import com.tinder.chat.message.model.Message;
 import java.util.UUID;
 
 public interface MessageService {
-    Message saveMessage(UUID senderId, ChatRequestDto requestDto);
+    Message saveMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto);
 }
