@@ -32,6 +32,7 @@ app:
     topics:
       match-events: match-events
       message-events: message-events
+      minio-chat-media-events: minio-chat-media-events
     consumer-groups:
       chat-service: chat-service-group
 
@@ -50,3 +51,8 @@ app:
       fixed-delay: 2000 #ms
       cleanup-cron: "0 0 3 * * *"
 
+  minio:
+    url: http://localhost:9000
+    access-key: admin
+    secret-key: password123
+    bucket-name: tinder-chat-media

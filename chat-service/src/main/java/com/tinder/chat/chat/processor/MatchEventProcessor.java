@@ -1,5 +1,6 @@
-package com.tinder.chat.chat.service;
+package com.tinder.chat.chat.processor;
 
+import com.tinder.chat.chat.service.ChatService;
 import com.tinder.chat.infrastructure.inbox.InboxEvent;
 import com.tinder.chat.infrastructure.inbox.InboxEventRepository;
 import com.tinder.chat.infrastructure.kafka.contract.MatchEvent;

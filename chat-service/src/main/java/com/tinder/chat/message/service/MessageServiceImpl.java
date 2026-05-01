@@ -1,6 +1,9 @@
 package com.tinder.chat.message.service;
 
+import com.tinder.chat.exception.EntityNotFoundException;
 import com.tinder.chat.message.dto.ChatRequestDto;
+import com.tinder.chat.message.enums.MessageContentType;
+import com.tinder.chat.message.enums.MessageStatus;
 import com.tinder.chat.message.event.MessageSavedEvent;
 import com.tinder.chat.message.model.Message;
 import com.tinder.chat.message.repository.MessageRepository;
@@ -22,17 +25,58 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public Message saveMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto) {
-        Message message = new Message();
-        message.setChatId(requestDto.chatId());
-        message.setSenderId(senderId);
-        message.setContentType(requestDto.type());
-        message.setContent(requestDto.payload());
+    public Message saveReadyMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto) {
+        Message message = Message.builder()
+                .chatId(requestDto.chatId())
+                .senderId(senderId)
+                .contentType(requestDto.type())
+                .content(requestDto.payload())
+                .status(MessageStatus.SENT)
+                .build();
 
         Message savedMessage = messageRepository.save(message);
 
         eventPublisher.publishEvent(new MessageSavedEvent(savedMessage, recipientId));
 
         return savedMessage;
+    }
+
+    @Override
+    @Transactional
+    public Message savePendingMessage(UUID chatId, UUID senderId, MessageContentType type, String objectKey) {
+        Message pendingMessage = Message.builder()
+                .chatId(chatId)
+                .senderId(senderId)
+                .contentType(type)
+                .content(objectKey)
+                .status(MessageStatus.UPLOADING)
+                .build();
+
+        return messageRepository.save(pendingMessage);
+    }
+
+    @Override
+    @Transactional
+    public Message markMessageAsSentAndPublishOutbox(Message message, UUID recipientId) {
+        message.setStatus(MessageStatus.SENT);
+        Message savedMessage = messageRepository.save(message);
+
+        eventPublisher.publishEvent(new MessageSavedEvent(savedMessage, recipientId));
+
+        return savedMessage;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Message getMessageById(Long messageId) {
+        return messageRepository.findById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("Message not found with id: " + messageId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Message getPendingMessageByObjectKey(String objectKey) {
+        return messageRepository.findByContentAndStatus(objectKey, MessageStatus.UPLOADING)
+                .orElseThrow(() -> new EntityNotFoundException("Pending message not found for key: " + objectKey));
     }
 }

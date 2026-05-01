@@ -1,6 +1,6 @@
 package com.tinder.chat.infrastructure.kafka;
 
-import com.tinder.chat.chat.service.MatchEventProcessor;
+import com.tinder.chat.chat.processor.MatchEventProcessor;
 import com.tinder.chat.infrastructure.kafka.contract.MatchEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
