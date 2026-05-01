@@ -2,16 +2,21 @@ package com.tinder.chat.infrastructure.storage;
 
 import com.tinder.chat.config.MinioProperties;
 import com.tinder.chat.exception.StorageException;
+import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.Http;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MinioStorageService implements StorageService {
 
     private final MinioClient minioClient;
@@ -30,6 +35,23 @@ public class MinioStorageService implements StorageService {
             );
         } catch (Exception e) {
             throw new StorageException("Failed to generate MinIO presigned URL", e);
+        }
+    }
+
+    @PostConstruct
+    public void createBucketIfNotExists() {
+        String bucketName = minioProperties.bucketName();
+        try {
+            boolean found = minioClient.bucketExists(
+                    BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!found) {
+                minioClient.makeBucket(
+                        MakeBucketArgs.builder().bucket(bucketName).build());
+                log.info("Successfully created private MinIO bucket: {}", bucketName);
+            }
+        } catch (Exception e) {
+            log.error("Failed to initialize MinIO bucket", e);
+            throw new StorageException("Could not initialize storage bucket", e);
         }
     }
 }

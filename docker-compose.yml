@@ -75,12 +75,41 @@ services:
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
+      MINIO_NOTIFY_KAFKA_ENABLE_1: "on"
+      MINIO_NOTIFY_KAFKA_BROKERS_1: "shared-kafka:29092"
+      MINIO_NOTIFY_KAFKA_TOPIC_1: "minio-chat-media-events"
+      MINIO_NOTIFY_KAFKA_PRODUCER_ACKS_1: "all"
     ports:
       - "9000:9000"
       - "9001:9001"
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+    depends_on:
+      - shared_kafka
+    networks:
+      default:
+        aliases:
+          - shared-minio
+
+  minio-init:
+    image: minio/mc
+    container_name: minio-init
+    depends_on:
+      - shared_minio
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO to start...';
+      while ! /usr/bin/mc alias set myminio http://shared-minio:9000 admin password123; do
+        echo 'MinIO is not ready yet, retrying in 2 seconds...';
+        sleep 2;
+      done;
+      echo 'MinIO is up! Configuring bucket and events...';
+      /usr/bin/mc mb myminio/tinder-chat-media --ignore-existing;
+      /usr/bin/mc event add myminio/tinder-chat-media arn:minio:sqs::1:kafka --event put;
+      echo 'MinIO initialization complete.';
+      exit 0;
+      "
 
   shared_kafka:
     image: apache/kafka:3.7.0
@@ -100,6 +129,10 @@ services:
       - "9092:9092"
     volumes:
       - kafka_data:/var/lib/kafka/data
+    networks:
+      default:
+        aliases:
+          - shared-kafka
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

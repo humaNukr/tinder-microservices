@@ -15,7 +15,7 @@ public class OutboxCleanupWorker {
 
     private final OutboxRepository outboxRepository;
 
-    @Scheduled(cron = "${outbox.scheduler.cleanup-cron}")
+    @Scheduled(cron = "${app.outbox.scheduler.cleanup-cron}")
     @Transactional
     public void cleanupOutbox() {
         LocalDateTime threshold = LocalDateTime.now().minusDays(7);

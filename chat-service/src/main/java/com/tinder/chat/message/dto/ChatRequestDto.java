@@ -9,6 +9,6 @@ import java.util.UUID;
 public record ChatRequestDto(
         @NotNull UUID chatId,
         @NotNull String payload,
-        @ValueOfEnum(enumClass = MessageContentType.class) MessageContentType type
+        @ValueOfEnum(enumClass = MessageContentType.class) String type
 ) {
 }

@@ -8,10 +8,12 @@ import com.tinder.chat.exception.AccessDeniedException;
 import com.tinder.chat.infrastructure.storage.StorageService;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageEventDto;
+import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.enums.MessageStatus;
 import com.tinder.chat.message.mapper.MessageMapper;
 import com.tinder.chat.message.model.Message;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MessageFacade {
 
     private final ChatParticipantProvider participantProvider;
@@ -37,12 +40,21 @@ public class MessageFacade {
 
     @Transactional
     public MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest request) {
+        log.info("--- DEBUG STEP 2 [FACADE] ---");
+        log.info("Starting orchestration. SenderId before validation: {}", senderId);
+
         validateParticipant(chatId, senderId);
+        log.info("Participant validation passed!");
 
         UUID fileId = UUID.randomUUID();
         String objectKey = buildObjectKey(chatId, fileId, request.fileExtension());
+        log.info("Generated ObjectKey: {}", objectKey);
 
-        Message pendingMessage = messageService.savePendingMessage(chatId, senderId, request.type(), objectKey);
+        MessageContentType contentType = MessageContentType.valueOf(request.type().toUpperCase());
+
+        log.info("Calling MessageService to save. Passing SenderId: {}", senderId);
+        Message pendingMessage = messageService.savePendingMessage(chatId, senderId, contentType, objectKey);
+
         String uploadUrl = storageService.generateTempLinkForUploading(objectKey);
 
         return new MediaInitResponse(pendingMessage.getId(), uploadUrl);

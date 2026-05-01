@@ -1,13 +1,10 @@
 package com.tinder.chat.infrastructure.kafka.contract;
 
-import java.time.Instant;
 import java.util.UUID;
 
-public record MatchEvent
-        (
-                UUID eventId,
-                UUID user1Id,
-                UUID user2Id,
-                Instant matchedAt
-        ) {
+public record MatchEvent(
+        UUID eventId,
+        UUID user1Id,
+        UUID user2Id
+) {
 }

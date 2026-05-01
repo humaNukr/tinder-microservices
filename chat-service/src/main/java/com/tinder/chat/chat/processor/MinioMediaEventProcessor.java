@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -29,6 +32,8 @@ public class MinioMediaEventProcessor {
     }
 
     private String extractObjectKeyFromJson(JsonNode json) {
-        return json.get("Records").get(0).get("s3").get("object").get("key").asText();
+        String encodedKey = json.get("Records").get(0).get("s3").get("object").get("key").asText();
+
+        return URLDecoder.decode(encodedKey, StandardCharsets.UTF_8);
     }
 }

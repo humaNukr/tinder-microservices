@@ -19,23 +19,20 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public void createChat(UUID user1Id, UUID user2Id) {
 
-        UUID firstUser = user1Id.compareTo(user2Id) < 0 ? user1Id : user2Id;
-        UUID secondUser = user1Id.compareTo(user2Id) > 0 ? user1Id : user2Id;
-
         Chat chat = Chat.builder()
                 .id(UUID.randomUUID())
-                .user1Id(firstUser)
-                .user2Id(secondUser)
+                .user1Id(user1Id)
+                .user2Id(user2Id)
                 .build();
 
-        ChatParticipant participant1 = new ChatParticipant(chat, firstUser);
+        ChatParticipant participant1 = new ChatParticipant(chat, user1Id);
 
-        ChatParticipant participant2 = new ChatParticipant(chat, secondUser);
+        ChatParticipant participant2 = new ChatParticipant(chat, user2Id);
 
         chat.addParticipant(participant1);
         chat.addParticipant(participant2);
 
         Chat savedChat = chatRepository.save(chat);
-        participantProvider.saveParticipants(savedChat.getId(), firstUser, secondUser);
+        participantProvider.saveParticipants(savedChat.getId(), user1Id, user2Id);
     }
 }

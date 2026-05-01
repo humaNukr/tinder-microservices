@@ -40,11 +40,12 @@ public class SwipeServiceImpl implements SwipeSevice {
         }
 
         if (isLiked) {
-            boolean isPremium = false;
-            rateLimiterService.checkAndIncrementLikeLimit(actorId, isPremium);
+            rateLimiterService.checkAndIncrementLikeLimit(actorId, false);
         }
 
-        SwipeStatusProjection projection = actorId.compareTo(targetId) < 0
+        boolean isActorUser1 = isFirstUser(actorId, targetId);
+
+        SwipeStatusProjection projection = isActorUser1
                 ? swipeRepository.upsertSwipeByUser1(actorId, targetId, isLiked)
                 : swipeRepository.upsertSwipeByUser2(targetId, actorId, isLiked);
 
@@ -62,10 +63,14 @@ public class SwipeServiceImpl implements SwipeSevice {
 
             UUID matchEventId = generateDeterministicMatchId(actorId, targetId);
 
-            log.info("Match found! ActorId: {}, TargetId: {}. MatchEventId: {}", actorId, targetId, matchEventId);
+            UUID user1Id = isActorUser1 ? actorId : targetId;
+            UUID user2Id = isActorUser1 ? targetId : actorId;
+
+            log.info("Match found! Creating chat between user1Id: {} and user2Id: {}. MatchEventId: {}", user1Id, user2Id, matchEventId);
+
             outboxService.saveEvent(
                     kafkaProperties.match(),
-                    new MatchEvent(matchEventId, actorId, targetId)
+                    new MatchEvent(matchEventId, user1Id, user2Id)
             );
 
             return new SwipeResponseDto(true);
@@ -74,10 +79,16 @@ public class SwipeServiceImpl implements SwipeSevice {
         return new SwipeResponseDto(false);
     }
 
+
+    private boolean isFirstUser(UUID id1, UUID id2) {
+        return id1.toString().compareTo(id2.toString()) < 0;
+    }
+
+
     private UUID generateDeterministicMatchId(UUID id1, UUID id2) {
-        String pairKey = id1.compareTo(id2) < 0
-                ? id1.toString() + id2.toString()
-                : id2.toString() + id1.toString();
+        String pairKey = isFirstUser(id1, id2)
+                ? id1.toString() + "_" + id2.toString()
+                : id2.toString() + "_" + id1.toString();
 
         return UUID.nameUUIDFromBytes(pairKey.getBytes(StandardCharsets.UTF_8));
     }

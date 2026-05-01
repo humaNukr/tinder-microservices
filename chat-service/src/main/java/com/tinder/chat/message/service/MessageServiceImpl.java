@@ -26,10 +26,11 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public Message saveReadyMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto) {
+        MessageContentType contentType = MessageContentType.valueOf(requestDto.type().toUpperCase());
         Message message = Message.builder()
                 .chatId(requestDto.chatId())
                 .senderId(senderId)
-                .contentType(requestDto.type())
+                .contentType(contentType)
                 .content(requestDto.payload())
                 .status(MessageStatus.SENT)
                 .build();
@@ -44,6 +45,9 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public Message savePendingMessage(UUID chatId, UUID senderId, MessageContentType type, String objectKey) {
+        log.info("--- DEBUG STEP 3 [SERVICE] ---");
+        log.info("Building entity. ChatId: {}, SenderId: {}, Type: {}", chatId, senderId, type);
+
         Message pendingMessage = Message.builder()
                 .chatId(chatId)
                 .senderId(senderId)
@@ -52,7 +56,13 @@ public class MessageServiceImpl implements MessageService {
                 .status(MessageStatus.UPLOADING)
                 .build();
 
-        return messageRepository.save(pendingMessage);
+        log.info("Entity built. SenderId inside entity BEFORE save: {}", pendingMessage.getSenderId());
+
+        Message savedMessage = messageRepository.save(pendingMessage);
+
+        log.info("Entity SAVED! ID in DB: {}, SenderId returned from DB: {}", savedMessage.getId(), savedMessage.getSenderId());
+
+        return savedMessage;
     }
 
     @Override

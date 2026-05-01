@@ -1,7 +1,6 @@
 package com.tinder.chat.infrastructure.kafka;
 
 import com.tinder.chat.chat.processor.MatchEventProcessor;
-import com.tinder.chat.infrastructure.kafka.contract.MatchEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,7 @@ public class MatchEventListener {
             topics = "${app.kafka.topics.match-events}",
             groupId = "${app.kafka.consumer-groups.chat-service}"
     )
-    public void listenMatchEvent(MatchEvent event) {
+    public void listenMatchEvent(String event) {
         eventProcessor.processMatchEvent(event);
     }
 }
