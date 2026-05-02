@@ -10,9 +10,12 @@ import com.tinder.chat.message.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -45,8 +48,6 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public Message savePendingMessage(UUID chatId, UUID senderId, MessageContentType type, String objectKey) {
-        log.info("--- DEBUG STEP 3 [SERVICE] ---");
-        log.info("Building entity. ChatId: {}, SenderId: {}, Type: {}", chatId, senderId, type);
 
         Message pendingMessage = Message.builder()
                 .chatId(chatId)
@@ -56,13 +57,7 @@ public class MessageServiceImpl implements MessageService {
                 .status(MessageStatus.UPLOADING)
                 .build();
 
-        log.info("Entity built. SenderId inside entity BEFORE save: {}", pendingMessage.getSenderId());
-
-        Message savedMessage = messageRepository.save(pendingMessage);
-
-        log.info("Entity SAVED! ID in DB: {}, SenderId returned from DB: {}", savedMessage.getId(), savedMessage.getSenderId());
-
-        return savedMessage;
+        return messageRepository.save(pendingMessage);
     }
 
     @Override
@@ -81,6 +76,18 @@ public class MessageServiceImpl implements MessageService {
     public Message getMessageById(Long messageId) {
         return messageRepository.findById(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("Message not found with id: " + messageId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Message> getChatHistory(UUID chatId, Long cursorId, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+
+        if (cursorId == null) {
+            return messageRepository.findByChatIdAndStatusOrderByIdDesc(chatId, MessageStatus.SENT, pageable);
+        } else {
+            return messageRepository.findHistoryByCursor(chatId, MessageStatus.SENT, cursorId, pageable);
+        }
     }
 
     @Override

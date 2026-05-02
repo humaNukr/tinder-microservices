@@ -1,5 +1,6 @@
 package com.tinder.chat.message.service;
 
+import com.tinder.chat.chat.dto.ChatHistoryResponseDto;
 import com.tinder.chat.chat.dto.MediaInitRequest;
 import com.tinder.chat.chat.dto.MediaInitResponse;
 import com.tinder.chat.chat.port.ChatEventPublisher;
@@ -8,15 +9,17 @@ import com.tinder.chat.exception.AccessDeniedException;
 import com.tinder.chat.infrastructure.storage.StorageService;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageEventDto;
+import com.tinder.chat.message.dto.MessageResponseDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.enums.MessageStatus;
-import com.tinder.chat.message.mapper.MessageMapper;
 import com.tinder.chat.message.model.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,7 +32,6 @@ public class MessageFacade {
     private final MessageService messageService;
     private final ChatEventPublisher eventPublisher;
     private final StorageService storageService;
-    private final MessageMapper messageMapper;
 
     @Transactional
     public void saveMessage(UUID senderId, ChatRequestDto requestDto) {
@@ -40,21 +42,13 @@ public class MessageFacade {
 
     @Transactional
     public MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest request) {
-        log.info("--- DEBUG STEP 2 [FACADE] ---");
-        log.info("Starting orchestration. SenderId before validation: {}", senderId);
-
         validateParticipant(chatId, senderId);
-        log.info("Participant validation passed!");
 
         UUID fileId = UUID.randomUUID();
         String objectKey = buildObjectKey(chatId, fileId, request.fileExtension());
-        log.info("Generated ObjectKey: {}", objectKey);
-
         MessageContentType contentType = MessageContentType.valueOf(request.type().toUpperCase());
 
-        log.info("Calling MessageService to save. Passing SenderId: {}", senderId);
         Message pendingMessage = messageService.savePendingMessage(chatId, senderId, contentType, objectKey);
-
         String uploadUrl = storageService.generateTempLinkForUploading(objectKey);
 
         return new MediaInitResponse(pendingMessage.getId(), uploadUrl);
@@ -74,23 +68,76 @@ public class MessageFacade {
         publishMessageEvent(confirmedMessage, recipientId);
     }
 
+    @Transactional(readOnly = true)
+    public String getMediaViewUrl(UUID chatId, String fileName, UUID userId) {
+        validateParticipant(chatId, userId);
+        String objectKey = String.format("chats/%s/%s", chatId, fileName);
+        return storageService.generateTempLinkForViewing(objectKey);
+    }
+
+    @Transactional(readOnly = true)
+    public ChatHistoryResponseDto getChatHistory(UUID chatId, UUID userId, Long cursor, int limit) {
+        validateParticipant(chatId, userId);
+
+        int limitPlusOne = limit + 1;
+        List<Message> messages = new ArrayList<>(messageService.getChatHistory(chatId, cursor, limitPlusOne));
+
+        boolean hasNext = messages.size() > limit;
+        if (hasNext) {
+            messages.remove(limit);
+        }
+
+        List<MessageResponseDto> messageDtos = messages.stream()
+                .map(this::toMessageResponseDto)
+                .toList();
+
+        Long nextCursor = messageDtos.isEmpty() ? null : messageDtos.getLast().id();
+
+        return new ChatHistoryResponseDto(messageDtos, nextCursor, hasNext);
+    }
+
+    private void publishMessageEvent(Message message, UUID recipientId) {
+        MessageEventDto eventDto = new MessageEventDto(
+                message.getId(),
+                message.getChatId(),
+                message.getSenderId(),
+                recipientId,
+                message.getContentType().name(),
+                resolveContentUrl(message),
+                message.getCreatedAt()
+        );
+        eventPublisher.publishNewMessage(eventDto);
+    }
+
+    private MessageResponseDto toMessageResponseDto(Message message) {
+        return new MessageResponseDto(
+                message.getId(),
+                message.getSenderId(),
+                message.getContentType(),
+                resolveContentUrl(message),
+                message.getCreatedAt()
+        );
+    }
+
+    private String resolveContentUrl(Message message) {
+        String content = message.getContent();
+        if (message.getContentType() != MessageContentType.TEXT) {
+            String[] parts = content.split("/");
+            String fileNameWithExt = parts[parts.length - 1];
+            return String.format("/api/v1/chats/%s/media/%s", message.getChatId(), fileNameWithExt);
+        }
+        return content;
+    }
 
     private UUID resolveRecipientId(UUID chatId, UUID senderId) {
         Set<UUID> participants = participantProvider.getParticipants(chatId);
-
         if (!participants.contains(senderId)) {
             throw new AccessDeniedException("User is not a participant of this chat");
         }
-
         return participants.stream()
                 .filter(id -> !id.equals(senderId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Recipient not found"));
-    }
-
-    private void publishMessageEvent(Message message, UUID recipientId) {
-        MessageEventDto eventDto = messageMapper.toEventDto(message, recipientId);
-        eventPublisher.publishNewMessage(eventDto);
     }
 
     private String buildObjectKey(UUID chatId, UUID fileId, String extension) {
@@ -102,6 +149,4 @@ public class MessageFacade {
             throw new AccessDeniedException("User is not a participant of this chat");
         }
     }
-
-
 }

@@ -34,7 +34,25 @@ public class MinioStorageService implements StorageService {
                             .build()
             );
         } catch (Exception e) {
+            log.error("Error generating upload link for object: {}", objectKey, e);
             throw new StorageException("Failed to generate MinIO presigned URL", e);
+        }
+    }
+
+    @Override
+    public String generateTempLinkForViewing(String objectKey) {
+        try {
+            return minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Http.Method.GET)
+                            .bucket(minioProperties.bucketName())
+                            .object(objectKey)
+                            .expiry(30, TimeUnit.MINUTES)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Error generating view link for object: {}", objectKey, e);
+            throw new StorageException("Could not generate view link", e);
         }
     }
 

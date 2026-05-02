@@ -4,6 +4,7 @@ import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.model.Message;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface MessageService {
@@ -14,6 +15,8 @@ public interface MessageService {
     Message markMessageAsSentAndPublishOutbox(Message message, UUID recipientId);
 
     Message getMessageById(Long messageId);
+
+    List<Message> getChatHistory(UUID chatId, Long cursorId, int limit);
 
     Message getPendingMessageByObjectKey(String objectKey);
 }
