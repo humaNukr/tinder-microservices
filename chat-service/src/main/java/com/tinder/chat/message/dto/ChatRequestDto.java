@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record ChatRequestDto(
+        @NotNull UUID localId,
         @NotNull UUID chatId,
         @NotNull String payload,
         @ValueOfEnum(enumClass = MessageContentType.class) String type

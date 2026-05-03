@@ -5,9 +5,11 @@ import com.tinder.chat.chat.dto.MediaInitRequest;
 import com.tinder.chat.chat.dto.MediaInitResponse;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.chat.port.ChatParticipantProvider;
+import com.tinder.chat.chat.port.ClientNotificationPort;
 import com.tinder.chat.exception.AccessDeniedException;
 import com.tinder.chat.infrastructure.storage.StorageService;
 import com.tinder.chat.message.dto.ChatRequestDto;
+import com.tinder.chat.message.dto.MessageAckDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.MessageResponseDto;
 import com.tinder.chat.message.enums.MessageContentType;
@@ -32,12 +34,21 @@ public class MessageFacade {
     private final MessageService messageService;
     private final ChatEventPublisher eventPublisher;
     private final StorageService storageService;
+    private final ClientNotificationPort clientNotificationPort;
 
     @Transactional
     public void saveMessage(UUID senderId, ChatRequestDto requestDto) {
         UUID recipientId = resolveRecipientId(requestDto.chatId(), senderId);
         Message savedMessage = messageService.saveReadyMessage(senderId, recipientId, requestDto);
+
         publishMessageEvent(savedMessage, recipientId);
+
+        MessageAckDto ack = new MessageAckDto(
+                requestDto.localId(),
+                savedMessage.getId(),
+                savedMessage.getCreatedAt()
+        );
+        clientNotificationPort.sendAck(senderId, ack);
     }
 
     @Transactional
@@ -51,7 +62,11 @@ public class MessageFacade {
         Message pendingMessage = messageService.savePendingMessage(chatId, senderId, contentType, objectKey);
         String uploadUrl = storageService.generateTempLinkForUploading(objectKey);
 
-        return new MediaInitResponse(pendingMessage.getId(), uploadUrl);
+        return new MediaInitResponse(
+                request.localId(),
+                pendingMessage.getId(),
+                uploadUrl
+        );
     }
 
     @Transactional
@@ -63,9 +78,17 @@ public class MessageFacade {
         }
 
         UUID recipientId = resolveRecipientId(message.getChatId(), message.getSenderId());
+
         Message confirmedMessage = messageService.markMessageAsSentAndPublishOutbox(message, recipientId);
 
         publishMessageEvent(confirmedMessage, recipientId);
+
+        MessageAckDto ack = new MessageAckDto(
+                null,
+                confirmedMessage.getId(),
+                confirmedMessage.getCreatedAt()
+        );
+        clientNotificationPort.sendAck(message.getSenderId(), ack);
     }
 
     @Transactional(readOnly = true)

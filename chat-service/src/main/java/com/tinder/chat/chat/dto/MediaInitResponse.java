@@ -1,7 +1,10 @@
 package com.tinder.chat.chat.dto;
 
+import java.util.UUID;
+
 public record MediaInitResponse(
-        Long messageId,
+        UUID localId,
+        Long dbId,
         String uploadUrl
 ) {
-}
+} //TODO choose only 1 dto

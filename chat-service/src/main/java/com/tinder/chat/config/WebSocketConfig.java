@@ -18,10 +18,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketAuthorizationInterceptor authorizationInterceptor;
+    private final WebSocketProperties webSocketProperties;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint(WebSocketConstants.CHAT_ENDPOINT)
+        registry.addEndpoint(webSocketProperties.chatEndpoint())
                 .setAllowedOriginPatterns("*")
                 .setHandshakeHandler(new CustomHandshakeHandler())
                 .withSockJS();
@@ -29,9 +30,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes(WebSocketConstants.APP_DESTINATION_PREFIX);
+        registry.setApplicationDestinationPrefixes(webSocketProperties.appDestinationPrefix());
         registry.enableSimpleBroker("/topic", "/queue");
-        registry.setUserDestinationPrefix(WebSocketConstants.USER_DESTINATION_PREFIX);
+        registry.setUserDestinationPrefix(webSocketProperties.userDestinationPrefix());
     }
 
     @Override

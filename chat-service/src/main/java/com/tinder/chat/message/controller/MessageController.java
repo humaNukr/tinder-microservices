@@ -17,12 +17,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class MessageController {
-    private final MessageFacade orchestrator;
+    private final MessageFacade facade;
 
     @MessageMapping("/send")
     public void processIncomingMessage(@Payload @Valid ChatRequestDto requestDto, Principal principal) {
         log.info("Received a message from {} with chat id:{}", principal.getName(), requestDto.chatId());
         UUID senderId = UUID.fromString(principal.getName());
-        orchestrator.saveMessage(senderId, requestDto);
+        facade.saveMessage(senderId, requestDto);
     }
 }

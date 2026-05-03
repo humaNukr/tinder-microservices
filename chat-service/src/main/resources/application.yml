@@ -54,6 +54,13 @@ app:
       fixed-delay: 2000 #ms
       cleanup-cron: "0 0 3 * * *"
 
+  websocket:
+    app-destination-prefix: "/app"
+    user-destination-prefix: "/user"
+    chat-endpoint: "/ws/chat"
+    queue-messages: "/queue/messages"
+    queue-acks: "/queue/acks"
+
   minio:
     url: http://localhost:9000
     access-key: admin
