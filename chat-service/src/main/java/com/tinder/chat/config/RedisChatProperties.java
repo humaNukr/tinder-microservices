@@ -7,6 +7,7 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "app.redis.chat")
 public record RedisChatProperties(
         String channel,
+        String typingChannel,
         String keyPrefix,
         String keySuffix,
         Duration ttl

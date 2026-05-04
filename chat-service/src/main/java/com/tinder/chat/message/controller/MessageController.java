@@ -1,5 +1,6 @@
 package com.tinder.chat.message.controller;
 
+import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.service.MessageFacade;
 import jakarta.validation.Valid;
@@ -24,5 +25,11 @@ public class MessageController {
         log.info("Received a message from {} with chat id:{}", principal.getName(), requestDto.chatId());
         UUID senderId = UUID.fromString(principal.getName());
         facade.saveMessage(senderId, requestDto);
+    }
+
+    @MessageMapping("/typing")
+    public void processTypingEvent(@Payload TypingEventDto requestDto, Principal principal) {
+        UUID senderId = UUID.fromString(principal.getName());
+        facade.processTypingEvent(requestDto, senderId);
     }
 }

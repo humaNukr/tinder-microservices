@@ -1,5 +1,6 @@
 package com.tinder.chat.infrastructure.redis;
 
+import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.config.RedisChatProperties;
 import com.tinder.chat.message.dto.MessageEventDto;
@@ -17,5 +18,10 @@ public class RedisChatPublisher implements ChatEventPublisher {
     @Override
     public void publishNewMessage(MessageEventDto eventDto) {
         redisTemplate.convertAndSend(redisProperties.channel(), eventDto);
+    }
+
+    @Override
+    public void publishTypingEvent(TypingEventDto eventDto) {
+        redisTemplate.convertAndSend(redisProperties.typingChannel(), eventDto);
     }
 }

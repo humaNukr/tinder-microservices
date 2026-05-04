@@ -3,6 +3,7 @@ package com.tinder.chat.message.service;
 import com.tinder.chat.chat.dto.ChatHistoryResponseDto;
 import com.tinder.chat.chat.dto.MediaInitRequest;
 import com.tinder.chat.chat.dto.MediaInitResponse;
+import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.chat.port.ChatParticipantProvider;
 import com.tinder.chat.chat.port.ClientNotificationPort;
@@ -117,6 +118,10 @@ public class MessageFacade {
         Long nextCursor = messageDtos.isEmpty() ? null : messageDtos.getLast().id();
 
         return new ChatHistoryResponseDto(messageDtos, nextCursor, hasNext);
+    }
+
+    public void processTypingEvent(TypingEventDto requestDto, UUID senderId) {
+        eventPublisher.publishTypingEvent(new TypingEventDto(requestDto.chatId(), senderId));
     }
 
     private void publishMessageEvent(Message message, UUID recipientId) {

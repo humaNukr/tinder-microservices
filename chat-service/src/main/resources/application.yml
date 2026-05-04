@@ -42,6 +42,7 @@ app:
   redis:
     chat:
       channel: chat-channel
+      typing-channel: chat-typing-channel
       key-prefix: "chat:"
       key-suffix: :participants
       ttl: 7d #Days (duration format)

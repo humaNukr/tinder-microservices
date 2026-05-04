@@ -7,4 +7,4 @@ public record MediaInitResponse(
         Long dbId,
         String uploadUrl
 ) {
-} //TODO choose only 1 dto
+}
