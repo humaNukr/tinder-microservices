@@ -1,5 +1,6 @@
 package com.tinder.chat.message.controller;
 
+import com.tinder.chat.chat.dto.ReadReceiptRequest;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.service.MessageFacade;
@@ -31,5 +32,11 @@ public class MessageController {
     public void processTypingEvent(@Payload TypingEventDto requestDto, Principal principal) {
         UUID senderId = UUID.fromString(principal.getName());
         facade.processTypingEvent(requestDto, senderId);
+    }
+
+    @MessageMapping("/read")
+    public void processReadReceipt(@Payload ReadReceiptRequest request, Principal principal) {
+        UUID readerId = UUID.fromString(principal.getName());
+        facade.processReadReceipt(readerId, request);
     }
 }

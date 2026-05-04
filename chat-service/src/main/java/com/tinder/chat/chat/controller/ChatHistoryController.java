@@ -1,6 +1,7 @@
 package com.tinder.chat.chat.controller;
 
 import com.tinder.chat.chat.dto.ChatHistoryResponseDto;
+import com.tinder.chat.chat.dto.ChatInitResponseDto;
 import com.tinder.chat.message.service.MessageFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,16 @@ import java.util.UUID;
 public class ChatHistoryController {
 
     private final MessageFacade messageFacade;
+
+    @GetMapping("/{chatId}/init")
+    public ChatInitResponseDto initChat(
+            @PathVariable UUID chatId,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestHeader("X-User-Id") UUID userId
+    ) {
+        int safeLimit = Math.min(limit, 50);
+        return messageFacade.initChat(chatId, userId, safeLimit);
+    }
 
     @GetMapping("/{chatId}/messages")
     public ChatHistoryResponseDto getChatHistory(

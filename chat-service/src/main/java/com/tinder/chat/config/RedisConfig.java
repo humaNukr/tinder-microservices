@@ -28,6 +28,7 @@ public class RedisConfig {
 
         container.addMessageListener(subscriber, new ChannelTopic(redisProperties.channel()));
         container.addMessageListener(subscriber, new ChannelTopic(redisProperties.typingChannel()));
+        container.addMessageListener(subscriber, new ChannelTopic(redisProperties.readReceiptChannel()));
 
         return container;
     }

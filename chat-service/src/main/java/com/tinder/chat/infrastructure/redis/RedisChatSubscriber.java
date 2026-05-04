@@ -5,6 +5,7 @@ import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.config.RedisChatProperties;
 import com.tinder.chat.config.WebSocketProperties;
 import com.tinder.chat.message.dto.MessageEventDto;
+import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -40,6 +41,10 @@ public class RedisChatSubscriber implements MessageListener {
                 TypingEventDto typingDto = objectMapper.readValue(body, TypingEventDto.class);
                 handleTypingEvent(typingDto);
 
+            } else if (channel.equals(redisProperties.readReceiptChannel())) {
+
+                ReadReceiptEventDto receiptDto = objectMapper.readValue(body, ReadReceiptEventDto.class);
+                handleReadReceipt(receiptDto);
             } else {
                 log.warn("Received message from unknown Redis channel: {}", channel);
             }
@@ -63,5 +68,13 @@ public class RedisChatSubscriber implements MessageListener {
 
         log.debug("Processing typing event for chat={} from sender={}", typingDto.chatId(), typingDto.senderId());
         messagingTemplate.convertAndSend(destination, typingDto);
+    }
+
+    private void handleReadReceipt(ReadReceiptEventDto receiptDto) {
+        messagingTemplate.convertAndSendToUser(
+                receiptDto.recipientId().toString(),
+                "/queue/read-receipts",
+                receiptDto
+        );
     }
 }

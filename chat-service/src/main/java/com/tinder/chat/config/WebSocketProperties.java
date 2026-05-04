@@ -8,6 +8,7 @@ public record WebSocketProperties(
         String userDestinationPrefix,
         String chatEndpoint,
         String queueMessages,
-        String queueAcks
+        String queueAcks,
+        String queueReadReceipts
 ) {
 }

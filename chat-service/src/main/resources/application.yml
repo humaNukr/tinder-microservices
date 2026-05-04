@@ -43,6 +43,7 @@ app:
     chat:
       channel: chat-channel
       typing-channel: chat-typing-channel
+      read-receipt-channel: chat-read-receipt-channel
       key-prefix: "chat:"
       key-suffix: :participants
       ttl: 7d #Days (duration format)
@@ -61,6 +62,7 @@ app:
     chat-endpoint: "/ws/chat"
     queue-messages: "/queue/messages"
     queue-acks: "/queue/acks"
+    queue-read_receipts: "/queue/read-receipts"
 
   minio:
     url: http://localhost:9000

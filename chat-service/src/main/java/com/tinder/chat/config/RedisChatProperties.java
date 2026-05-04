@@ -8,6 +8,7 @@ import java.time.Duration;
 public record RedisChatProperties(
         String channel,
         String typingChannel,
+        String readReceiptChannel,
         String keyPrefix,
         String keySuffix,
         Duration ttl

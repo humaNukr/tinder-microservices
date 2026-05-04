@@ -1,18 +1,22 @@
 package com.tinder.chat.message.service;
 
 import com.tinder.chat.chat.dto.ChatHistoryResponseDto;
+import com.tinder.chat.chat.dto.ChatInitResponseDto;
 import com.tinder.chat.chat.dto.MediaInitRequest;
 import com.tinder.chat.chat.dto.MediaInitResponse;
+import com.tinder.chat.chat.dto.ReadReceiptRequest;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.chat.port.ChatParticipantProvider;
 import com.tinder.chat.chat.port.ClientNotificationPort;
+import com.tinder.chat.chat.service.ChatParticipantService;
 import com.tinder.chat.exception.AccessDeniedException;
 import com.tinder.chat.infrastructure.storage.StorageService;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageAckDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.MessageResponseDto;
+import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.enums.MessageStatus;
 import com.tinder.chat.message.model.Message;
@@ -36,11 +40,14 @@ public class MessageFacade {
     private final ChatEventPublisher eventPublisher;
     private final StorageService storageService;
     private final ClientNotificationPort clientNotificationPort;
+    private final ChatParticipantService participantService;
 
     @Transactional
     public void saveMessage(UUID senderId, ChatRequestDto requestDto) {
         UUID recipientId = resolveRecipientId(requestDto.chatId(), senderId);
         Message savedMessage = messageService.saveReadyMessage(senderId, recipientId, requestDto);
+
+        participantService.updateWatermark(requestDto.chatId(), senderId, savedMessage.getId());
 
         publishMessageEvent(savedMessage, recipientId);
 
@@ -63,10 +70,31 @@ public class MessageFacade {
         Message pendingMessage = messageService.savePendingMessage(chatId, senderId, contentType, objectKey);
         String uploadUrl = storageService.generateTempLinkForUploading(objectKey);
 
+        participantService.updateWatermark(chatId, senderId, pendingMessage.getId());
+
         return new MediaInitResponse(
                 request.localId(),
                 pendingMessage.getId(),
                 uploadUrl
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ChatInitResponseDto initChat(UUID chatId, UUID userId, int limit) {
+        validateParticipant(chatId, userId);
+
+        ChatHistoryResponseDto historyPage = getChatHistory(chatId, userId, null, limit);
+
+        UUID partnerId = resolveRecipientId(chatId, userId);
+        Long partnerWatermark = participantService.getParticipantWatermark(chatId, partnerId);
+        Long myWatermark = participantService.getParticipantWatermark(chatId, userId);
+
+        return new ChatInitResponseDto(
+                historyPage.messages(),
+                partnerWatermark,
+                myWatermark,
+                historyPage.nextCursor(),
+                historyPage.hasNext()
         );
     }
 
@@ -118,6 +146,24 @@ public class MessageFacade {
         Long nextCursor = messageDtos.isEmpty() ? null : messageDtos.getLast().id();
 
         return new ChatHistoryResponseDto(messageDtos, nextCursor, hasNext);
+    }
+
+    @Transactional
+    public void processReadReceipt(UUID readerId, ReadReceiptRequest request) {
+        int updatedRows = participantService.updateWatermark(request.chatId(), readerId, request.messageId());
+
+        if (updatedRows == 0) {
+            return;
+        }
+
+        UUID recipientId = resolveRecipientId(request.chatId(), readerId);
+        ReadReceiptEventDto eventDto = new ReadReceiptEventDto(
+                request.chatId(),
+                readerId,
+                recipientId,
+                request.messageId()
+        );
+        eventPublisher.publishReadReceipt(eventDto);
     }
 
     public void processTypingEvent(TypingEventDto requestDto, UUID senderId) {
