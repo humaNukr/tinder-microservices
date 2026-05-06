@@ -10,6 +10,7 @@ import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.chat.port.ChatParticipantProvider;
 import com.tinder.chat.chat.port.ClientNotificationPort;
+import com.tinder.chat.chat.port.IdempotencyPort;
 import com.tinder.chat.chat.service.ChatParticipantService;
 import com.tinder.chat.exception.AccessDeniedException;
 import com.tinder.chat.infrastructure.storage.StorageService;
@@ -27,6 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -44,17 +47,38 @@ public class MessageFacade {
     private final ClientNotificationPort clientNotificationPort;
     private final ChatParticipantService participantService;
     private final UserPresenceService userPresenceService;
+    private final IdempotencyPort idempotencyPort;
 
     @Transactional
     public void saveMessage(UUID senderId, ChatRequestDto requestDto) {
+        String idempotencyKey = "chat:idempotency:" + senderId + ":" + requestDto.localId();
+        Duration ttl = Duration.ofHours(24);
+
+        if (!idempotencyPort.tryAcquire(idempotencyKey, ttl)) {
+            log.warn("Idempotent request detected for localId: {}", requestDto.localId());
+
+            String existingResult = idempotencyPort.getResult(idempotencyKey);
+
+            Long dbIdToReturn = ("PENDING".equals(existingResult) || existingResult == null)
+                    ? null
+                    : Long.valueOf(existingResult);
+
+            clientNotificationPort.sendAck(senderId, new MessageAckDto(
+                    requestDto.localId(),
+                    dbIdToReturn,
+                    Instant.now()
+            ));
+            return;
+        }
+
         Set<UUID> participants = getParticipantsAndValidate(requestDto.chatId(), senderId);
         UUID recipientId = getPartnerId(participants, senderId);
 
         Message savedMessage = messageService.saveReadyMessage(senderId, recipientId, requestDto);
-
         participantService.updateWatermark(requestDto.chatId(), senderId, savedMessage.getId());
-
         publishMessageEvent(savedMessage, recipientId);
+
+        idempotencyPort.complete(idempotencyKey, savedMessage.getId().toString(), ttl);
 
         MessageAckDto ack = new MessageAckDto(
                 requestDto.localId(),
