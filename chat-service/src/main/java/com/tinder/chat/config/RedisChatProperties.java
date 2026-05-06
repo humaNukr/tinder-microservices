@@ -9,6 +9,7 @@ public record RedisChatProperties(
         String channel,
         String typingChannel,
         String readReceiptChannel,
+        String deleteChannel,
         String keyPrefix,
         String keySuffix,
         Duration ttl

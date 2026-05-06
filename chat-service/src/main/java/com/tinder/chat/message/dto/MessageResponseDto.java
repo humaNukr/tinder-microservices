@@ -10,6 +10,7 @@ public record MessageResponseDto(
         UUID senderId,
         MessageContentType type,
         String content,
-        Instant createdAt
+        Instant createdAt,
+        Instant deletedAt
 ) {
 }

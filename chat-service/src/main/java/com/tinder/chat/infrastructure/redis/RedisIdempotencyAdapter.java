@@ -13,8 +13,8 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RedisIdempotencyAdapter implements IdempotencyPort {
 
-    private final StringRedisTemplate stringRedisTemplate;
     private static final String PENDING_MARKER = "PENDING";
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     public boolean tryAcquire(String idempotencyKey, Duration ttl) {

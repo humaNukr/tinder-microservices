@@ -45,6 +45,7 @@ app:
       channel: chat-channel
       typing-channel: chat-typing-channel
       read-receipt-channel: chat-read-receipt-channel
+      delete-channel: chat:deletions
       key-prefix: "chat:"
       key-suffix: ":participants"
       ttl: 7d

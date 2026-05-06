@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changes/04-create-messages-table.sql
   - include:
       file: db/changelog/changes/05-create-outbox-events-table.sql
+  - include:
+      file: db/changelog/changes/06-add-deleted-at.sql

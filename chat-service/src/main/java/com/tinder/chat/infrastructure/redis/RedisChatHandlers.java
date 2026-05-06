@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.config.WebSocketProperties;
+import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,17 @@ public class RedisChatHandlers {
                 receiptDto.recipientId().toString(),
                 webSocketProperties.queueReadReceipts(),
                 receiptDto
+        );
+    }
+
+    public void handleMessageDeletedEvent(String messageBody) throws JsonProcessingException {
+        MessageDeletedEventDto eventDto = objectMapper.readValue(messageBody, MessageDeletedEventDto.class);
+        log.debug("Broadcasting message deletion to user {}: messageId {}", eventDto.recipientId(), eventDto.messageId());
+
+        messagingTemplate.convertAndSendToUser(
+                eventDto.recipientId().toString(),
+                "/queue/message-deletions",
+                eventDto
         );
     }
 }

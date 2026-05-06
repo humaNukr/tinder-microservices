@@ -10,6 +10,7 @@ public record MessageEventDto(
         UUID recipientId,
         String contentType,
         String content,
-        Instant createdAt
+        Instant createdAt,
+        Instant deletedAt
 ) {
 }

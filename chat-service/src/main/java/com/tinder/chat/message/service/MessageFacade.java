@@ -13,9 +13,11 @@ import com.tinder.chat.chat.port.ClientNotificationPort;
 import com.tinder.chat.chat.port.IdempotencyPort;
 import com.tinder.chat.chat.service.ChatParticipantService;
 import com.tinder.chat.exception.AccessDeniedException;
+import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.infrastructure.storage.StorageService;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageAckDto;
+import com.tinder.chat.message.dto.MessageDeleteDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.MessageResponseDto;
 import com.tinder.chat.message.enums.MessageContentType;
@@ -86,6 +88,27 @@ public class MessageFacade {
                 savedMessage.getCreatedAt()
         );
         clientNotificationPort.sendAck(senderId, ack);
+    }
+
+    @Transactional
+    public void deleteMessage(UUID senderId, MessageDeleteDto request) {
+        Set<UUID> participants = getParticipantsAndValidate(request.chatId(), senderId);
+        UUID partnerId = getPartnerId(participants, senderId);
+
+        Message message = messageService.getMessageById(request.messageId());
+
+        if (!message.getSenderId().equals(senderId)) {
+            throw new AccessDeniedException("You can only delete your own messages");
+        }
+        if (!message.getChatId().equals(request.chatId())) {
+            throw new IllegalArgumentException("Message does not belong to this chat");
+        }
+        if (message.isDeleted()) {
+            return;
+        }
+
+        message.markAsDeleted();
+        publishMessageDeletedEvent(message, partnerId);
     }
 
     @Transactional
@@ -223,6 +246,17 @@ public class MessageFacade {
                 .orElseThrow(() -> new IllegalStateException("Recipient not found"));
     }
 
+    private void publishMessageDeletedEvent(Message message, UUID recipientId) {
+        MessageDeletedEventDto eventDto = new MessageDeletedEventDto(
+                message.getId(),
+                message.getChatId(),
+                message.getSenderId(),
+                recipientId,
+                message.getDeletedAt()
+        );
+        eventPublisher.publishMessageDeleted(eventDto);
+    }
+
     private void publishMessageEvent(Message message, UUID recipientId) {
         MessageEventDto eventDto = new MessageEventDto(
                 message.getId(),
@@ -231,18 +265,22 @@ public class MessageFacade {
                 recipientId,
                 message.getContentType().name(),
                 resolveContentUrl(message),
-                message.getCreatedAt()
+                message.getCreatedAt(),
+                message.getDeletedAt()
         );
         eventPublisher.publishNewMessage(eventDto);
     }
 
     private MessageResponseDto toMessageResponseDto(Message message) {
+        String finalContent = message.isDeleted() ? "TOMBSTONE" : resolveContentUrl(message);
+
         return new MessageResponseDto(
                 message.getId(),
                 message.getSenderId(),
                 message.getContentType(),
-                resolveContentUrl(message),
-                message.getCreatedAt()
+                finalContent,
+                message.getCreatedAt(),
+                message.getDeletedAt()
         );
     }
 

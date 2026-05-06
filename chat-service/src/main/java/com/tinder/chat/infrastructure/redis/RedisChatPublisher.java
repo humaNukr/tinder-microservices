@@ -4,6 +4,7 @@ import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.config.RedisChatProperties;
+import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,5 +30,10 @@ public class RedisChatPublisher implements ChatEventPublisher {
     @Override
     public void publishReadReceipt(ReadReceiptEventDto eventDto) {
         redisTemplate.convertAndSend(redisProperties.readReceiptChannel(), eventDto);
+    }
+
+    @Override
+    public void publishMessageDeleted(MessageDeletedEventDto eventDto) {
+        redisTemplate.convertAndSend(redisProperties.deleteChannel(), eventDto);
     }
 }

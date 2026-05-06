@@ -44,6 +44,11 @@ public class RedisConfig {
                 new ChannelTopic(presenceProperties.channel())
         );
 
+        container.addMessageListener(
+                createAdapter(chatHandlers, "handleMessageDeletedEvent"),
+                new ChannelTopic(chatProperties.deleteChannel())
+        );
+
         return container;
     }
 

@@ -2,6 +2,7 @@ package com.tinder.chat.chat.port;
 
 import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import com.tinder.chat.chat.dto.TypingEventDto;
+import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 
 public interface ChatEventPublisher {
@@ -10,4 +11,6 @@ public interface ChatEventPublisher {
     void publishTypingEvent(TypingEventDto eventDto);
 
     void publishReadReceipt(ReadReceiptEventDto eventDto);
+
+    void publishMessageDeleted(MessageDeletedEventDto eventDto);
 }

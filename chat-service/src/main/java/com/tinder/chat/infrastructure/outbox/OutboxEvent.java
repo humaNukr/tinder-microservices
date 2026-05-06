@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnTransformer;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +26,7 @@ public class OutboxEvent {
     private String topic;
 
     @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
+    @ColumnTransformer(write = "?::jsonb")
     private String payload;
 
     @Column(name = "created_at", nullable = false)

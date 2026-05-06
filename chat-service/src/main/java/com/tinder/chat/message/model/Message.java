@@ -57,4 +57,17 @@ public class Message {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    public void markAsDeleted() {
+        deletedAt = Instant.now();
+        content = "";
+        contentType = MessageContentType.TEXT;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
 }
