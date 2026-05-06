@@ -26,9 +26,7 @@ public class UserPresenceListener {
             UserPresenceEvent event = objectMapper.readValue(payload, UserPresenceEvent.class);
             log.debug("Received presence event: user={}, online={}", event.userId(), event.isOnline());
 
-            if (!event.isOnline()) {
-                profileService.updateLastSeen(event.userId(), event.timestamp());
-            }
+            profileService.updateLastSeen(event.userId(), event.timestamp());
         } catch (Exception e) {
             log.error("Failed to process user presence event: {}", payload, e);
         }

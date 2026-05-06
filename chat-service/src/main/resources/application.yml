@@ -46,11 +46,13 @@ app:
       typing-channel: chat-typing-channel
       read-receipt-channel: chat-read-receipt-channel
       key-prefix: "chat:"
-      key-suffix: :participants
-      ttl: 7d #Days (duration format)
+      key-suffix: ":participants"
+      ttl: 7d
     presence:
       channel: user-presence-channel
       session-key-prefix: "user:sessions:"
+      grace-period-prefix: "user:grace:"
+      grace-period-duration: 15s
 
   outbox:
     scheduler:

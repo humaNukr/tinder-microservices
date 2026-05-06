@@ -28,24 +28,30 @@ public class RedisConfig {
         container.setConnectionFactory(connectionFactory);
 
         container.addMessageListener(
-                new MessageListenerAdapter(chatHandlers, "handleChatMessage"),
+                createAdapter(chatHandlers, "handleChatMessage"),
                 new ChannelTopic(chatProperties.channel())
         );
         container.addMessageListener(
-                new MessageListenerAdapter(chatHandlers, "handleTypingEvent"),
+                createAdapter(chatHandlers, "handleTypingEvent"),
                 new ChannelTopic(chatProperties.typingChannel())
         );
         container.addMessageListener(
-                new MessageListenerAdapter(chatHandlers, "handleReadReceipt"),
+                createAdapter(chatHandlers, "handleReadReceipt"),
                 new ChannelTopic(chatProperties.readReceiptChannel())
         );
-
         container.addMessageListener(
-                new MessageListenerAdapter(presenceHandlers, "handlePresenceEvent"),
+                createAdapter(presenceHandlers, "handlePresenceEvent"),
                 new ChannelTopic(presenceProperties.channel())
         );
 
         return container;
+    }
+
+
+    private MessageListenerAdapter createAdapter(Object delegate, String methodName) {
+        MessageListenerAdapter adapter = new MessageListenerAdapter(delegate, methodName);
+        adapter.afterPropertiesSet();
+        return adapter;
     }
 
     @Bean

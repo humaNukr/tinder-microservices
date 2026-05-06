@@ -20,15 +20,17 @@ public class UserPresenceServiceImpl implements UserPresenceService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisPresenceProperties presenceProperties;
-
     private final List<UserPresencePublisher> publishers;
 
     @Override
     public void userConnected(UUID userId, String sessionId) {
-        String key = presenceProperties.sessionKeyPrefix() + userId;
-        Long activeSessions = stringRedisTemplate.opsForSet().add(key, sessionId);
+        String sessionKey = presenceProperties.sessionKeyPrefix() + userId;
+        String graceKey = presenceProperties.gracePeriodPrefix() + userId;
 
-        stringRedisTemplate.expire(key, Duration.ofHours(24));
+        stringRedisTemplate.delete(graceKey);
+
+        Long activeSessions = stringRedisTemplate.opsForSet().add(sessionKey, sessionId);
+        stringRedisTemplate.expire(sessionKey, Duration.ofHours(24));
 
         if (activeSessions != null && activeSessions == 1L) {
             publishEvents(userId, true);
@@ -37,16 +39,30 @@ public class UserPresenceServiceImpl implements UserPresenceService {
 
     @Override
     public void userDisconnected(UUID userId, String sessionId) {
-        String key = presenceProperties.sessionKeyPrefix() + userId;
-        stringRedisTemplate.opsForSet().remove(key, sessionId);
+        String sessionKey = presenceProperties.sessionKeyPrefix() + userId;
+        String graceKey = presenceProperties.gracePeriodPrefix() + userId;
 
-        Long remainingSessions = stringRedisTemplate.opsForSet().size(key);
+        stringRedisTemplate.opsForSet().remove(sessionKey, sessionId);
+        Long remainingSessions = stringRedisTemplate.opsForSet().size(sessionKey);
 
         if (remainingSessions == null || remainingSessions == 0L) {
+            log.debug("User {} disconnected. Starting grace period.", userId);
+            stringRedisTemplate.opsForValue().set(graceKey, "pending", presenceProperties.gracePeriodDuration());
+        }
+    }
+
+    @Override
+    public void handleGracePeriodExpired(UUID userId) {
+        String sessionKey = presenceProperties.sessionKeyPrefix() + userId;
+        Long remainingSessions = stringRedisTemplate.opsForSet().size(sessionKey);
+
+        if (remainingSessions == null || remainingSessions == 0L) {
+            log.debug("Grace period expired for user {}. Publishing offline event.", userId);
             publishEvents(userId, false);
         }
     }
 
+    @Override
     public boolean isUserOnline(UUID userId) {
         String key = presenceProperties.sessionKeyPrefix() + userId;
         Long sessions = stringRedisTemplate.opsForSet().size(key);

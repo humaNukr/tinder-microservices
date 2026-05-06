@@ -7,5 +7,7 @@ public interface UserPresenceService {
 
     void userDisconnected(UUID userId, String sessionId);
 
+    void handleGracePeriodExpired(UUID userId);
+
     boolean isUserOnline(UUID userId);
 }

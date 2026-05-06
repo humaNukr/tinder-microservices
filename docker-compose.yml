@@ -68,6 +68,7 @@ services:
     container_name: shared_redis
     ports:
       - "6379:6379"
+    command: redis-server --notify-keyspace-events Ex
 
   shared_minio:
     image: minio/minio
