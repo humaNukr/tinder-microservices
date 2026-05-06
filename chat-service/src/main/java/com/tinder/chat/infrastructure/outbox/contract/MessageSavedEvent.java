@@ -1,4 +1,4 @@
-package com.tinder.chat.message.event;
+package com.tinder.chat.infrastructure.outbox.contract;
 
 import com.tinder.chat.message.model.Message;
 

@@ -4,6 +4,7 @@ import com.tinder.chat.chat.dto.ChatHistoryResponseDto;
 import com.tinder.chat.chat.dto.ChatInitResponseDto;
 import com.tinder.chat.chat.dto.MediaInitRequest;
 import com.tinder.chat.chat.dto.MediaInitResponse;
+import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import com.tinder.chat.chat.dto.ReadReceiptRequest;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
@@ -16,10 +17,10 @@ import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageAckDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.MessageResponseDto;
-import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.enums.MessageStatus;
 import com.tinder.chat.message.model.Message;
+import com.tinder.chat.user.service.UserPresenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ public class MessageFacade {
     private final StorageService storageService;
     private final ClientNotificationPort clientNotificationPort;
     private final ChatParticipantService participantService;
+    private final UserPresenceService userPresenceService;
 
     @Transactional
     public void saveMessage(UUID senderId, ChatRequestDto requestDto) {
@@ -86,11 +88,13 @@ public class MessageFacade {
         ChatHistoryResponseDto historyPage = getChatHistory(chatId, userId, null, limit);
 
         UUID partnerId = resolveRecipientId(chatId, userId);
+        boolean isPartnerOnline = userPresenceService.isUserOnline(partnerId);
         Long partnerWatermark = participantService.getParticipantWatermark(chatId, partnerId);
         Long myWatermark = participantService.getParticipantWatermark(chatId, userId);
 
         return new ChatInitResponseDto(
                 historyPage.messages(),
+                isPartnerOnline,
                 partnerWatermark,
                 myWatermark,
                 historyPage.nextCursor(),

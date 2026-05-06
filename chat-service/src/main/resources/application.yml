@@ -36,6 +36,7 @@ app:
       match-events: match-events
       message-events: message-events
       minio-chat-media-events: minio-chat-media-events
+      user-presence-events: user-presence-events
     consumer-groups:
       chat-service: chat-service-group
 
@@ -47,6 +48,9 @@ app:
       key-prefix: "chat:"
       key-suffix: :participants
       ttl: 7d #Days (duration format)
+    presence:
+      channel: user-presence-channel
+      session-key-prefix: "user:sessions:"
 
   outbox:
     scheduler:
@@ -62,7 +66,9 @@ app:
     chat-endpoint: "/ws/chat"
     queue-messages: "/queue/messages"
     queue-acks: "/queue/acks"
-    queue-read_receipts: "/queue/read-receipts"
+    queue-read-receipts: "/queue/read-receipts"
+    topic-users-prefix: "/topic/users"
+    topic-users-presence-suffix: "/presence"
 
   minio:
     url: http://localhost:9000

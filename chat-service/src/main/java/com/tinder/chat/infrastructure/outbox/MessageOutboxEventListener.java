@@ -2,7 +2,7 @@ package com.tinder.chat.infrastructure.outbox;
 
 import com.tinder.chat.config.KafkaTopicsProperties;
 import com.tinder.chat.infrastructure.kafka.contract.MessageSentEvent;
-import com.tinder.chat.message.event.MessageSavedEvent;
+import com.tinder.chat.infrastructure.outbox.contract.MessageSavedEvent;
 import com.tinder.chat.message.model.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

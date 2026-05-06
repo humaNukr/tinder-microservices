@@ -9,4 +9,6 @@ build/
 .idea/
 *.iml
 
+.github/git-commit-instructions.md
+
 1.html

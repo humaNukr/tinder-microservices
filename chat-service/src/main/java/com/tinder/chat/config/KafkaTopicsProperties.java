@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record KafkaTopicsProperties(
         String matchEvents,
         String messageEvents,
-        String minioChatMediaEvents
+        String minioChatMediaEvents,
+        String userPresenceEvents
 ) {
 }

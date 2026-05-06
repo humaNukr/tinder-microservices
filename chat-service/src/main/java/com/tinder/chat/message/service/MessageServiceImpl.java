@@ -4,7 +4,7 @@ import com.tinder.chat.exception.EntityNotFoundException;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.enums.MessageStatus;
-import com.tinder.chat.message.event.MessageSavedEvent;
+import com.tinder.chat.infrastructure.outbox.contract.MessageSavedEvent;
 import com.tinder.chat.message.model.Message;
 import com.tinder.chat.message.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;

@@ -9,6 +9,8 @@ public record WebSocketProperties(
         String chatEndpoint,
         String queueMessages,
         String queueAcks,
-        String queueReadReceipts
+        String queueReadReceipts,
+        String topicUsersPrefix,
+        String topicUsersPresenceSuffix
 ) {
 }
