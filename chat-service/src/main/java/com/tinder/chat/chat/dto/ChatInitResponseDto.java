@@ -11,4 +11,5 @@ public record ChatInitResponseDto(
         Long myLastReadMessageId,
         Long nextCursor,
         boolean hasNext
-) {}
+) {
+}

@@ -23,7 +23,7 @@ public class WebSocketPresenceListener {
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = headerAccessor.getUser();
-        
+
         if (principal != null) {
             UUID userId = UUID.fromString(principal.getName());
             String sessionId = headerAccessor.getSessionId();
@@ -36,7 +36,7 @@ public class WebSocketPresenceListener {
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = headerAccessor.getUser();
-        
+
         if (principal != null) {
             UUID userId = UUID.fromString(principal.getName());
             String sessionId = headerAccessor.getSessionId();

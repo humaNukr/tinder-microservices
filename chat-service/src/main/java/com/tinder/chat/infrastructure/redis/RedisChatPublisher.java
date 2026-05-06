@@ -1,10 +1,10 @@
 package com.tinder.chat.infrastructure.redis;
 
+import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.config.RedisChatProperties;
 import com.tinder.chat.message.dto.MessageEventDto;
-import com.tinder.chat.chat.dto.ReadReceiptEventDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;

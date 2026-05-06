@@ -1,4 +1,4 @@
-package com.tinder.chat.infrastructure.kafka.contract;
+package com.tinder.profile.event;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

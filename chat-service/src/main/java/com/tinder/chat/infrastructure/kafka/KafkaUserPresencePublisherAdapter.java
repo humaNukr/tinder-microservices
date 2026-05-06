@@ -21,16 +21,18 @@ public class KafkaUserPresencePublisherAdapter implements UserPresencePublisher 
 
     @Override
     public void publishUserPresenceEvent(UserPresenceEvent event) {
+        if (event.isOnline()) {
+            log.trace("Skipping Kafka publish for online event: user={}", event.userId());
+            return;
+        }
+
         try {
             String payload = objectMapper.writeValueAsString(event);
-
-            log.debug("Sending presence event to Kafka topic {}: {}", topicsProperties.userPresenceEvents(), payload);
-
+            log.debug("Sending offline presence event to Kafka topic {}: {}", topicsProperties.userPresenceEvents(), payload);
             kafkaTemplate.send(topicsProperties.userPresenceEvents(), event.userId().toString(), payload);
 
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize UserPresenceEvent for Kafka: {}", event, e);
-            throw new RuntimeException("Error serializing Kafka payload", e);
         }
     }
 }

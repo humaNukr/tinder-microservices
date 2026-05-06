@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +27,8 @@ public class UserPresenceServiceImpl implements UserPresenceService {
     public void userConnected(UUID userId, String sessionId) {
         String key = presenceProperties.sessionKeyPrefix() + userId;
         Long activeSessions = stringRedisTemplate.opsForSet().add(key, sessionId);
+
+        stringRedisTemplate.expire(key, Duration.ofHours(24));
 
         if (activeSessions != null && activeSessions == 1L) {
             publishEvents(userId, true);

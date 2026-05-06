@@ -8,6 +8,7 @@ import com.tinder.profile.dto.UpdatePreferencesRequest;
 import com.tinder.profile.dto.UpdateProfileRequest;
 import com.tinder.profile.dto.UserPreferencesResponse;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,4 +36,6 @@ public interface ProfileService {
     List<String> removePhotosFromProfile(UUID userId, List<String> photoUrlsToRemove);
 
     Profile getProfileEntity(UUID userId);
+
+    void updateLastSeen(UUID userId, LocalDateTime timestamp);
 }

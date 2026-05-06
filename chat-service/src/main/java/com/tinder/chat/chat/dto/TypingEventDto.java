@@ -5,4 +5,5 @@ import java.util.UUID;
 public record TypingEventDto(
         UUID chatId,
         UUID senderId
-) {}
+) {
+}

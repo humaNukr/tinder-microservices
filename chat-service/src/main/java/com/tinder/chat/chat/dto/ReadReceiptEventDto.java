@@ -7,4 +7,5 @@ public record ReadReceiptEventDto(
         UUID readerId,
         UUID recipientId,
         Long messageId
-) {}
+) {
+}

@@ -7,4 +7,5 @@ public record MessageAckDto(
         UUID localId,
         Long dbId,
         Instant createdAt
-) {}
+) {
+}
