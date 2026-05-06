@@ -27,5 +27,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             Pageable pageable
     );
 
-    Optional<Message> findByContentAndStatus(String content, MessageStatus status);
+    @Query("SELECT m FROM Message m WHERE m.content = :objectKey AND m.status = 'UPLOADING'")
+    Optional<Message> findPendingMessageByObjectKey(@Param("objectKey") String objectKey);
 }

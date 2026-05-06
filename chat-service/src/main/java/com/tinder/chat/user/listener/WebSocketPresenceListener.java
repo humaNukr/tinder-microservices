@@ -1,6 +1,6 @@
 package com.tinder.chat.user.listener;
 
-import com.tinder.chat.user.service.UserPresenceServiceImpl;
+import com.tinder.chat.user.service.UserPresenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @Slf4j
 public class WebSocketPresenceListener {
 
-    private final UserPresenceServiceImpl presenceService;
+    private final UserPresenceService presenceService;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {

@@ -93,7 +93,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional(readOnly = true)
     public Message getPendingMessageByObjectKey(String objectKey) {
-        return messageRepository.findByContentAndStatus(objectKey, MessageStatus.UPLOADING)
+        return messageRepository.findPendingMessageByObjectKey(objectKey)
                 .orElseThrow(() -> new EntityNotFoundException("Pending message not found for key: " + objectKey));
     }
 }

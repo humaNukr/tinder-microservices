@@ -21,11 +21,6 @@ public class KafkaUserPresencePublisherAdapter implements UserPresencePublisher 
 
     @Override
     public void publishUserPresenceEvent(UserPresenceEvent event) {
-        if (event.isOnline()) {
-            log.trace("Skipping Kafka publish for online event: user={}", event.userId());
-            return;
-        }
-
         try {
             String payload = objectMapper.writeValueAsString(event);
             log.debug("Sending offline presence event to Kafka topic {}: {}", topicsProperties.userPresenceEvents(), payload);

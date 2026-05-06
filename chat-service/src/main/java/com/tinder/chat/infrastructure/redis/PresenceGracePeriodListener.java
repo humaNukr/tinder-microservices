@@ -1,6 +1,7 @@
 package com.tinder.chat.infrastructure.redis;
 
 import com.tinder.chat.config.RedisPresenceProperties;
+import com.tinder.chat.user.service.UserPresenceService;
 import com.tinder.chat.user.service.UserPresenceServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -14,12 +15,12 @@ import java.util.UUID;
 @Component
 public class PresenceGracePeriodListener extends KeyExpirationEventMessageListener {
 
-    private final UserPresenceServiceImpl userPresenceService;
+    private final UserPresenceService userPresenceService;
     private final RedisPresenceProperties presenceProperties;
 
     public PresenceGracePeriodListener(
             RedisMessageListenerContainer listenerContainer,
-            UserPresenceServiceImpl userPresenceService,
+            UserPresenceService userPresenceService,
             RedisPresenceProperties presenceProperties) {
         super(listenerContainer);
         this.userPresenceService = userPresenceService;
@@ -35,7 +36,7 @@ public class PresenceGracePeriodListener extends KeyExpirationEventMessageListen
             try {
                 String userIdStr = expiredKey.substring(gracePrefix.length());
                 UUID userId = UUID.fromString(userIdStr);
-                
+
                 userPresenceService.handleGracePeriodExpired(userId);
             } catch (IllegalArgumentException e) {
                 log.error("Failed to parse UUID from expired key: {}", expiredKey);

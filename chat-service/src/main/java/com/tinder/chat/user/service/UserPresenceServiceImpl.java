@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,7 +19,8 @@ public class UserPresenceServiceImpl implements UserPresenceService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisPresenceProperties presenceProperties;
-    private final List<UserPresencePublisher> publishers;
+    private final UserPresencePublisher redisUserPresencePublisher;
+    private final UserPresencePublisher kafkaUserPresencePublisherAdapter;
 
     @Override
     public void userConnected(UUID userId, String sessionId) {
@@ -71,13 +71,18 @@ public class UserPresenceServiceImpl implements UserPresenceService {
 
     private void publishEvents(UUID userId, boolean isOnline) {
         UserPresenceEvent event = new UserPresenceEvent(userId, isOnline, LocalDateTime.now());
-        log.info("Presence changed for user {}. Online: {}. Publishing...", userId, isOnline);
 
-        for (UserPresencePublisher publisher : publishers) {
+        try {
+            redisUserPresencePublisher.publishUserPresenceEvent(event);
+        } catch (Exception e) {
+            log.error("Failed to publish presence event to Redis", e);
+        }
+
+        if (!isOnline) {
             try {
-                publisher.publishUserPresenceEvent(event);
+                kafkaUserPresencePublisherAdapter.publishUserPresenceEvent(event);
             } catch (Exception e) {
-                log.error("Failed to publish presence event via {}", publisher.getClass().getSimpleName(), e);
+                log.error("Failed to publish presence event to Kafka", e);
             }
         }
     }

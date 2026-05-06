@@ -46,7 +46,9 @@ public class MessageFacade {
 
     @Transactional
     public void saveMessage(UUID senderId, ChatRequestDto requestDto) {
-        UUID recipientId = resolveRecipientId(requestDto.chatId(), senderId);
+        Set<UUID> participants = getParticipantsAndValidate(requestDto.chatId(), senderId);
+        UUID recipientId = getPartnerId(participants, senderId);
+
         Message savedMessage = messageService.saveReadyMessage(senderId, recipientId, requestDto);
 
         participantService.updateWatermark(requestDto.chatId(), senderId, savedMessage.getId());
@@ -63,7 +65,7 @@ public class MessageFacade {
 
     @Transactional
     public MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest request) {
-        validateParticipant(chatId, senderId);
+        getParticipantsAndValidate(chatId, senderId);
 
         UUID fileId = UUID.randomUUID();
         String objectKey = buildObjectKey(chatId, fileId, request.fileExtension());
@@ -83,11 +85,11 @@ public class MessageFacade {
 
     @Transactional(readOnly = true)
     public ChatInitResponseDto initChat(UUID chatId, UUID userId, int limit) {
-        validateParticipant(chatId, userId);
+        Set<UUID> participants = getParticipantsAndValidate(chatId, userId);
+        UUID partnerId = getPartnerId(participants, userId);
 
-        ChatHistoryResponseDto historyPage = getChatHistory(chatId, userId, null, limit);
+        ChatHistoryResponseDto historyPage = getChatHistoryInternal(chatId, null, limit);
 
-        UUID partnerId = resolveRecipientId(chatId, userId);
         boolean isPartnerOnline = userPresenceService.isUserOnline(partnerId);
         Long partnerWatermark = participantService.getParticipantWatermark(chatId, partnerId);
         Long myWatermark = participantService.getParticipantWatermark(chatId, userId);
@@ -110,7 +112,8 @@ public class MessageFacade {
             return;
         }
 
-        UUID recipientId = resolveRecipientId(message.getChatId(), message.getSenderId());
+        Set<UUID> participants = getParticipantsAndValidate(message.getChatId(), message.getSenderId());
+        UUID recipientId = getPartnerId(participants, message.getSenderId());
 
         Message confirmedMessage = messageService.markMessageAsSentAndPublishOutbox(message, recipientId);
 
@@ -126,15 +129,43 @@ public class MessageFacade {
 
     @Transactional(readOnly = true)
     public String getMediaViewUrl(UUID chatId, String fileName, UUID userId) {
-        validateParticipant(chatId, userId);
+        getParticipantsAndValidate(chatId, userId);
+
         String objectKey = String.format("chats/%s/%s", chatId, fileName);
         return storageService.generateTempLinkForViewing(objectKey);
     }
 
     @Transactional(readOnly = true)
     public ChatHistoryResponseDto getChatHistory(UUID chatId, UUID userId, Long cursor, int limit) {
-        validateParticipant(chatId, userId);
+        getParticipantsAndValidate(chatId, userId);
+        return getChatHistoryInternal(chatId, cursor, limit);
+    }
 
+    @Transactional
+    public void processReadReceipt(UUID readerId, ReadReceiptRequest request) {
+        int updatedRows = participantService.updateWatermark(request.chatId(), readerId, request.messageId());
+
+        if (updatedRows == 0) {
+            return;
+        }
+
+        Set<UUID> participants = getParticipantsAndValidate(request.chatId(), readerId);
+        UUID recipientId = getPartnerId(participants, readerId);
+
+        ReadReceiptEventDto eventDto = new ReadReceiptEventDto(
+                request.chatId(),
+                readerId,
+                recipientId,
+                request.messageId()
+        );
+        eventPublisher.publishReadReceipt(eventDto);
+    }
+
+    public void processTypingEvent(TypingEventDto requestDto, UUID senderId) {
+        eventPublisher.publishTypingEvent(new TypingEventDto(requestDto.chatId(), senderId));
+    }
+
+    private ChatHistoryResponseDto getChatHistoryInternal(UUID chatId, Long cursor, int limit) {
         int limitPlusOne = limit + 1;
         List<Message> messages = new ArrayList<>(messageService.getChatHistory(chatId, cursor, limitPlusOne));
 
@@ -152,26 +183,19 @@ public class MessageFacade {
         return new ChatHistoryResponseDto(messageDtos, nextCursor, hasNext);
     }
 
-    @Transactional
-    public void processReadReceipt(UUID readerId, ReadReceiptRequest request) {
-        int updatedRows = participantService.updateWatermark(request.chatId(), readerId, request.messageId());
-
-        if (updatedRows == 0) {
-            return;
+    private Set<UUID> getParticipantsAndValidate(UUID chatId, UUID userId) {
+        Set<UUID> participants = participantProvider.getParticipants(chatId);
+        if (!participants.contains(userId)) {
+            throw new AccessDeniedException("User is not a participant of this chat");
         }
-
-        UUID recipientId = resolveRecipientId(request.chatId(), readerId);
-        ReadReceiptEventDto eventDto = new ReadReceiptEventDto(
-                request.chatId(),
-                readerId,
-                recipientId,
-                request.messageId()
-        );
-        eventPublisher.publishReadReceipt(eventDto);
+        return participants;
     }
 
-    public void processTypingEvent(TypingEventDto requestDto, UUID senderId) {
-        eventPublisher.publishTypingEvent(new TypingEventDto(requestDto.chatId(), senderId));
+    private UUID getPartnerId(Set<UUID> participants, UUID userId) {
+        return participants.stream()
+                .filter(id -> !id.equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Recipient not found"));
     }
 
     private void publishMessageEvent(Message message, UUID recipientId) {
@@ -207,24 +231,7 @@ public class MessageFacade {
         return content;
     }
 
-    private UUID resolveRecipientId(UUID chatId, UUID senderId) {
-        Set<UUID> participants = participantProvider.getParticipants(chatId);
-        if (!participants.contains(senderId)) {
-            throw new AccessDeniedException("User is not a participant of this chat");
-        }
-        return participants.stream()
-                .filter(id -> !id.equals(senderId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Recipient not found"));
-    }
-
     private String buildObjectKey(UUID chatId, UUID fileId, String extension) {
         return String.format("chats/%s/%s%s", chatId, fileId, extension);
-    }
-
-    private void validateParticipant(UUID chatId, UUID senderId) {
-        if (!participantProvider.getParticipants(chatId).contains(senderId)) {
-            throw new AccessDeniedException("User is not a participant of this chat");
-        }
     }
 }
