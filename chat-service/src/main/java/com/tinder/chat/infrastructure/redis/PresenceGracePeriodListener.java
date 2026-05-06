@@ -2,7 +2,6 @@ package com.tinder.chat.infrastructure.redis;
 
 import com.tinder.chat.config.RedisPresenceProperties;
 import com.tinder.chat.user.service.UserPresenceService;
-import com.tinder.chat.user.service.UserPresenceServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;

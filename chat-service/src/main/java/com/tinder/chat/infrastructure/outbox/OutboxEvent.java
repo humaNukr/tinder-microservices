@@ -1,6 +1,5 @@
 package com.tinder.chat.infrastructure.outbox;
 
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,7 +9,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 
@@ -26,9 +24,8 @@ public class OutboxEvent {
     @Column(name = "topic", nullable = false)
     private String topic;
 
-    @Column(name = "payload", nullable = false)
-    @Type(JsonType.class)
-    private Object payload;
+    @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
+    private String payload;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -37,7 +34,7 @@ public class OutboxEvent {
     @Setter
     private Boolean isSent = false;
 
-    public OutboxEvent(String topic, Object payload, LocalDateTime createdAt) {
+    public OutboxEvent(String topic, String payload, LocalDateTime createdAt) {
         this.topic = topic;
         this.payload = payload;
         this.createdAt = createdAt;

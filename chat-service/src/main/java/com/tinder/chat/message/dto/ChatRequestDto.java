@@ -10,6 +10,6 @@ public record ChatRequestDto(
         @NotNull UUID localId,
         @NotNull UUID chatId,
         @NotNull String payload,
-        @ValueOfEnum(enumClass = MessageContentType.class) String type
+        @NotNull @ValueOfEnum(enumClass = MessageContentType.class) String type
 ) {
 }

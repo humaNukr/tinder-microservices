@@ -1,5 +1,7 @@
 package com.tinder.chat.infrastructure.outbox;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.chat.config.KafkaTopicsProperties;
 import com.tinder.chat.infrastructure.kafka.contract.MessageSentEvent;
 import com.tinder.chat.infrastructure.outbox.contract.MessageSavedEvent;
@@ -20,6 +22,7 @@ public class MessageOutboxEventListener {
 
     private final OutboxRepository outboxRepository;
     private final KafkaTopicsProperties kafkaTopicsProperties;
+    private final ObjectMapper objectMapper;
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleMessageSavedEvent(MessageSavedEvent event) {
@@ -44,9 +47,21 @@ public class MessageOutboxEventListener {
                 message.getCreatedAt()
         );
 
-        OutboxEvent outboxEvent = new OutboxEvent(kafkaTopicsProperties.messageEvents(), kafkaEvent, LocalDateTime.now());
+        try {
+            String jsonPayload = objectMapper.writeValueAsString(kafkaEvent);
 
-        outboxRepository.save(outboxEvent);
-        log.debug("Outbox event saved for message id: {}", message.getId());
+            OutboxEvent outboxEvent = new OutboxEvent(
+                    kafkaTopicsProperties.messageEvents(),
+                    jsonPayload,
+                    LocalDateTime.now()
+            );
+
+            outboxRepository.save(outboxEvent);
+            log.debug("Outbox event saved for message id: {}", message.getId());
+
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize kafka event for Outbox. Message ID: {}", message.getId(), e);
+            throw new RuntimeException("Serialization error during Outbox event creation", e);
+        }
     }
 }

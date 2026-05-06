@@ -1,7 +1,5 @@
 package com.tinder.chat.infrastructure.outbox;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.chat.config.OutboxSchedulerProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +21,6 @@ public class OutboxRelayWorker {
 
     private final OutboxRepository outboxRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final ObjectMapper objectMapper;
     private final OutboxSchedulerProperties outboxSchedulerProperties;
 
     @Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")
@@ -34,22 +31,15 @@ public class OutboxRelayWorker {
             return;
         }
 
-        List<CompletableFuture<OutboxEvent>> futures = events.stream().map(event -> {
-            try {
-                String jsonPayload = objectMapper.writeValueAsString(event.getPayload());
-
-                return kafkaTemplate
-                        .send(event.getTopic(), String.valueOf(event.getId()), jsonPayload)
+        List<CompletableFuture<OutboxEvent>> futures = events.stream().map(event ->
+                kafkaTemplate
+                        .send(event.getTopic(), String.valueOf(event.getId()), event.getPayload())
                         .thenApply(sendResult -> event)
                         .exceptionally(ex -> {
                             log.error("Failed to send event {}", event.getId(), ex);
                             return null;
-                        });
-            } catch (JsonProcessingException e) {
-                log.error("Fatal error serializing event payload for eventId {}: {}", event.getId(), e.getMessage());
-                return CompletableFuture.<OutboxEvent>completedFuture(null);
-            }
-        }).toList();
+                        })
+        ).toList();
 
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))

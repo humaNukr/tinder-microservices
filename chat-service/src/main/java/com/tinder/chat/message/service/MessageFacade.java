@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -224,8 +225,7 @@ public class MessageFacade {
     private String resolveContentUrl(Message message) {
         String content = message.getContent();
         if (message.getContentType() != MessageContentType.TEXT) {
-            String[] parts = content.split("/");
-            String fileNameWithExt = parts[parts.length - 1];
+            String fileNameWithExt = Paths.get(content).getFileName().toString();
             return String.format("/api/v1/chats/%s/media/%s", message.getChatId(), fileNameWithExt);
         }
         return content;
