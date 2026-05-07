@@ -8,7 +8,7 @@ import com.tinder.chat.message.model.Message;
 import java.util.UUID;
 
 public interface MessageService {
-    Message saveReadyMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto);
+    Message saveReadyMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto, Message parentMessage);
 
     Message savePendingMessage(UUID chatId, UUID senderId, MessageContentType type, String objectKey);
 

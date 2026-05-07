@@ -70,7 +70,16 @@ public class MessageCommandServiceImpl implements MessageCommandService {
         Set<UUID> participants = getParticipantsAndValidate(requestDto.chatId(), senderId);
         UUID recipientId = getPartnerId(participants, senderId);
 
-        Message savedMessage = messageService.saveReadyMessage(senderId, recipientId, requestDto);
+        Message parentMessage = null;
+        if (requestDto.replyToMessageId() != null) {
+            parentMessage = messageService.getMessageById(requestDto.replyToMessageId());
+
+            if (!parentMessage.getChatId().equals(requestDto.chatId())) {
+                throw new IllegalArgumentException("Parent message belongs to another chat");
+            }
+        }
+
+        Message savedMessage = messageService.saveReadyMessage(senderId, recipientId, requestDto, parentMessage);
         participantService.updateWatermark(requestDto.chatId(), senderId, savedMessage.getId());
 
         eventPublisher.publishNewMessage(messageMapper.toEventDto(savedMessage, recipientId));

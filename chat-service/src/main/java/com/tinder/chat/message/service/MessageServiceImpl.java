@@ -30,7 +30,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional
-    public Message saveReadyMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto) {
+    public Message saveReadyMessage(UUID senderId, UUID recipientId, ChatRequestDto requestDto, Message parentMessage) {
         MessageContentType contentType = MessageContentType.valueOf(requestDto.type().toUpperCase());
         Message message = Message.builder()
                 .chatId(requestDto.chatId())
@@ -38,6 +38,7 @@ public class MessageServiceImpl implements MessageService {
                 .contentType(contentType)
                 .content(requestDto.payload())
                 .status(MessageStatus.SENT)
+                .parentMessage(parentMessage)
                 .build();
 
         Message savedMessage = messageRepository.save(message);

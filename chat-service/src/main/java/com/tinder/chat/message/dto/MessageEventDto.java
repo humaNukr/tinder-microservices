@@ -8,6 +8,7 @@ public record MessageEventDto(
         UUID chatId,
         UUID senderId,
         UUID recipientId,
+        ReplyInfoDto replyTo,
         String contentType,
         String content,
         Instant createdAt,

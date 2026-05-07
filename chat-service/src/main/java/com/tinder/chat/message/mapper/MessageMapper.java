@@ -5,6 +5,7 @@ import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.message.dto.MessageAckDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.MessageResponseDto;
+import com.tinder.chat.message.dto.ReplyInfoDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.model.Message;
 import org.mapstruct.Mapper;
@@ -28,6 +29,11 @@ public interface MessageMapper {
     MessageResponseDto toResponseDto(Message message);
 
     List<MessageResponseDto> toResponseDtoList(List<Message> messages);
+
+    @Mapping(target = "messageId", source = "id")
+    @Mapping(target = "type", source = "contentType")
+    @Mapping(target = "content", expression = "java(resolveContent(message))")
+    ReplyInfoDto toReplyInfoDto(Message message);
 
     @Mapping(target = "dbId", source = "message.id")
     MessageAckDto toAckDto(Message message, UUID localId);

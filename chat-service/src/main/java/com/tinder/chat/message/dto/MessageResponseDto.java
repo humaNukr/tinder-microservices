@@ -6,6 +6,7 @@ import java.util.UUID;
 public record MessageResponseDto(
         Long id,
         UUID senderId,
+        ReplyInfoDto replyTo,
         String type,
         String content,
         Instant createdAt,

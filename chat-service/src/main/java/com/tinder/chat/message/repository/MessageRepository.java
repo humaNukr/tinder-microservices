@@ -3,6 +3,7 @@ package com.tinder.chat.message.repository;
 import com.tinder.chat.message.enums.MessageStatus;
 import com.tinder.chat.message.model.Message;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,8 +16,10 @@ import java.util.UUID;
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
+    @EntityGraph(attributePaths = {"parentMessage"})
     List<Message> findByChatIdAndStatusOrderByIdDesc(UUID chatId, MessageStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"parentMessage"})
     List<Message> findByChatIdAndStatusAndIdLessThanOrderByIdDesc(UUID chatId, MessageStatus status, Long id, Pageable pageable);
 
     @Query("SELECT m FROM Message m WHERE m.content = :objectKey AND m.status = 'UPLOADING'")
