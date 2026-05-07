@@ -64,4 +64,17 @@ public class Chat implements Persistable<UUID> {
         this.participants.add(participant);
         participant.setChat(this);
     }
+
+    public static Chat createNewChat(UUID userA, UUID userB) {
+        boolean isALessThanB = userA.toString().compareTo(userB.toString()) < 0;
+
+        UUID firstUser = isALessThanB ? userA : userB;
+        UUID secondUser = isALessThanB ? userB : userA;
+
+        return Chat.builder()
+                .id(UUID.randomUUID())
+                .user1Id(firstUser)
+                .user2Id(secondUser)
+                .build();
+    }
 }

@@ -19,11 +19,7 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public void createChat(UUID user1Id, UUID user2Id) {
 
-        Chat chat = Chat.builder()
-                .id(UUID.randomUUID())
-                .user1Id(user1Id)
-                .user2Id(user2Id)
-                .build();
+        Chat chat = Chat.createNewChat(user1Id, user2Id);
 
         ChatParticipant participant1 = new ChatParticipant(chat, user1Id);
 

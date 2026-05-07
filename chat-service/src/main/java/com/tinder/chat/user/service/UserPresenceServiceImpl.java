@@ -5,6 +5,7 @@ import com.tinder.chat.config.RedisPresenceProperties;
 import com.tinder.chat.infrastructure.kafka.contract.UserPresenceEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,11 @@ public class UserPresenceServiceImpl implements UserPresenceService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisPresenceProperties presenceProperties;
+
+    @Qualifier("redisUserPresencePublisher")
     private final UserPresencePublisher redisUserPresencePublisher;
+
+    @Qualifier("kafkaUserPresencePublisherAdapter")
     private final UserPresencePublisher kafkaUserPresencePublisherAdapter;
 
     @Override
