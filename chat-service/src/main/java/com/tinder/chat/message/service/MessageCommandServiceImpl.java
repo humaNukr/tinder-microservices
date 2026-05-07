@@ -158,7 +158,7 @@ public class MessageCommandServiceImpl implements MessageCommandService {
         Set<UUID> participants = getParticipantsAndValidate(request.chatId(), senderId);
         UUID partnerId = getPartnerId(participants, senderId);
 
-        Message message = messageService.getMessageById(request.messageId());
+        Message message = messageService.getMessageByIdWithReactions(request.messageId());
 
         if (!message.getChatId().equals(request.chatId())) {
             throw new IllegalArgumentException("Message does not belong to this chat");
@@ -190,13 +190,17 @@ public class MessageCommandServiceImpl implements MessageCommandService {
             finalReaction = request.reaction();
         }
 
+        boolean isRemoved = finalReaction == null;
         ReactionEventDto eventDto = new ReactionEventDto(
                 request.chatId(),
                 request.messageId(),
                 senderId,
                 partnerId,
-                finalReaction
+                finalReaction,
+                isRemoved
         );
+
+        eventPublisher.publishReaction(eventDto);
         eventPublisher.publishReaction(eventDto);
     }
 

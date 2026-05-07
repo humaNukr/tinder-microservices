@@ -83,6 +83,13 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional(readOnly = true)
+    public Message getMessageByIdWithReactions(Long messageId) {
+        return messageRepository.findByIdWithReactions(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("Message not found with id: " + messageId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CursorPage<Message> getChatHistoryPage(UUID chatId, Long cursor, int limit) {
         int limitPlusOne = limit + 1;
         Pageable pageable = PageRequest.of(0, limitPlusOne);

@@ -20,7 +20,7 @@ import java.util.concurrent.TimeoutException;
 public class OutboxRelayWorker {
 
     private final OutboxRepository outboxRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final OutboxSchedulerProperties outboxSchedulerProperties;
 
     @Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")

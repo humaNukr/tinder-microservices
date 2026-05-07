@@ -16,6 +16,10 @@ import java.util.UUID;
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
+    @EntityGraph(attributePaths = {"reactions"})
+    @Query("SELECT m FROM Message m WHERE m.id = :id")
+    Optional<Message> findByIdWithReactions(@Param("id") Long id);
+
     @EntityGraph(attributePaths = {"parentMessage"})
     List<Message> findByChatIdAndStatusOrderByIdDesc(UUID chatId, MessageStatus status, Pageable pageable);
 

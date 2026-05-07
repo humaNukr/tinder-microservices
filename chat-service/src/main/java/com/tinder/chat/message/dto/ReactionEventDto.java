@@ -7,6 +7,7 @@ public record ReactionEventDto(
         Long messageId,
         UUID senderId,
         UUID recipientId,
-        String reaction
+        String reaction,
+        boolean isRemoved
 ) {
 }

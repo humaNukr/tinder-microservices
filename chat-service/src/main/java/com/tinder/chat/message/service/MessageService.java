@@ -16,6 +16,8 @@ public interface MessageService {
 
     Message getMessageById(Long messageId);
 
+    Message getMessageByIdWithReactions(Long messageId);
+
     CursorPage<Message> getChatHistoryPage(UUID chatId, Long cursor, int limit);
 
     Message getPendingMessageByObjectKey(String objectKey);
