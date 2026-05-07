@@ -4,6 +4,7 @@ import com.tinder.chat.chat.dto.MediaInitRequest;
 import com.tinder.chat.chat.dto.MediaInitResponse;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageDeleteDto;
+import com.tinder.chat.message.dto.ReactionRequestDto;
 
 import java.util.UUID;
 
@@ -16,4 +17,6 @@ public interface MessageCommandService {
     MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest request);
 
     void confirmMediaUpload(String objectKey);
+
+    void toggleReaction(UUID senderId, ReactionRequestDto request);
 }

@@ -2,6 +2,7 @@ package com.tinder.chat.message.model;
 
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.enums.MessageStatus;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,6 +25,8 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -61,6 +65,9 @@ public class Message {
     @Setter
     private MessageStatus status;
 
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MessageReaction> reactions = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -72,6 +79,16 @@ public class Message {
         deletedAt = Instant.now();
         content = "";
         contentType = MessageContentType.TEXT;
+    }
+
+    public void addReaction(MessageReaction reaction) {
+        reactions.add(reaction);
+        reaction.setMessage(this);
+    }
+
+    public void removeReaction(MessageReaction reaction) {
+        reactions.remove(reaction);
+        reaction.setMessage(null);
     }
 
     public boolean isDeleted() {

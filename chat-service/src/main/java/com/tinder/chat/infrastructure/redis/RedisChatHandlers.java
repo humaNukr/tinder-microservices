@@ -7,6 +7,7 @@ import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.config.WebSocketProperties;
 import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.message.dto.MessageEventDto;
+import com.tinder.chat.message.dto.ReactionEventDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -46,6 +47,23 @@ public class RedisChatHandlers {
                 receiptDto.recipientId().toString(),
                 webSocketProperties.queueReadReceipts(),
                 receiptDto
+        );
+    }
+
+    public void handleReactionEvent(String messageBody) throws JsonProcessingException {
+        ReactionEventDto eventDto = objectMapper.readValue(messageBody, ReactionEventDto.class);
+        log.debug("Broadcasting reaction update: msgId={}, reaction={}", eventDto.messageId(), eventDto.reaction());
+
+        messagingTemplate.convertAndSendToUser(
+                eventDto.recipientId().toString(),
+                "/queue/message-reactions",
+                eventDto
+        );
+
+        messagingTemplate.convertAndSendToUser(
+                eventDto.senderId().toString(),
+                "/queue/message-reactions",
+                eventDto
         );
     }
 

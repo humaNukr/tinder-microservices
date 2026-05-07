@@ -2,10 +2,11 @@ package com.tinder.chat.message.dto;
 
 import java.util.UUID;
 
-public record ReplyInfoDto(
+public record ReactionEventDto(
+        UUID chatId,
         Long messageId,
         UUID senderId,
-        String type,
-        String content
+        UUID recipientId,
+        String reaction
 ) {
 }

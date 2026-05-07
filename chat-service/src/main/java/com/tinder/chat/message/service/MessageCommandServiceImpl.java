@@ -12,10 +12,13 @@ import com.tinder.chat.infrastructure.storage.StorageService;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageAckDto;
 import com.tinder.chat.message.dto.MessageDeleteDto;
+import com.tinder.chat.message.dto.ReactionEventDto;
+import com.tinder.chat.message.dto.ReactionRequestDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.enums.MessageStatus;
 import com.tinder.chat.message.mapper.MessageMapper;
 import com.tinder.chat.message.model.Message;
+import com.tinder.chat.message.model.MessageReaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -147,6 +151,53 @@ public class MessageCommandServiceImpl implements MessageCommandService {
 
         eventPublisher.publishNewMessage(messageMapper.toEventDto(confirmedMessage, recipientId));
         clientNotificationPort.sendAck(message.getSenderId(), messageMapper.toAckDto(confirmedMessage, null));
+    }
+
+    @Transactional
+    public void toggleReaction(UUID senderId, ReactionRequestDto request) {
+        Set<UUID> participants = getParticipantsAndValidate(request.chatId(), senderId);
+        UUID partnerId = getPartnerId(participants, senderId);
+
+        Message message = messageService.getMessageById(request.messageId());
+
+        if (!message.getChatId().equals(request.chatId())) {
+            throw new IllegalArgumentException("Message does not belong to this chat");
+        }
+        if (message.isDeleted()) {
+            throw new IllegalStateException("Cannot react to a deleted message");
+        }
+
+        String finalReaction = null;
+
+        Optional<MessageReaction> existingReactionOpt = message.getReactions().stream()
+                .filter(r -> r.getUserId().equals(senderId))
+                .findFirst();
+
+        if (existingReactionOpt.isPresent()) {
+            MessageReaction existingReaction = existingReactionOpt.get();
+            if (existingReaction.getReaction().equals(request.reaction())) {
+                message.removeReaction(existingReaction);
+            } else {
+                existingReaction.setReaction(request.reaction());
+                finalReaction = request.reaction();
+            }
+        } else {
+            MessageReaction newReaction = MessageReaction.builder()
+                    .userId(senderId)
+                    .reaction(request.reaction())
+                    .build();
+            message.addReaction(newReaction);
+            finalReaction = request.reaction();
+        }
+
+        ReactionEventDto eventDto = new ReactionEventDto(
+                request.chatId(),
+                request.messageId(),
+                senderId,
+                partnerId,
+                finalReaction
+        );
+        eventPublisher.publishReaction(eventDto);
     }
 
     private Set<UUID> getParticipantsAndValidate(UUID chatId, UUID userId) {

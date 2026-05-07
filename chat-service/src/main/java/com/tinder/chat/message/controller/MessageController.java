@@ -4,6 +4,7 @@ import com.tinder.chat.chat.dto.ReadReceiptRequest;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageDeleteDto;
+import com.tinder.chat.message.dto.ReactionRequestDto;
 import com.tinder.chat.message.service.MessageFacade;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,12 @@ public class MessageController {
     public void processReadReceipt(@Payload ReadReceiptRequest request, Principal principal) {
         UUID readerId = UUID.fromString(principal.getName());
         facade.processReadReceipt(readerId, request);
+    }
+
+    @MessageMapping("/react")
+    public void reactToMessage(Principal principal, @Payload @Valid ReactionRequestDto request) {
+        UUID senderId = UUID.fromString(principal.getName());
+        facade.toggleReaction(senderId, request);
     }
 
     @MessageMapping("/delete")

@@ -5,9 +5,11 @@ import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.message.dto.MessageAckDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.MessageResponseDto;
+import com.tinder.chat.message.dto.ReactionInfoDto;
 import com.tinder.chat.message.dto.ReplyInfoDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.model.Message;
+import com.tinder.chat.message.model.MessageReaction;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -18,14 +20,17 @@ import java.util.UUID;
 @Mapper(config = MapperConfig.class)
 public interface MessageMapper {
 
+    @Mapping(target = "type", source = "message.contentType")
     @Mapping(target = "content", expression = "java(resolveContent(message))")
+    @Mapping(target = "replyTo", source = "message.parentMessage")
     MessageEventDto toEventDto(Message message, UUID recipientId);
 
     @Mapping(target = "messageId", source = "message.id")
     MessageDeletedEventDto toDeletedEventDto(Message message, UUID recipientId);
 
-    @Mapping(target = "content", expression = "java(resolveContent(message))")
     @Mapping(target = "type", source = "contentType")
+    @Mapping(target = "content", expression = "java(resolveContent(message))")
+    @Mapping(target = "replyTo", source = "parentMessage")
     MessageResponseDto toResponseDto(Message message);
 
     List<MessageResponseDto> toResponseDtoList(List<Message> messages);
@@ -38,6 +43,7 @@ public interface MessageMapper {
     @Mapping(target = "dbId", source = "message.id")
     MessageAckDto toAckDto(Message message, UUID localId);
 
+    ReactionInfoDto toReactionInfoDto(MessageReaction reaction);
 
     default String resolveContent(Message message) {
         if (message.isDeleted()) {

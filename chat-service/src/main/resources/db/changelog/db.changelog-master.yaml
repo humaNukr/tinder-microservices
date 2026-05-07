@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/changes/06-add-deleted-at.sql
   - include:
       file: db/changelog/changes/07-add-parent-message-id.sql
+  - include:
+      file: db/changelog/changes/08-create-message-reactions.sql

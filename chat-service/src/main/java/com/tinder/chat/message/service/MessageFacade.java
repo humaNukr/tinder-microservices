@@ -9,6 +9,7 @@ import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.service.ChatActivityService;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.dto.MessageDeleteDto;
+import com.tinder.chat.message.dto.ReactionRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -56,5 +57,9 @@ public class MessageFacade {
 
     public void processTypingEvent(TypingEventDto requestDto, UUID senderId) {
         activityService.processTypingEvent(requestDto, senderId);
+    }
+
+    public void toggleReaction(UUID senderId, ReactionRequestDto request) {
+        commandService.toggleReaction(senderId, request);
     }
 }
