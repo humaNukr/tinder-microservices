@@ -11,6 +11,13 @@ spring:
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
           routes:
+            - id: public-media-route
+              uri: http://localhost:9000
+              predicates:
+                - Path=/media/**
+              filters:
+                - RewritePath=/media/(?<segment>.*), /tinder-media/$\{segment}
+
             - id: auth-service
               uri: http://localhost:8081
               predicates:

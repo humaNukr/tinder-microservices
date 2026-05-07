@@ -71,6 +71,7 @@ app:
     queue-messages: "/queue/messages"
     queue-acks: "/queue/acks"
     queue-read-receipts: "/queue/read-receipts"
+    queue-message-reactions: "/queue/message-reactions"
     queue-message-deletions: "/queue/message-deletions"
     topic-users-prefix: "/topic/users"
     topic-users-presence-suffix: "/presence"
@@ -80,3 +81,7 @@ app:
     access-key: admin
     secret-key: password123
     bucket-name: tinder-chat-media
+
+  services:
+    profile:
+      url: http://localhost:8082

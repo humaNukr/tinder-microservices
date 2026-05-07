@@ -56,13 +56,13 @@ public class RedisChatHandlers {
 
         messagingTemplate.convertAndSendToUser(
                 eventDto.recipientId().toString(),
-                "/queue/message-reactions",
+                webSocketProperties.queueMessageReactions(),
                 eventDto
         );
 
         messagingTemplate.convertAndSendToUser(
                 eventDto.senderId().toString(),
-                "/queue/message-reactions",
+                webSocketProperties.queueMessageReactions(),
                 eventDto
         );
     }

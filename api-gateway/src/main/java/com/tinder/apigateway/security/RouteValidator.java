@@ -13,7 +13,8 @@ public class RouteValidator {
             "/api/v1/auth/send-otp",
             "/api/v1/auth/verify",
             "/api/v1/auth/google",
-            "/ws/chat"
+            "/ws/chat",
+            "/media/"
     );
 
     public static final List<String> securedApiEndpoints = List.of(

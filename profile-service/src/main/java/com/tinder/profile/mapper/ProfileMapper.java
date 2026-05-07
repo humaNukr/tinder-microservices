@@ -18,6 +18,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -27,11 +28,14 @@ import java.util.List;
 
 @Mapper(config = MapperConfig.class)
 public abstract class ProfileMapper {
+
+    @Value("${app.media.public-prefix}")
+    protected String mediaPrefix;
     @Autowired
     protected MinioProperties minioProperties;
 
     @Mapping(target = "age", source = "birthDate", qualifiedByName = "calculateAge")
-    @Mapping(target = "photos", qualifiedByName = "buildFullUrls")
+    @Mapping(target = "photos", qualifiedByName = "buildPublicUrls")
     public abstract ProfileResponse toDto(Profile profile);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -64,14 +68,17 @@ public abstract class ProfileMapper {
         return Period.between(birthDate, LocalDate.now()).getYears();
     }
 
-    @Named("buildFullUrls")
-    protected List<String> buildFullUrls(List<String> photoKeys) {
+    @Named("buildPublicUrls")
+    protected List<String> buildPublicUrls(List<String> photoKeys) {
         if (photoKeys == null || photoKeys.isEmpty()) {
             return new ArrayList<>();
         }
 
-        String baseUrl = minioProperties.url() + "/";
-        return photoKeys.stream().map(key -> baseUrl + key).toList();
+        return photoKeys.stream().map(key -> {
+            String cleanKey = key.replaceFirst("^tinder-media/", "");
+
+            return mediaPrefix + cleanKey;
+        }).toList();
     }
 
     @AfterMapping

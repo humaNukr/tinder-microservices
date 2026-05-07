@@ -33,6 +33,9 @@ app:
     min-age: 18
     default-search-radius-km: 50.0
 
+  media:
+    public-prefix: "/media/"
+
 minio:
   url: http://localhost:9000
   access-key: admin

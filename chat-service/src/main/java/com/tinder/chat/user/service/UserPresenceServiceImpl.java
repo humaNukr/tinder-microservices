@@ -6,11 +6,19 @@ import com.tinder.chat.infrastructure.kafka.contract.UserPresenceEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -72,6 +80,33 @@ public class UserPresenceServiceImpl implements UserPresenceService {
         String key = presenceProperties.sessionKeyPrefix() + userId;
         Long sessions = stringRedisTemplate.opsForSet().size(key);
         return sessions != null && sessions > 0;
+    }
+
+    @Override
+    public Map<UUID, Boolean> getPresenceBatch(Set<UUID> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<UUID> idList = new ArrayList<>(userIds);
+
+        List<Object> results = stringRedisTemplate.executePipelined(new SessionCallback<>() {
+            @Override
+            public Object execute(RedisOperations operations) {
+                for (UUID id : idList) {
+                    operations.hasKey(presenceProperties.sessionKeyPrefix() + id);
+                }
+                return null;
+            }
+        });
+
+        Map<UUID, Boolean> presenceMap = new HashMap<>();
+        for (int i = 0; i < idList.size(); i++) {
+            Boolean isOnline = (Boolean) results.get(i);
+            presenceMap.put(idList.get(i), Boolean.TRUE.equals(isOnline));
+        }
+
+        return presenceMap;
     }
 
     private void publishEvents(UUID userId, boolean isOnline) {

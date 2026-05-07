@@ -1,5 +1,7 @@
 package com.tinder.chat.user.service;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public interface UserPresenceService {
@@ -10,4 +12,6 @@ public interface UserPresenceService {
     void handleGracePeriodExpired(UUID userId);
 
     boolean isUserOnline(UUID userId);
+
+    Map<UUID, Boolean> getPresenceBatch(Set<UUID> userIds);
 }
