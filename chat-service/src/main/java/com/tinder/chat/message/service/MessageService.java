@@ -1,10 +1,10 @@
 package com.tinder.chat.message.service;
 
+import com.tinder.chat.chat.dto.CursorPage;
 import com.tinder.chat.message.dto.ChatRequestDto;
 import com.tinder.chat.message.enums.MessageContentType;
 import com.tinder.chat.message.model.Message;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface MessageService {
@@ -16,7 +16,7 @@ public interface MessageService {
 
     Message getMessageById(Long messageId);
 
-    List<Message> getChatHistory(UUID chatId, Long cursorId, int limit);
+    CursorPage<Message> getChatHistoryPage(UUID chatId, Long cursor, int limit);
 
     Message getPendingMessageByObjectKey(String objectKey);
 }

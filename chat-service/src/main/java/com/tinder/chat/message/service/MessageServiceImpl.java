@@ -1,5 +1,6 @@
 package com.tinder.chat.message.service;
 
+import com.tinder.chat.chat.dto.CursorPage;
 import com.tinder.chat.exception.EntityNotFoundException;
 import com.tinder.chat.infrastructure.outbox.contract.MessageSavedEvent;
 import com.tinder.chat.message.dto.ChatRequestDto;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -80,14 +82,30 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Message> getChatHistory(UUID chatId, Long cursorId, int limit) {
-        Pageable pageable = PageRequest.of(0, limit);
+    public CursorPage<Message> getChatHistoryPage(UUID chatId, Long cursor, int limit) {
+        int limitPlusOne = limit + 1;
+        Pageable pageable = PageRequest.of(0, limitPlusOne);
 
-        if (cursorId == null) {
-            return messageRepository.findByChatIdAndStatusOrderByIdDesc(chatId, MessageStatus.SENT, pageable);
+        List<Message> messageList;
+
+        if (cursor == null) {
+            messageList = messageRepository.findByChatIdAndStatusOrderByIdDesc(
+                    chatId, MessageStatus.SENT, pageable);
         } else {
-            return messageRepository.findHistoryByCursor(chatId, MessageStatus.SENT, cursorId, pageable);
+            messageList = messageRepository.findByChatIdAndStatusAndIdLessThanOrderByIdDesc(
+                    chatId, MessageStatus.SENT, cursor, pageable);
         }
+
+        List<Message> messages = new ArrayList<>(messageList);
+
+        boolean hasNext = messages.size() > limit;
+        if (hasNext) {
+            messages.remove(limit);
+        }
+
+        Long nextCursor = messages.isEmpty() ? null : messages.getLast().getId();
+
+        return new CursorPage<>(messages, nextCursor, hasNext);
     }
 
     @Override

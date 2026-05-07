@@ -10,6 +10,7 @@ public record WebSocketProperties(
         String queueMessages,
         String queueAcks,
         String queueReadReceipts,
+        String queueMessageDeletions,
         String topicUsersPrefix,
         String topicUsersPresenceSuffix
 ) {

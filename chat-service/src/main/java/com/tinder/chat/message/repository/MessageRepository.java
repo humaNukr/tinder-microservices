@@ -17,15 +17,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     List<Message> findByChatIdAndStatusOrderByIdDesc(UUID chatId, MessageStatus status, Pageable pageable);
 
-    @Query("SELECT m FROM Message m " +
-            "WHERE m.chatId = :chatId AND m.status = :status AND m.id < :cursorId " +
-            "ORDER BY m.id DESC")
-    List<Message> findHistoryByCursor(
-            @Param("chatId") UUID chatId,
-            @Param("status") MessageStatus status,
-            @Param("cursorId") Long cursorId,
-            Pageable pageable
-    );
+    List<Message> findByChatIdAndStatusAndIdLessThanOrderByIdDesc(UUID chatId, MessageStatus status, Long id, Pageable pageable);
 
     @Query("SELECT m FROM Message m WHERE m.content = :objectKey AND m.status = 'UPLOADING'")
     Optional<Message> findPendingMessageByObjectKey(@Param("objectKey") String objectKey);

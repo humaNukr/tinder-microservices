@@ -13,11 +13,15 @@ CREATE TABLE messages
     CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chats (id)
 );
 
-CREATE UNIQUE INDEX idx_messages_chat_id_id ON messages (chat_id, id DESC);
+CREATE INDEX idx_messages_chat_id_id ON messages (chat_id, id DESC);
 CREATE UNIQUE INDEX idx_messages_pending_content
     ON messages (content)
     WHERE status = 'UPLOADING';
+CREATE INDEX idx_messages_history_lookup
+    ON messages (chat_id, id DESC)
+    WHERE status = 'SENT';
 
 -- rollback DROP TABLE messages;
 -- rollback DROP INDEX idx_messages_pending_content;
--- rollback DROP INDEX idx_messages_chat_id_id;3
+-- rollback DROP INDEX idx_messages_chat_id_id;
+-- rollback DROP INDEX idx_messages_history_lookup;

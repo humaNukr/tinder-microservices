@@ -55,7 +55,13 @@ public class RedisChatHandlers {
 
         messagingTemplate.convertAndSendToUser(
                 eventDto.recipientId().toString(),
-                "/queue/message-deletions",
+                webSocketProperties.queueMessageDeletions(),
+                eventDto
+        );
+
+        messagingTemplate.convertAndSendToUser(
+                eventDto.senderId().toString(),
+                webSocketProperties.queueMessageDeletions(),
                 eventDto
         );
     }
