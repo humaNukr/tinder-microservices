@@ -54,6 +54,11 @@ public class RedisConfig {
                 new ChannelTopic(chatProperties.reactionChannel())
         );
 
+        container.addMessageListener(
+                createAdapter(chatHandlers, "handleMessageEditedEvent"),
+                new ChannelTopic(chatProperties.editChannel())
+        );
+
         return container;
     }
 

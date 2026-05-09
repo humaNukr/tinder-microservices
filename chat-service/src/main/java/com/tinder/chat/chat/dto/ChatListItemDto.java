@@ -14,4 +14,5 @@ public record ChatListItemDto(
         Instant lastMessageAt,
         boolean isLastMessageMine,
         int unreadCount
-) {}
+) {
+}

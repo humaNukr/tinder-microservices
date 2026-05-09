@@ -21,7 +21,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
@@ -62,7 +61,6 @@ public class Message {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    @Setter
     private MessageStatus status;
 
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -72,6 +70,9 @@ public class Message {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "edited_at")
+    private Instant editedAt;
+
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
@@ -79,6 +80,33 @@ public class Message {
         deletedAt = Instant.now();
         content = "";
         contentType = MessageContentType.TEXT;
+        status = MessageStatus.DELETED;
+    }
+
+    public void edit(String newContent) {
+        if (this.isDeleted()) {
+            throw new IllegalStateException("Cannot edit a deleted message");
+        }
+
+        if (this.contentType != MessageContentType.TEXT) {
+            throw new IllegalStateException("Cannot edit non-text messages");
+        }
+
+        this.content = newContent;
+        this.status = MessageStatus.EDITED;
+        this.editedAt = Instant.now();
+    }
+
+    public void markAsSent() {
+        if (this.isDeleted()) {
+            throw new IllegalStateException("Cannot change status of a deleted message");
+        }
+
+        if (this.status == MessageStatus.READ || this.status == MessageStatus.EDITED) {
+            throw new IllegalStateException("Cannot downgrade message status from " + this.status + " to SENT");
+        }
+
+        this.status = MessageStatus.SENT;
     }
 
     public void addReaction(MessageReaction reaction) {

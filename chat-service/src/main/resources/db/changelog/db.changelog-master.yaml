@@ -15,3 +15,7 @@ databaseChangeLog:
       file: db/changelog/changes/07-add-parent-message-id.sql
   - include:
       file: db/changelog/changes/08-create-message-reactions.sql
+  - include:
+      file: db/changelog/changes/09-add-edited-at.sql
+  - include:
+      file: db/changelog/changes/10-drop-obsolete-history-index.sql

@@ -47,6 +47,7 @@ app:
       read-receipt-channel: chat-read-receipt-channel
       reaction-channel: chat:reactions
       delete-channel: chat:deletions
+      edit-channel: chat:edits
       key-prefix: "chat:"
       key-suffix: ":participants"
       ttl: 7d
@@ -73,6 +74,7 @@ app:
     queue-read-receipts: "/queue/read-receipts"
     queue-message-reactions: "/queue/message-reactions"
     queue-message-deletions: "/queue/message-deletions"
+    queue-message-edits: "/queue/message-edits"
     topic-users-prefix: "/topic/users"
     topic-users-presence-suffix: "/presence"
 

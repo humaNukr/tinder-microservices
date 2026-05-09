@@ -21,4 +21,6 @@ public interface MessageService {
     CursorPage<Message> getChatHistoryPage(UUID chatId, Long cursor, int limit);
 
     Message getPendingMessageByObjectKey(String objectKey);
+
+    Message saveMessageEntity(Message message);
 }

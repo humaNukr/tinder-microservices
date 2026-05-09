@@ -11,6 +11,7 @@ public record RedisChatProperties(
         String readReceiptChannel,
         String reactionChannel,
         String deleteChannel,
+        String editChannel,
         String keyPrefix,
         String keySuffix,
         Duration ttl

@@ -66,7 +66,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @Transactional
     public Message markMessageAsSentAndPublishOutbox(Message message, UUID recipientId) {
-        message.setStatus(MessageStatus.SENT);
+        message.markAsSent();
         Message savedMessage = messageRepository.save(message);
 
         eventPublisher.publishEvent(new MessageSavedEvent(savedMessage, recipientId));
@@ -97,11 +97,11 @@ public class MessageServiceImpl implements MessageService {
         List<Message> messageList;
 
         if (cursor == null) {
-            messageList = messageRepository.findByChatIdAndStatusOrderByIdDesc(
-                    chatId, MessageStatus.SENT, pageable);
+            messageList = messageRepository.findByChatIdAndStatusNotOrderByIdDesc(
+                    chatId, MessageStatus.UPLOADING, pageable);
         } else {
-            messageList = messageRepository.findByChatIdAndStatusAndIdLessThanOrderByIdDesc(
-                    chatId, MessageStatus.SENT, cursor, pageable);
+            messageList = messageRepository.findByChatIdAndStatusNotAndIdLessThanOrderByIdDesc(
+                    chatId, MessageStatus.UPLOADING, cursor, pageable);
         }
 
         List<Message> messages = new ArrayList<>(messageList);
@@ -121,5 +121,11 @@ public class MessageServiceImpl implements MessageService {
     public Message getPendingMessageByObjectKey(String objectKey) {
         return messageRepository.findPendingMessageByObjectKey(objectKey)
                 .orElseThrow(() -> new EntityNotFoundException("Pending message not found for key: " + objectKey));
+    }
+
+    @Override
+    @Transactional
+    public Message saveMessageEntity(Message message) {
+        return messageRepository.save(message);
     }
 }

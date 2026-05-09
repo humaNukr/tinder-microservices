@@ -10,6 +10,7 @@ import com.tinder.chat.chat.service.ChatParticipantService;
 import com.tinder.chat.exception.AccessDeniedException;
 import com.tinder.chat.infrastructure.storage.StorageService;
 import com.tinder.chat.message.dto.ChatRequestDto;
+import com.tinder.chat.message.dto.EditMessageRequest;
 import com.tinder.chat.message.dto.MessageAckDto;
 import com.tinder.chat.message.dto.MessageDeleteDto;
 import com.tinder.chat.message.dto.ReactionEventDto;
@@ -72,7 +73,7 @@ public class MessageCommandServiceImpl implements MessageCommandService {
         }
 
         Set<UUID> participants = getParticipantsAndValidate(requestDto.chatId(), senderId);
-        UUID recipientId = getPartnerId(participants, senderId);
+        UUID partnerId = getPartnerId(participants, senderId);
 
         Message parentMessage = null;
         if (requestDto.replyToMessageId() != null) {
@@ -83,27 +84,50 @@ public class MessageCommandServiceImpl implements MessageCommandService {
             }
         }
 
-        Message savedMessage = messageService.saveReadyMessage(senderId, recipientId, requestDto, parentMessage);
+        Message savedMessage = messageService.saveReadyMessage(senderId, partnerId, requestDto, parentMessage);
         participantService.updateWatermark(requestDto.chatId(), senderId, savedMessage.getId());
 
-        eventPublisher.publishNewMessage(messageMapper.toEventDto(savedMessage, recipientId));
+        eventPublisher.publishNewMessage(messageMapper.toEventDto(savedMessage, partnerId));
 
         idempotencyPort.complete(idempotencyKey, savedMessage.getId().toString(), ttl);
 
         clientNotificationPort.sendAck(senderId, messageMapper.toAckDto(savedMessage, requestDto.localId()));
     }
 
+    @Override
     @Transactional
-    public void deleteMessage(UUID senderId, MessageDeleteDto request) {
-        Set<UUID> participants = getParticipantsAndValidate(request.chatId(), senderId);
+    public void editMessage(UUID senderId, EditMessageRequest requestDto) {
+        Message message = messageService.getMessageById(requestDto.messageId());
+
+        Set<UUID> participants = getParticipantsAndValidate(requestDto.chatId(), senderId);
         UUID partnerId = getPartnerId(participants, senderId);
 
-        Message message = messageService.getMessageById(request.messageId());
+        if (!message.getSenderId().equals(senderId)) {
+            throw new AccessDeniedException("You can only edit your own messages");
+        }
+
+        if (message.getStatus() == MessageStatus.DELETED || message.getContentType() != MessageContentType.TEXT) {
+            throw new IllegalStateException("Cannot edit this type of message");
+        }
+
+        message.edit(requestDto.newContent());
+
+        Message savedMessage = messageService.saveMessageEntity(message);
+
+        eventPublisher.publishMessageEdited(messageMapper.toEditedEventDto(savedMessage, partnerId));
+    }
+
+    @Transactional
+    public void deleteMessage(UUID senderId, MessageDeleteDto requestDto) {
+        Set<UUID> participants = getParticipantsAndValidate(requestDto.chatId(), senderId);
+        UUID partnerId = getPartnerId(participants, senderId);
+
+        Message message = messageService.getMessageById(requestDto.messageId());
 
         if (!message.getSenderId().equals(senderId)) {
             throw new AccessDeniedException("You can only delete your own messages");
         }
-        if (!message.getChatId().equals(request.chatId())) {
+        if (!message.getChatId().equals(requestDto.chatId())) {
             throw new IllegalArgumentException("Message does not belong to this chat");
         }
 
@@ -117,12 +141,12 @@ public class MessageCommandServiceImpl implements MessageCommandService {
     }
 
     @Transactional
-    public MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest request) {
+    public MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest requestDto) {
         getParticipantsAndValidate(chatId, senderId);
 
         UUID fileId = UUID.randomUUID();
-        String objectKey = buildObjectKey(chatId, fileId, request.fileExtension());
-        MessageContentType contentType = MessageContentType.valueOf(request.type().toUpperCase());
+        String objectKey = buildObjectKey(chatId, fileId, requestDto.fileExtension());
+        MessageContentType contentType = MessageContentType.valueOf(requestDto.type().toUpperCase());
 
         Message pendingMessage = messageService.savePendingMessage(chatId, senderId, contentType, objectKey);
         String uploadUrl = storageService.generateTempLinkForUploading(objectKey);
@@ -130,7 +154,7 @@ public class MessageCommandServiceImpl implements MessageCommandService {
         participantService.updateWatermark(chatId, senderId, pendingMessage.getId());
 
         return new MediaInitResponse(
-                request.localId(),
+                requestDto.localId(),
                 pendingMessage.getId(),
                 uploadUrl
         );
@@ -154,13 +178,13 @@ public class MessageCommandServiceImpl implements MessageCommandService {
     }
 
     @Transactional
-    public void toggleReaction(UUID senderId, ReactionRequestDto request) {
-        Set<UUID> participants = getParticipantsAndValidate(request.chatId(), senderId);
+    public void toggleReaction(UUID senderId, ReactionRequestDto requestDto) {
+        Set<UUID> participants = getParticipantsAndValidate(requestDto.chatId(), senderId);
         UUID partnerId = getPartnerId(participants, senderId);
 
-        Message message = messageService.getMessageByIdWithReactions(request.messageId());
+        Message message = messageService.getMessageByIdWithReactions(requestDto.messageId());
 
-        if (!message.getChatId().equals(request.chatId())) {
+        if (!message.getChatId().equals(requestDto.chatId())) {
             throw new IllegalArgumentException("Message does not belong to this chat");
         }
         if (message.isDeleted()) {
@@ -175,25 +199,25 @@ public class MessageCommandServiceImpl implements MessageCommandService {
 
         if (existingReactionOpt.isPresent()) {
             MessageReaction existingReaction = existingReactionOpt.get();
-            if (existingReaction.getReaction().equals(request.reaction())) {
+            if (existingReaction.getReaction().equals(requestDto.reaction())) {
                 message.removeReaction(existingReaction);
             } else {
-                existingReaction.setReaction(request.reaction());
-                finalReaction = request.reaction();
+                existingReaction.setReaction(requestDto.reaction());
+                finalReaction = requestDto.reaction();
             }
         } else {
             MessageReaction newReaction = MessageReaction.builder()
                     .userId(senderId)
-                    .reaction(request.reaction())
+                    .reaction(requestDto.reaction())
                     .build();
             message.addReaction(newReaction);
-            finalReaction = request.reaction();
+            finalReaction = requestDto.reaction();
         }
 
         boolean isRemoved = finalReaction == null;
         ReactionEventDto eventDto = new ReactionEventDto(
-                request.chatId(),
-                request.messageId(),
+                requestDto.chatId(),
+                requestDto.messageId(),
                 senderId,
                 partnerId,
                 finalReaction,

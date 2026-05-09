@@ -3,6 +3,7 @@ package com.tinder.chat.message.service;
 import com.tinder.chat.chat.dto.MediaInitRequest;
 import com.tinder.chat.chat.dto.MediaInitResponse;
 import com.tinder.chat.message.dto.ChatRequestDto;
+import com.tinder.chat.message.dto.EditMessageRequest;
 import com.tinder.chat.message.dto.MessageDeleteDto;
 import com.tinder.chat.message.dto.ReactionRequestDto;
 
@@ -12,11 +13,13 @@ public interface MessageCommandService {
 
     void saveMessage(UUID senderId, ChatRequestDto requestDto);
 
-    void deleteMessage(UUID senderId, MessageDeleteDto request);
+    void editMessage(UUID senderId, EditMessageRequest requestDto);
 
-    MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest request);
+    void deleteMessage(UUID senderId, MessageDeleteDto requestDto);
+
+    MediaInitResponse initMediaUpload(UUID chatId, UUID senderId, MediaInitRequest requestDto);
 
     void confirmMediaUpload(String objectKey);
 
-    void toggleReaction(UUID senderId, ReactionRequestDto request);
+    void toggleReaction(UUID senderId, ReactionRequestDto requestDto);
 }

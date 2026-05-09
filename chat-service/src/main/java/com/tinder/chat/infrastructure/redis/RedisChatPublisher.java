@@ -5,6 +5,7 @@ import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.config.RedisChatProperties;
 import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
+import com.tinder.chat.message.dto.MessageEditedEventDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.ReactionEventDto;
 import lombok.RequiredArgsConstructor;
@@ -41,5 +42,10 @@ public class RedisChatPublisher implements ChatEventPublisher {
     @Override
     public void publishMessageDeleted(MessageDeletedEventDto eventDto) {
         redisTemplate.convertAndSend(redisProperties.deleteChannel(), eventDto);
+    }
+
+    @Override
+    public void publishMessageEdited(MessageEditedEventDto eventDto) {
+        redisTemplate.convertAndSend(redisProperties.editChannel(), eventDto);
     }
 }

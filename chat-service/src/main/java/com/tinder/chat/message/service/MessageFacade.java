@@ -8,6 +8,7 @@ import com.tinder.chat.chat.dto.ReadReceiptRequest;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.service.ChatActivityService;
 import com.tinder.chat.message.dto.ChatRequestDto;
+import com.tinder.chat.message.dto.EditMessageRequest;
 import com.tinder.chat.message.dto.MessageDeleteDto;
 import com.tinder.chat.message.dto.ReactionRequestDto;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +24,12 @@ public class MessageFacade {
     private final MessageQueryService queryService;
     private final ChatActivityService activityService;
 
-    public void saveMessage(UUID senderId, ChatRequestDto requestDto) {
-        commandService.saveMessage(senderId, requestDto);
+    public void saveMessage(UUID senderId, ChatRequestDto request) {
+        commandService.saveMessage(senderId, request);
+    }
+
+    public void editMessage(UUID senderId, EditMessageRequest request) {
+        commandService.editMessage(senderId, request);
     }
 
     public void deleteMessage(UUID senderId, MessageDeleteDto request) {

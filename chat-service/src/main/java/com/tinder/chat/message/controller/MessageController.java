@@ -3,6 +3,7 @@ package com.tinder.chat.message.controller;
 import com.tinder.chat.chat.dto.ReadReceiptRequest;
 import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.message.dto.ChatRequestDto;
+import com.tinder.chat.message.dto.EditMessageRequest;
 import com.tinder.chat.message.dto.MessageDeleteDto;
 import com.tinder.chat.message.dto.ReactionRequestDto;
 import com.tinder.chat.message.service.MessageFacade;
@@ -28,6 +29,12 @@ public class MessageController {
         log.info("Received a message from {} with chat id:{}", principal.getName(), requestDto.chatId());
         UUID senderId = UUID.fromString(principal.getName());
         facade.saveMessage(senderId, requestDto);
+    }
+
+    @MessageMapping("/edit")
+    public void editMessage(@Payload @Valid EditMessageRequest request, Principal principal) {
+        UUID senderId = UUID.fromString(principal.getName());
+        facade.editMessage(senderId, request);
     }
 
     @MessageMapping("/typing")

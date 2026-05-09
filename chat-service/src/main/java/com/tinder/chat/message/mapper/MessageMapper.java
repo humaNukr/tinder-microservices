@@ -3,6 +3,7 @@ package com.tinder.chat.message.mapper;
 import com.tinder.chat.config.MapperConfig;
 import com.tinder.chat.infrastructure.redis.contract.MessageDeletedEventDto;
 import com.tinder.chat.message.dto.MessageAckDto;
+import com.tinder.chat.message.dto.MessageEditedEventDto;
 import com.tinder.chat.message.dto.MessageEventDto;
 import com.tinder.chat.message.dto.MessageResponseDto;
 import com.tinder.chat.message.dto.ReactionInfoDto;
@@ -24,6 +25,10 @@ public interface MessageMapper {
     @Mapping(target = "content", expression = "java(resolveContent(message))")
     @Mapping(target = "replyTo", source = "message.parentMessage")
     MessageEventDto toEventDto(Message message, UUID recipientId);
+
+    @Mapping(target = "messageId", source = "message.id")
+    @Mapping(target = "newContent", source = "message.content")
+    MessageEditedEventDto toEditedEventDto(Message message, UUID recipientId);
 
     @Mapping(target = "messageId", source = "message.id")
     MessageDeletedEventDto toDeletedEventDto(Message message, UUID recipientId);
