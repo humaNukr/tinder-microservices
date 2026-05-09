@@ -1,6 +1,8 @@
 package com.tinder.chat.security;
 
 import com.tinder.chat.exception.AccessDeniedException;
+import io.jsonwebtoken.JwtException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -11,10 +13,14 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class WebSocketAuthorizationInterceptor implements ChannelInterceptor {
+
+    private final JwtUtil jwtUtil;
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -25,6 +31,29 @@ public class WebSocketAuthorizationInterceptor implements ChannelInterceptor {
         }
 
         StompCommand command = accessor.getCommand();
+
+        if (StompCommand.CONNECT.equals(command)) {
+            List<String> authHeaders = accessor.getNativeHeader("Authorization");
+
+            if (authHeaders != null && !authHeaders.isEmpty()) {
+                String token = authHeaders.get(0).replace("Bearer ", "");
+
+                try {
+                    String userId = jwtUtil.extractUserId(token);
+
+                    Principal principal = new StompPrincipal(userId);
+                    accessor.setUser(principal);
+
+                    log.debug("User {} successfully authenticated in WebSocket", userId);
+                } catch (JwtException e) {
+                    log.error("Invalid JWT token during WebSocket handshake: {}", e.getMessage());
+                    throw new AccessDeniedException("Invalid JWT token");
+                }
+            } else {
+                log.warn("Missing Authorization header in STOMP CONNECT");
+                throw new AccessDeniedException("Missing JWT token");
+            }
+        }
 
         if (StompCommand.SUBSCRIBE.equals(command) || StompCommand.SEND.equals(command)) {
             Principal principal = accessor.getUser();

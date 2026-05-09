@@ -85,3 +85,6 @@ app:
   services:
     profile:
       url: http://localhost:8082
+
+jwt:
+  secret: ${JWT_SECRET}

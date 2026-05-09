@@ -1,6 +1,5 @@
 package com.tinder.chat.config;
 
-import com.tinder.chat.security.CustomHandshakeHandler;
 import com.tinder.chat.security.WebSocketAuthorizationInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint(webSocketProperties.chatEndpoint())
                 .setAllowedOriginPatterns("*")
-                .setHandshakeHandler(new CustomHandshakeHandler())
                 .withSockJS();
     }
 
