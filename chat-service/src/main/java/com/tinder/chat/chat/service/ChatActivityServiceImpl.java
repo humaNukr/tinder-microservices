@@ -6,7 +6,6 @@ import com.tinder.chat.chat.dto.TypingEventDto;
 import com.tinder.chat.chat.port.ChatEventPublisher;
 import com.tinder.chat.chat.port.ChatParticipantProvider;
 import com.tinder.chat.exception.AccessDeniedException;
-import com.tinder.chat.message.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,15 +22,12 @@ public class ChatActivityServiceImpl implements ChatActivityService {
     private final ChatParticipantService participantService;
     private final ChatParticipantProvider participantProvider;
     private final ChatEventPublisher eventPublisher;
-    private final MessageRepository messageRepository;
 
     @Transactional
     public void processReadReceipt(UUID readerId, ReadReceiptRequest request) {
         int updatedWatermarks = participantService.updateWatermark(request.chatId(), readerId, request.messageId());
 
-        int updatedMessages = messageRepository.markMessagesAsRead(request.chatId(), readerId, request.messageId());
-
-        if (updatedWatermarks == 0 && updatedMessages == 0) {
+        if (updatedWatermarks == 0) {
             return;
         }
 

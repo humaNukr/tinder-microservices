@@ -98,11 +98,7 @@ public class Message {
     }
 
     public void markAsSent() {
-        if (this.isDeleted()) {
-            throw new IllegalStateException("Cannot change status of a deleted message");
-        }
-
-        if (this.status == MessageStatus.READ || this.status == MessageStatus.EDITED) {
+        if (this.status.ordinal() > MessageStatus.SENT.ordinal()) {
             throw new IllegalStateException("Cannot downgrade message status from " + this.status + " to SENT");
         }
 

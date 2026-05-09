@@ -225,7 +225,6 @@ public class MessageCommandServiceImpl implements MessageCommandService {
         );
 
         eventPublisher.publishReaction(eventDto);
-        eventPublisher.publishReaction(eventDto);
     }
 
     private Set<UUID> getParticipantsAndValidate(UUID chatId, UUID userId) {
