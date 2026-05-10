@@ -65,6 +65,10 @@ app:
       fixed-delay: 2000 #ms
       cleanup-cron: "0 0 3 * * *"
 
+  inbox:
+    scheduler:
+      cleanup-cron: "0 0 3 * * *"
+
   websocket:
     app-destination-prefix: "/app"
     user-destination-prefix: "/user"
