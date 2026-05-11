@@ -92,13 +92,6 @@ public class MessagePublishingService implements SendMessageUseCase, EditMessage
         Set<UUID> participants = chatRoomValidator.validateAndGetParticipants(requestDto.chatId(), senderId);
         UUID partnerId = chatRoomValidator.getPartnerId(participants, senderId);
 
-        if (!message.getSenderId().equals(senderId)) {
-            throw new AccessDeniedException("You can only edit your own messages");
-        }
-        if (message.getStatus() == MessageStatus.DELETED || message.getContentType() != MessageContentType.TEXT) {
-            throw new IllegalStateException("Cannot edit this type of message");
-        }
-
         message.edit(requestDto.newContent());
         Message savedMessage = persistencePort.save(message);
 
@@ -113,18 +106,8 @@ public class MessagePublishingService implements SendMessageUseCase, EditMessage
 
         Message message = persistencePort.getById(requestDto.messageId());
 
-        if (!message.getSenderId().equals(senderId)) {
-            throw new AccessDeniedException("You can only delete your own messages");
-        }
-        if (!message.getChatId().equals(requestDto.chatId())) {
-            throw new IllegalArgumentException("Message does not belong to this chat");
-        }
+        message.deleteBy(senderId, requestDto.chatId());
 
-        if (message.isDeleted()) {
-            return;
-        }
-
-        message.markAsDeleted();
         persistencePort.save(message);
 
         eventPort.publishMessageDeleted(messageEventMapper.toDeletedEventDto(message, partnerId));

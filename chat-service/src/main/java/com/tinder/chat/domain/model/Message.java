@@ -77,11 +77,21 @@ public class Message {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    public void markAsDeleted() {
-        deletedAt = Instant.now();
-        content = "";
-        contentType = MessageContentType.TEXT;
-        status = MessageStatus.DELETED;
+    public void deleteBy(UUID requesterId, UUID contextChatId) {
+        if (!this.senderId.equals(requesterId)) {
+            throw new IllegalStateException("You can only delete your own messages");
+        }
+        if (!this.chatId.equals(contextChatId)) {
+            throw new IllegalArgumentException("Message does not belong to this chat");
+        }
+        if (this.isDeleted()) {
+            return;
+        }
+
+        this.deletedAt = Instant.now();
+        this.content = "";
+        this.contentType = MessageContentType.TEXT;
+        this.status = MessageStatus.DELETED;
     }
 
     public void edit(String newContent) {

@@ -3,10 +3,13 @@ package com.tinder.chat.infrastructure.adapter.out.redis;
 import com.tinder.chat.application.port.out.presence.PresenceStatePort;
 import com.tinder.chat.infrastructure.config.properties.RedisPresenceProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -16,16 +19,23 @@ public class RedisPresenceStateAdapter implements PresenceStatePort {
     private final StringRedisTemplate redisTemplate;
     private final RedisPresenceProperties props;
 
-    @Override
     public boolean registerSessionAndClearGrace(UUID userId, String sessionId) {
-        String sessionKey = props.sessionKeyPrefix() + userId;
         String graceKey = props.gracePeriodPrefix() + userId;
+        String sessionKey = props.gracePeriodPrefix() + userId;
 
-        redisTemplate.delete(graceKey);
-        redisTemplate.opsForSet().add(sessionKey, sessionId);
-        redisTemplate.expire(sessionKey, Duration.ofHours(24));
-
-        Long size = redisTemplate.opsForSet().size(sessionKey);
+        List<Object> results = redisTemplate.executePipelined(new SessionCallback<Object>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <K, V> Object execute(RedisOperations<K, V> operations) {
+                StringRedisTemplate stringOps = (StringRedisTemplate) operations;
+                stringOps.delete(graceKey);
+                stringOps.opsForSet().add(sessionKey, sessionId);
+                stringOps.expire(sessionKey, Duration.ofHours(24));
+                stringOps.opsForSet().size(sessionKey);
+                return null;
+            }
+        });
+        Long size = (Long) results.get(3);
         return size != null && size == 1L;
     }
 
