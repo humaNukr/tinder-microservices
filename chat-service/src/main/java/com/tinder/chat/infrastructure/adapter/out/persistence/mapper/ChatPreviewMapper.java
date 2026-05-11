@@ -1,4 +1,4 @@
-package com.tinder.chat.shared.mapper;
+package com.tinder.chat.infrastructure.adapter.out.persistence.mapper;
 
 import com.tinder.chat.domain.model.ChatPreview;
 import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatPreviewProjection;

@@ -1,4 +1,4 @@
-package com.tinder.chat.domain.model;
+package com.tinder.chat.infrastructure.adapter.out.persistence.entity;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;

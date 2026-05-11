@@ -1,6 +1,6 @@
 package com.tinder.chat.infrastructure.adapter.out.persistence;
 
-import com.tinder.chat.domain.model.Chat;
+import com.tinder.chat.infrastructure.adapter.out.persistence.entity.ChatJpaEntity;
 import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatParticipantsProjection;
 import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatPreviewProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ChatJpaRepository extends JpaRepository<Chat, UUID> {
+public interface ChatJpaRepository extends JpaRepository<ChatJpaEntity, UUID> {
 
-    @Query("SELECT c.user1Id as user1Id, c.user2Id as user2Id FROM Chat c WHERE c.id = :chatId")
+    @Query("SELECT c.user1Id as user1Id, c.user2Id as user2Id FROM ChatJpaEntity c WHERE c.id = :chatId")
     Optional<ChatParticipantsProjection> findParticipantsById(@Param("chatId") UUID chatId);
 
     @Query(nativeQuery = true, value = """

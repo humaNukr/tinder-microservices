@@ -4,6 +4,8 @@ import com.tinder.chat.application.port.out.message.MessagePersistencePort;
 import com.tinder.chat.domain.enums.MessageStatus;
 import com.tinder.chat.domain.exception.EntityNotFoundException;
 import com.tinder.chat.domain.model.Message;
+import com.tinder.chat.infrastructure.adapter.out.persistence.entity.MessageJpaEntity;
+import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.MessageEntityMapper;
 import com.tinder.chat.shared.dto.common.CursorPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -19,28 +21,34 @@ import java.util.UUID;
 public class MessagePersistenceAdapter implements MessagePersistencePort {
 
     private final MessageJpaRepository messageRepository;
+    private final MessageEntityMapper mapper;
 
     @Override
     public Message save(Message message) {
-        return messageRepository.save(message);
+        MessageJpaEntity entityToSave = mapper.toEntity(message);
+        MessageJpaEntity savedEntity = messageRepository.save(entityToSave);
+        return mapper.toDomain(savedEntity);
     }
 
     @Override
     public Message getById(Long messageId) {
-        return messageRepository.findById(messageId)
+        MessageJpaEntity entity = messageRepository.findById(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("Message not found with id: " + messageId));
+        return mapper.toDomain(entity);
     }
 
     @Override
     public Message getByIdWithReactions(Long messageId) {
-        return messageRepository.findByIdWithReactions(messageId)
+        MessageJpaEntity entity = messageRepository.findByIdWithReactions(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("Message not found with id: " + messageId));
+        return mapper.toDomain(entity);
     }
 
     @Override
     public Message getPendingMessageByObjectKey(String objectKey) {
-        return messageRepository.findPendingMessageByObjectKey(objectKey)
+        MessageJpaEntity entity = messageRepository.findPendingMessageByObjectKey(objectKey)
                 .orElseThrow(() -> new EntityNotFoundException("Pending message not found for key: " + objectKey));
+        return mapper.toDomain(entity);
     }
 
     @Override
@@ -48,24 +56,29 @@ public class MessagePersistenceAdapter implements MessagePersistencePort {
         int limitPlusOne = limit + 1;
         Pageable pageable = PageRequest.of(0, limitPlusOne);
 
-        List<Message> messageList;
+        List<MessageJpaEntity> entityList;
 
         if (cursor == null) {
-            messageList = messageRepository.findByChatIdAndStatusNotOrderByIdDesc(
+            entityList = messageRepository.findByChatIdAndStatusNotOrderByIdDesc(
                     chatId, MessageStatus.UPLOADING, pageable);
         } else {
-            messageList = messageRepository.findByChatIdAndStatusNotAndIdLessThanOrderByIdDesc(
+            entityList = messageRepository.findByChatIdAndStatusNotAndIdLessThanOrderByIdDesc(
                     chatId, MessageStatus.UPLOADING, cursor, pageable);
         }
 
-        List<Message> messages = new ArrayList<>(messageList);
+        List<MessageJpaEntity> entities = new ArrayList<>(entityList);
 
-        boolean hasNext = messages.size() > limit;
+        boolean hasNext = entities.size() > limit;
         if (hasNext) {
-            messages.remove(limit);
+            entities.remove(limit);
         }
 
-        Long nextCursor = messages.isEmpty() ? null : messages.getLast().getId();
+        Long nextCursor = entities.isEmpty() ? null : entities.getLast().getId();
+
+        // Мапимо список Entity в список Доменних моделей
+        List<Message> messages = entities.stream()
+                .map(mapper::toDomain)
+                .toList();
 
         return new CursorPage<>(messages, nextCursor, hasNext);
     }
