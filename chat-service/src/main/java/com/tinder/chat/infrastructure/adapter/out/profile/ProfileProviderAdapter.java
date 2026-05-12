@@ -1,8 +1,6 @@
-package com.tinder.chat.infrastructure.adapter.out.provider;
+package com.tinder.chat.infrastructure.adapter.out.profile;
 
 import com.tinder.chat.application.port.out.profile.ProfilePort;
-import com.tinder.chat.infrastructure.adapter.out.cache.ProfileCacheClient;
-import com.tinder.chat.infrastructure.adapter.out.http.ProfileRestAdapter;
 import com.tinder.chat.shared.dto.external.ProfileResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,5 @@
-package com.tinder.chat.infrastructure.config;
+package com.tinder.chat.infrastructure.adapter.out.profile;
 
-import com.tinder.chat.infrastructure.adapter.out.http.ProfileClient;
 import com.tinder.chat.infrastructure.config.properties.ProfileServiceProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +10,7 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 @Configuration
 @RequiredArgsConstructor
-public class RestClientConfig {
+class ProfileClientConfig {
 
     private final ProfileServiceProperties serviceProperties;
 

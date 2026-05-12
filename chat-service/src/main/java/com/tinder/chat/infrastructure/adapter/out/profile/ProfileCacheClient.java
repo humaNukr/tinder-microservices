@@ -1,11 +1,11 @@
-package com.tinder.chat.infrastructure.adapter.out.cache;
+package com.tinder.chat.infrastructure.adapter.out.profile;
 
 import com.tinder.chat.shared.dto.external.ProfileResponse;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface ProfileCacheClient {
+interface ProfileCacheClient {
     List<ProfileResponse> getCachedProfiles(List<UUID> usersIds);
 
     void cacheProfiles(List<ProfileResponse> profiles);

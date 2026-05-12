@@ -1,15 +1,18 @@
 package com.tinder.chat.infrastructure.adapter.out.persistence;
 
 import com.tinder.chat.application.port.out.room.ChatPersistencePort;
+import com.tinder.chat.domain.exception.EntityNotFoundException;
 import com.tinder.chat.domain.model.Chat;
 import com.tinder.chat.domain.model.ChatPreview;
 import com.tinder.chat.infrastructure.adapter.out.persistence.entity.ChatJpaEntity;
 import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.ChatEntityMapper;
 import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.ChatPreviewMapper;
+import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatParticipantsProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -33,5 +36,13 @@ public class ChatPersistenceAdapter implements ChatPersistencePort {
                 .stream()
                 .map(previewMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Set<UUID> getChatParticipants(UUID chatId) {
+        ChatParticipantsProjection projection = repository.findParticipantsById(chatId)
+                .orElseThrow(() -> new EntityNotFoundException("Chat with id " + chatId + " not found"));
+
+        return Set.of(projection.getUser1Id(), projection.getUser2Id());
     }
 }

@@ -6,7 +6,7 @@ import com.tinder.chat.domain.model.Message;
 import com.tinder.chat.infrastructure.adapter.out.persistence.outbox.OutboxEventEntity;
 import com.tinder.chat.infrastructure.adapter.out.persistence.outbox.OutboxJpaRepository;
 import com.tinder.chat.infrastructure.config.properties.KafkaTopicsProperties;
-import com.tinder.chat.shared.dto.event.MessageSavedEvent;
+import com.tinder.chat.domain.event.MessageSavedEvent;
 import com.tinder.chat.shared.dto.event.MessageSentEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

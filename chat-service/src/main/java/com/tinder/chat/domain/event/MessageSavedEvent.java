@@ -1,4 +1,4 @@
-package com.tinder.chat.shared.dto.event;
+package com.tinder.chat.domain.event;
 
 import com.tinder.chat.domain.model.Message;
 

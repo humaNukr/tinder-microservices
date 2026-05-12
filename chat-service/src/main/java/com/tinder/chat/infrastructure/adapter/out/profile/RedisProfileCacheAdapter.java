@@ -1,8 +1,7 @@
-package com.tinder.chat.infrastructure.adapter.in.redis;
+package com.tinder.chat.infrastructure.adapter.out.profile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tinder.chat.infrastructure.adapter.out.cache.ProfileCacheClient;
 import com.tinder.chat.shared.dto.external.ProfileResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +18,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RedisProfileCacheAdapter implements ProfileCacheClient {
+class RedisProfileCacheAdapter implements ProfileCacheClient {
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;

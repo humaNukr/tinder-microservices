@@ -39,8 +39,8 @@ public class ChatHistoryQueryService implements InitChatQuery, GetChatHistoryQue
 
         boolean isPartnerOnline = userPresencePort.isUserOnline(partnerId);
 
-        Long partnerWatermark = participantPersistencePort.findLastReadMessageId(chatId, partnerId).orElse(null);
-        Long myWatermark = participantPersistencePort.findLastReadMessageId(chatId, userId).orElse(null);
+        Long partnerWatermark = participantPersistencePort.findLastReadMessageId(chatId, partnerId).orElse(0L);
+        Long myWatermark = participantPersistencePort.findLastReadMessageId(chatId, userId).orElse(0L);
 
         List<MessageResponseDto> messageDtos = messageResponseMapper.toResponseDtoList(historyPage.data());
 

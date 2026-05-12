@@ -14,7 +14,7 @@ public interface OutboxJpaRepository extends JpaRepository<OutboxEventEntity, Lo
     @Query(value = """
             SELECT * FROM outbox_events
             WHERE is_sent = false
-            ORDER BY created_at
+            ORDER BY created_at ASC
             LIMIT :limit
             FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)

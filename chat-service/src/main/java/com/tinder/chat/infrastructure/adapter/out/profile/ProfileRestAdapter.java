@@ -1,4 +1,4 @@
-package com.tinder.chat.infrastructure.adapter.out.http;
+package com.tinder.chat.infrastructure.adapter.out.profile;
 
 import com.tinder.chat.shared.dto.external.ProfileResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ProfileRestAdapter {
+class ProfileRestAdapter {
 
     private final ProfileClient profileClient;
 

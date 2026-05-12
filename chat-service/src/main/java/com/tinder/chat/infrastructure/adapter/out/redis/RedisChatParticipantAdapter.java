@@ -1,14 +1,14 @@
 package com.tinder.chat.infrastructure.adapter.out.redis;
 
 import com.tinder.chat.application.port.out.room.ChatParticipantPort;
-import com.tinder.chat.infrastructure.adapter.out.persistence.ChatJpaRepository;
-import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatParticipantsProjection;
+import com.tinder.chat.application.port.out.room.ChatPersistencePort;
 import com.tinder.chat.infrastructure.config.properties.RedisChatProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class RedisChatParticipantAdapter implements ChatParticipantPort {
 
     private final StringRedisTemplate redisTemplate;
-    private final ChatJpaRepository chatJpaRepository;
+    private final ChatPersistencePort chatPersistencePort;
     private final RedisChatProperties redisProps;
 
     public void saveParticipants(UUID chatId, UUID user1Id, UUID user2Id) {
@@ -39,12 +39,16 @@ public class RedisChatParticipantAdapter implements ChatParticipantPort {
 
         // Fallback
         log.warn("Cache miss for chat {}. Fallback to PostgreSQL", chatId);
-        ChatParticipantsProjection projection = chatJpaRepository.findParticipantsById(chatId)
-                .orElseThrow(() -> new IllegalArgumentException("Chat not found: " + chatId));
 
-        saveParticipants(chatId, projection.getUser1Id(), projection.getUser2Id());
+        Set<UUID> participants = chatPersistencePort.getChatParticipants(chatId);
 
-        return Set.of(projection.getUser1Id(), projection.getUser2Id());
+        Iterator<UUID> iterator = participants.iterator();
+        UUID user1Id = iterator.next();
+        UUID user2Id = iterator.next();
+
+        saveParticipants(chatId, user1Id, user2Id);
+
+        return Set.of(user1Id, user2Id);
     }
 
     private String buildKey(UUID chatId) {
