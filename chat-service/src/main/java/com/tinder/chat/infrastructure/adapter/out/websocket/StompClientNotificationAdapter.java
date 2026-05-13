@@ -38,7 +38,11 @@ public class StompClientNotificationAdapter implements ClientNotificationPort {
 
     @Override
     public void sendTypingEvent(TypingEventDto eventDto) {
-        String destination = String.format("/topic/chats/%s/typing", eventDto.chatId());
+        String destination = String.format("%s/%s/%s",
+                webSocketProperties.topicChatPrefix(),
+                eventDto.chatId(),
+                webSocketProperties.topicChatTypingSuffix());
+
         messagingTemplate.convertAndSend(destination, eventDto);
     }
 
@@ -67,9 +71,10 @@ public class StompClientNotificationAdapter implements ClientNotificationPort {
 
     @Override
     public void sendPresenceEvent(UserPresenceEvent event) {
-        messagingTemplate.convertAndSend(
-                webSocketProperties.topicUsersPrefix() + event.userId() + webSocketProperties.topicUsersPresenceSuffix(),
-                event
-        );
+        String destination = String.format("%s/%s/%s",
+                webSocketProperties.topicUsersPrefix(),
+                event.userId(),
+                webSocketProperties.topicUsersPresenceSuffix());
+        messagingTemplate.convertAndSend(destination, event);
     }
 }

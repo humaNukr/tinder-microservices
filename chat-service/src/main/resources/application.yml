@@ -80,7 +80,9 @@ app:
     queue-message-deletions: "/queue/message-deletions"
     queue-message-edits: "/queue/message-edits"
     topic-users-prefix: "/topic/users"
-    topic-users-presence-suffix: "/presence"
+    topic-users-presence-suffix: "presence"
+    topic-chat-prefix: "/topic/chats"
+    topic-chat-typing-suffix: "typing"
 
   minio:
     url: http://localhost:9000

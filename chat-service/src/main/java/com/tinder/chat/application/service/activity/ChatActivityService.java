@@ -45,7 +45,7 @@ public class ChatActivityService implements ProcessReadReceiptUseCase, SendTypin
     }
 
     @Override
-    public void processTypingEvent(TypingEventDto requestDto, UUID senderId) {
+    public void processTypingEvent(TypingEventDto requestDto) {
         eventPort.publishTypingEvent(requestDto);
     }
 }

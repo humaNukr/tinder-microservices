@@ -14,6 +14,9 @@ public record WebSocketProperties(
         String queueMessageDeletions,
         String queueMessageEdits,
         String topicUsersPrefix,
-        String topicUsersPresenceSuffix
+        String topicUsersPresenceSuffix,
+        String topicChatPrefix,
+        String topicChatTypingSuffix
+
 ) {
 }

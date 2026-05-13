@@ -50,8 +50,11 @@ public class MessageWebSocketController {
 
     @MessageMapping("/typing")
     public void processTypingEvent(@Payload TypingEventDto requestDto, Principal principal) {
-        UUID senderId = UUID.fromString(principal.getName());
-        sendTypingEventUseCase.processTypingEvent(requestDto, senderId);
+        UUID actualSenderId = UUID.fromString(principal.getName());
+
+        TypingEventDto enrichedEvent = new TypingEventDto(requestDto.chatId(), actualSenderId);
+
+        sendTypingEventUseCase.processTypingEvent(enrichedEvent);
     }
 
     @MessageMapping("/read")

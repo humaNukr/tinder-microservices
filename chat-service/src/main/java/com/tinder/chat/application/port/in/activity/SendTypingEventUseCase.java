@@ -5,5 +5,5 @@ import com.tinder.chat.shared.dto.event.TypingEventDto;
 import java.util.UUID;
 
 public interface SendTypingEventUseCase {
-    void processTypingEvent(TypingEventDto requestDto, UUID senderId);
+    void processTypingEvent(TypingEventDto requestDto);
 }
