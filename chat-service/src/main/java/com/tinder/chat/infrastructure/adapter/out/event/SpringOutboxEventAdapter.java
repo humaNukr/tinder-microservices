@@ -1,8 +1,8 @@
 package com.tinder.chat.infrastructure.adapter.out.event;
 
 import com.tinder.chat.application.port.out.message.MessageOutboxEventPort;
-import com.tinder.chat.domain.model.Message;
 import com.tinder.chat.domain.event.MessageSavedEvent;
+import com.tinder.chat.domain.model.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;

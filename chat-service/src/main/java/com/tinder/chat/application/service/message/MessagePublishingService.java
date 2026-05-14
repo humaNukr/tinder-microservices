@@ -12,7 +12,6 @@ import com.tinder.chat.application.port.out.room.ChatParticipantPersistencePort;
 import com.tinder.chat.application.service.room.ChatRoomValidator;
 import com.tinder.chat.domain.enums.MessageContentType;
 import com.tinder.chat.domain.enums.MessageStatus;
-import com.tinder.chat.domain.exception.AccessDeniedException;
 import com.tinder.chat.domain.model.Message;
 import com.tinder.chat.shared.dto.event.MessageAckDto;
 import com.tinder.chat.shared.dto.message.ChatRequestDto;
