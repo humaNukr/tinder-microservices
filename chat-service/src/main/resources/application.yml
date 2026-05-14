@@ -23,6 +23,9 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -31,16 +34,87 @@ app:
   kafka:
     topics:
       match-events: match-events
+      message-events: message-events
+      minio-chat-media-events: minio-chat-media-events
+      user-presence-events: user-presence-events
     consumer-groups:
       chat-service: chat-service-group
 
   redis:
     chat:
       channel: chat-channel
+      typing-channel: chat-typing-channel
+      read-receipt-channel: chat-read-receipt-channel
+      reaction-channel: chat:reactions
+      delete-channel: chat:deletions
+      edit-channel: chat:edits
       key-prefix: "chat:"
-      key-suffix: :participants
-      ttl: 7d #Days (duration format)
+      key-suffix: ":participants"
+      ttl: 7d
+    presence:
+      channel: user-presence-channel
+      session-key-prefix: "user:sessions:"
+      grace-period-prefix: "user:grace:"
+      grace-period-duration: 15s
 
   outbox:
-    poll-interval: 1000
+    scheduler:
+      poll-interval: 1000
+      batch-size: 50
+      batch-processing-time: 5 #seconds
+      fixed-delay: 2000 #ms
+      cleanup-cron: "0 0 3 * * *"
 
+  inbox:
+    scheduler:
+      cleanup-cron: "0 0 3 * * *"
+
+  websocket:
+    app-destination-prefix: "/app"
+    user-destination-prefix: "/user"
+    chat-endpoint: "/ws/chat"
+    queue-messages: "/queue/messages"
+    queue-acks: "/queue/acks"
+    queue-read-receipts: "/queue/read-receipts"
+    queue-message-reactions: "/queue/message-reactions"
+    queue-message-deletions: "/queue/message-deletions"
+    queue-message-edits: "/queue/message-edits"
+    topic-users-prefix: "/topic/users"
+    topic-users-presence-suffix: "presence"
+    topic-chat-prefix: "/topic/chats"
+    topic-chat-typing-suffix: "typing"
+
+  minio:
+    url: http://localhost:9000
+    access-key: admin
+    secret-key: password123
+    bucket-name: tinder-chat-media
+
+  services:
+    profile:
+      url: http://localhost:8082
+
+resilience4j:
+  retry:
+    instances:
+      profileService:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.HttpServerErrorException
+
+  circuitbreaker:
+    instances:
+      profileService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+jwt:
+  secret: ${JWT_SECRET}

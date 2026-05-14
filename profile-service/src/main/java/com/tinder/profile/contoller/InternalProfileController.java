@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/internal/api/v1/profiles")
+@RequestMapping("/api/v1/internal/profiles")
 @RequiredArgsConstructor
 public class InternalProfileController {
 

@@ -10,8 +10,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 public class ProfileServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ProfileServiceApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ProfileServiceApplication.class, args);
+    }
 
 }

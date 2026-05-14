@@ -26,11 +26,15 @@ app:
   kafka:
     topics:
       user-activity: user-activity-events
+      user-presence: user-presence-events
 
   profile:
     max-photos: 9
     min-age: 18
     default-search-radius-km: 50.0
+
+  media:
+    public-prefix: "/media/"
 
 minio:
   url: http://localhost:9000

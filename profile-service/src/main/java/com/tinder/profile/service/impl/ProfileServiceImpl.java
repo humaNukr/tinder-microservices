@@ -23,7 +23,11 @@ import com.tinder.profile.service.interfaces.ProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -44,6 +48,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final UserActivityProducer activityProducer;
     private final ProfileProperties profileProperties;
     private final ApplicationEventPublisher eventPublisher;
+    private final MongoTemplate mongoTemplate;
 
     @Override
     public ProfileResponse createProfile(UUID userId, CreateProfileRequest request) {
@@ -233,5 +238,16 @@ public class ProfileServiceImpl implements ProfileService {
     public Profile getProfileEntity(UUID userId) {
         return profileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ProfileNotFoundException("Profile with id " + userId + " not found"));
+    }
+
+    @Override
+    public void updateLastSeen(UUID userId, LocalDateTime timestamp) {
+        Query query = new Query(Criteria.where("userId").is(userId));
+
+        Update update = new Update().max("lastSeen", timestamp);
+
+        mongoTemplate.updateFirst(query, update, Profile.class);
+
+        log.debug("Attempted to update last_seen for user {} to {}", userId, timestamp);
     }
 }
