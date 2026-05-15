@@ -8,6 +8,7 @@ import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.ChatEntityM
 import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.ChatPreviewMapper;
 import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatParticipantsProjection;
 import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatPreviewProjection;
+import com.tinder.chat.infrastructure.adapter.out.persistence.repository.ChatJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,8 +49,12 @@ class ChatPersistenceAdapterTest {
     @BeforeEach
     void setUp() {
         chatId = UUID.randomUUID();
-        user1Id = UUID.randomUUID();
-        user2Id = UUID.randomUUID();
+        UUID u1 = UUID.randomUUID();
+        UUID u2 = UUID.randomUUID();
+
+        boolean isU1Smaller = u1.toString().compareTo(u2.toString()) < 0;
+        user1Id = isU1Smaller ? u1 : u2;
+        user2Id = isU1Smaller ? u2 : u1;
     }
 
     @Nested

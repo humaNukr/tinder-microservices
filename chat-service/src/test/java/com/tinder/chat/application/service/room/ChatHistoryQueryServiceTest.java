@@ -58,6 +58,11 @@ class ChatHistoryQueryServiceTest {
         limit = 20;
     }
 
+    private CursorPage<Message> createMockPage() {
+        List<Message> messages = List.of(mock(Message.class));
+        return new CursorPage<>(messages, 5L, false);
+    }
+
     @Nested
     class InitChat {
 
@@ -113,10 +118,5 @@ class ChatHistoryQueryServiceTest {
 
             verify(chatRoomValidator).validateAndGetParticipants(chatId, userId);
         }
-    }
-
-    private CursorPage<Message> createMockPage() {
-        List<Message> messages = List.of(mock(Message.class));
-        return new CursorPage<>(messages, 5L, false);
     }
 }

@@ -26,7 +26,7 @@ class ChatCreationServiceTest {
 
     @Mock
     private ChatPersistencePort chatPersistencePort;
-    
+
     @Mock
     private ChatParticipantPort chatParticipantPort;
 
@@ -47,6 +47,14 @@ class ChatCreationServiceTest {
         savedChatId = UUID.randomUUID();
     }
 
+    private Chat createMockChat() {
+        return Chat.builder()
+                .id(savedChatId)
+                .user1Id(user1Id)
+                .user2Id(user2Id)
+                .build();
+    }
+
     @Nested
     class CreateChat {
 
@@ -59,18 +67,10 @@ class ChatCreationServiceTest {
 
             verify(chatPersistencePort).save(chatCaptor.capture());
             Chat capturedChat = chatCaptor.getValue();
-            
+
             assertNotNull(capturedChat);
             assertEquals(2, capturedChat.getParticipants().size());
             verify(chatParticipantPort).saveParticipants(savedChatId, user1Id, user2Id);
         }
-    }
-
-    private Chat createMockChat() {
-        return Chat.builder()
-                .id(savedChatId)
-                .user1Id(user1Id)
-                .user2Id(user2Id)
-                .build();
     }
 }

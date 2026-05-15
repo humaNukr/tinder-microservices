@@ -21,7 +21,7 @@ public class RedisPresenceStateAdapter implements PresenceStatePort {
 
     public boolean registerSessionAndClearGrace(UUID userId, String sessionId) {
         String graceKey = props.gracePeriodPrefix() + userId;
-        String sessionKey = props.gracePeriodPrefix() + userId;
+        String sessionKey = props.sessionKeyPrefix() + userId;
 
         List<Object> results = redisTemplate.executePipelined(new SessionCallback<Object>() {
             @Override

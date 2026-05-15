@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -71,6 +70,27 @@ class MessageMediaServiceTest {
         senderId = UUID.randomUUID();
         partnerId = UUID.randomUUID();
         messageId = 1L;
+    }
+
+    private Message createMessage(MessageStatus status) {
+        return Message.builder()
+                .id(messageId)
+                .chatId(chatId)
+                .senderId(senderId)
+                .contentType(MessageContentType.IMAGE)
+                .content("some-object-key")
+                .status(status)
+                .build();
+    }
+
+    private void setupParticipantValidation() {
+        when(chatRoomValidator.validateAndGetParticipants(chatId, senderId)).thenReturn(Set.of(senderId, partnerId));
+    }
+
+    private void setupPartnerValidation() {
+        Set<UUID> participants = Set.of(senderId, partnerId);
+        when(chatRoomValidator.validateAndGetParticipants(chatId, senderId)).thenReturn(participants);
+        when(chatRoomValidator.getPartnerId(participants, senderId)).thenReturn(partnerId);
     }
 
     @Nested
@@ -139,26 +159,5 @@ class MessageMediaServiceTest {
             verify(persistencePort, never()).save(any(Message.class));
             verifyNoInteractions(chatRoomValidator, outboxEventPort, eventPort, notificationPort);
         }
-    }
-
-    private Message createMessage(MessageStatus status) {
-        return Message.builder()
-                .id(messageId)
-                .chatId(chatId)
-                .senderId(senderId)
-                .contentType(MessageContentType.IMAGE)
-                .content("some-object-key")
-                .status(status)
-                .build();
-    }
-
-    private void setupParticipantValidation() {
-        when(chatRoomValidator.validateAndGetParticipants(chatId, senderId)).thenReturn(Set.of(senderId, partnerId));
-    }
-
-    private void setupPartnerValidation() {
-        Set<UUID> participants = Set.of(senderId, partnerId);
-        when(chatRoomValidator.validateAndGetParticipants(chatId, senderId)).thenReturn(participants);
-        when(chatRoomValidator.getPartnerId(participants, senderId)).thenReturn(partnerId);
     }
 }

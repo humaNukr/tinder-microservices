@@ -8,6 +8,7 @@ import com.tinder.chat.infrastructure.adapter.out.persistence.entity.ChatJpaEnti
 import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.ChatEntityMapper;
 import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.ChatPreviewMapper;
 import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatParticipantsProjection;
+import com.tinder.chat.infrastructure.adapter.out.persistence.repository.ChatJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

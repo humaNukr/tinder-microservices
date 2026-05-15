@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -56,6 +55,25 @@ class MessageReactionServiceTest {
         partnerId = UUID.randomUUID();
         chatId = UUID.randomUUID();
         messageId = 100L;
+    }
+
+    private Message createMessage(boolean isDeleted) {
+        Message message = Message.builder()
+                .id(messageId)
+                .chatId(chatId)
+                .senderId(senderId)
+                .reactions(new ArrayList<>())
+                .build();
+        if (isDeleted) {
+            message.deleteBy(senderId, chatId);
+        }
+        return message;
+    }
+
+    private void setupValidator(UUID targetChatId) {
+        Set<UUID> participants = Set.of(senderId, partnerId);
+        when(chatRoomValidator.validateAndGetParticipants(targetChatId, senderId)).thenReturn(participants);
+        when(chatRoomValidator.getPartnerId(participants, senderId)).thenReturn(partnerId);
     }
 
     @Nested
@@ -147,24 +165,5 @@ class MessageReactionServiceTest {
                     messageReactionService.toggleReaction(senderId, request)
             );
         }
-    }
-
-    private Message createMessage(boolean isDeleted) {
-        Message message = Message.builder()
-                .id(messageId)
-                .chatId(chatId)
-                .senderId(senderId)
-                .reactions(new ArrayList<>())
-                .build();
-        if (isDeleted) {
-            message.deleteBy(senderId, chatId);
-        }
-        return message;
-    }
-
-    private void setupValidator(UUID targetChatId) {
-        Set<UUID> participants = Set.of(senderId, partnerId);
-        when(chatRoomValidator.validateAndGetParticipants(targetChatId, senderId)).thenReturn(participants);
-        when(chatRoomValidator.getPartnerId(participants, senderId)).thenReturn(partnerId);
     }
 }

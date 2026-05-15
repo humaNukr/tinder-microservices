@@ -8,6 +8,7 @@ import com.tinder.chat.infrastructure.adapter.out.persistence.outbox.OutboxEvent
 import com.tinder.chat.infrastructure.adapter.out.persistence.outbox.OutboxJpaRepository;
 import com.tinder.chat.infrastructure.config.properties.KafkaTopicsProperties;
 import com.tinder.chat.shared.dto.event.MessageSentEvent;
+import com.tinder.chat.shared.mapper.MessageEventMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,28 +26,22 @@ public class MessageOutboxEventListener {
     private final OutboxJpaRepository outboxRepository;
     private final KafkaTopicsProperties kafkaTopicsProperties;
     private final ObjectMapper objectMapper;
+    private final MessageEventMapper messageEventMapper;
 
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handleMessageSavedEvent(MessageSavedEvent event) {
         Message message = event.savedMessage();
-        UUID recipientId = event.recipientId();
 
         String content = message.getContent();
         String snippet = (content != null && content.length() > 50)
                 ? content.substring(0, 50) + "..."
                 : content;
 
-        UUID eventId = UUID.randomUUID();
-
-        MessageSentEvent kafkaEvent = new MessageSentEvent(
-                eventId,
-                message.getId(),
-                message.getChatId(),
-                message.getSenderId(),
-                recipientId,
-                message.getContentType().name(),
-                snippet,
-                message.getCreatedAt()
+        MessageSentEvent kafkaEvent = messageEventMapper.toMessageSentEvent(
+                message,
+                UUID.randomUUID(),
+                event.recipientId(),
+                snippet
         );
 
         try {
@@ -59,7 +54,6 @@ public class MessageOutboxEventListener {
             );
 
             outboxRepository.save(outboxEvent);
-            log.debug("Outbox event saved for message id: {}", message.getId());
 
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize kafka event for Outbox. Message ID: {}", message.getId(), e);

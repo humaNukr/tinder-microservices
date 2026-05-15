@@ -48,6 +48,31 @@ class UserPresenceManagementServiceTest {
         sessionId = "session-123";
     }
 
+    private void verifyOnlineEventPublished() {
+        verify(presenceEventPort).broadcastToChatServers(eventCaptor.capture());
+        verify(presenceEventPort, never()).broadcastToSystem(any());
+
+        UserPresenceEvent capturedEvent = eventCaptor.getValue();
+        assertEquals(userId, capturedEvent.userId());
+        assertTrue(capturedEvent.isOnline());
+        assertNotNull(capturedEvent.timestamp());
+    }
+
+    private void verifyOfflineEventPublished() {
+        verify(presenceEventPort).broadcastToChatServers(eventCaptor.capture());
+        verify(presenceEventPort).broadcastToSystem(eventCaptor.getValue());
+
+        UserPresenceEvent capturedEvent = eventCaptor.getValue();
+        assertEquals(userId, capturedEvent.userId());
+        assertFalse(capturedEvent.isOnline());
+        assertNotNull(capturedEvent.timestamp());
+    }
+
+    private void verifyNoEventsPublished() {
+        verify(presenceEventPort, never()).broadcastToChatServers(any());
+        verify(presenceEventPort, never()).broadcastToSystem(any());
+    }
+
     @Nested
     class UserConnected {
 
@@ -118,30 +143,5 @@ class UserPresenceManagementServiceTest {
             verify(presenceStatePort).isOffline(userId);
             verifyNoEventsPublished();
         }
-    }
-
-    private void verifyOnlineEventPublished() {
-        verify(presenceEventPort).broadcastToChatServers(eventCaptor.capture());
-        verify(presenceEventPort, never()).broadcastToSystem(any());
-
-        UserPresenceEvent capturedEvent = eventCaptor.getValue();
-        assertEquals(userId, capturedEvent.userId());
-        assertTrue(capturedEvent.isOnline());
-        assertNotNull(capturedEvent.timestamp());
-    }
-
-    private void verifyOfflineEventPublished() {
-        verify(presenceEventPort).broadcastToChatServers(eventCaptor.capture());
-        verify(presenceEventPort).broadcastToSystem(eventCaptor.getValue());
-
-        UserPresenceEvent capturedEvent = eventCaptor.getValue();
-        assertEquals(userId, capturedEvent.userId());
-        assertFalse(capturedEvent.isOnline());
-        assertNotNull(capturedEvent.timestamp());
-    }
-
-    private void verifyNoEventsPublished() {
-        verify(presenceEventPort, never()).broadcastToChatServers(any());
-        verify(presenceEventPort, never()).broadcastToSystem(any());
     }
 }

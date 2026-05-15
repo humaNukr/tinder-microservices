@@ -39,6 +39,10 @@ class ChatRoomValidatorTest {
         partnerId = UUID.randomUUID();
     }
 
+    private Set<UUID> createParticipantsSet(UUID user1, UUID user2) {
+        return Set.of(user1, user2);
+    }
+
     @Nested
     class ValidateAndGetParticipants {
 
@@ -86,9 +90,5 @@ class ChatRoomValidatorTest {
                     chatRoomValidator.getPartnerId(participants, currentUserId)
             );
         }
-    }
-
-    private Set<UUID> createParticipantsSet(UUID user1, UUID user2) {
-        return Set.of(user1, user2);
     }
 }

@@ -24,13 +24,27 @@ class MessageContentResolverTest {
         senderId = UUID.randomUUID();
     }
 
+    private Message createMessage(String content, MessageContentType type, boolean isDeleted) {
+        Message message = Message.builder()
+                .chatId(chatId)
+                .senderId(senderId)
+                .content(content)
+                .contentType(type)
+                .build();
+
+        if (isDeleted) {
+            message.deleteBy(senderId, chatId);
+        }
+        return message;
+    }
+
     @Nested
     class ResolveContent {
 
         @Test
         void resolveContent_NullMessage_ReturnsNull() {
             String result = resolver.resolveContent(null);
-            
+
             assertNull(result);
         }
 
@@ -62,19 +76,5 @@ class MessageContentResolverTest {
 
             assertEquals(String.format("/api/v1/chats/%s/media/file-uuid.jpg", chatId), result);
         }
-    }
-
-    private Message createMessage(String content, MessageContentType type, boolean isDeleted) {
-        Message message = Message.builder()
-                .chatId(chatId)
-                .senderId(senderId)
-                .content(content)
-                .contentType(type)
-                .build();
-
-        if (isDeleted) {
-            message.deleteBy(senderId, chatId);
-        }
-        return message;
     }
 }

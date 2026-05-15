@@ -53,6 +53,12 @@ class ChatActivityServiceTest {
         messageId = 150L;
     }
 
+    private void setupValidator() {
+        Set<UUID> participants = Set.of(readerId, partnerId);
+        when(chatRoomValidator.validateAndGetParticipants(chatId, readerId)).thenReturn(participants);
+        when(chatRoomValidator.getPartnerId(participants, readerId)).thenReturn(partnerId);
+    }
+
     @Nested
     class ProcessReadReceipt {
 
@@ -102,11 +108,5 @@ class ChatActivityServiceTest {
             verify(eventPort).publishTypingEvent(requestDto);
             verifyNoInteractions(persistencePort, chatRoomValidator);
         }
-    }
-
-    private void setupValidator() {
-        Set<UUID> participants = Set.of(readerId, partnerId);
-        when(chatRoomValidator.validateAndGetParticipants(chatId, readerId)).thenReturn(participants);
-        when(chatRoomValidator.getPartnerId(participants, readerId)).thenReturn(partnerId);
     }
 }

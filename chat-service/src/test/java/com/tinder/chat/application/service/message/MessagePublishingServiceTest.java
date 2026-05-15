@@ -33,7 +33,11 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MessagePublishingServiceTest {
@@ -71,6 +75,34 @@ class MessagePublishingServiceTest {
         partnerId = UUID.randomUUID();
         messageId = 1L;
         localId = UUID.randomUUID();
+    }
+
+    private ChatRequestDto createChatRequestDto(Long replyToMessageId) {
+        return new ChatRequestDto(
+                localId,
+                chatId,
+                "TEXT",
+                MessageContentType.TEXT.name(),
+                replyToMessageId
+        );
+    }
+
+    private Message createMessage() {
+        return Message.builder()
+                .id(1L)
+                .chatId(chatId)
+                .senderId(senderId)
+                .content("Original content")
+                .contentType(MessageContentType.TEXT)
+                .status(MessageStatus.SENT)
+                .createdAt(Instant.now())
+                .build();
+    }
+
+    private void setupChatRoomValidator() {
+        Set<UUID> participants = Set.of(senderId, partnerId);
+        when(chatRoomValidator.validateAndGetParticipants(chatId, senderId)).thenReturn(participants);
+        when(chatRoomValidator.getPartnerId(participants, senderId)).thenReturn(partnerId);
     }
 
     @Nested
@@ -173,33 +205,5 @@ class MessagePublishingServiceTest {
             verify(persistencePort).save(message);
             verify(eventPort).publishMessageDeleted(eventDto);
         }
-    }
-
-    private ChatRequestDto createChatRequestDto(Long replyToMessageId) {
-        return new ChatRequestDto(
-                localId,
-                chatId,
-                "TEXT",
-                MessageContentType.TEXT.name(),
-                replyToMessageId
-        );
-    }
-
-    private Message createMessage() {
-        return Message.builder()
-                .id(1L)
-                .chatId(chatId)
-                .senderId(senderId)
-                .content("Original content")
-                .contentType(MessageContentType.TEXT)
-                .status(MessageStatus.SENT)
-                .createdAt(Instant.now())
-                .build();
-    }
-
-    private void setupChatRoomValidator() {
-        Set<UUID> participants = Set.of(senderId, partnerId);
-        when(chatRoomValidator.validateAndGetParticipants(chatId, senderId)).thenReturn(participants);
-        when(chatRoomValidator.getPartnerId(participants, senderId)).thenReturn(partnerId);
     }
 }

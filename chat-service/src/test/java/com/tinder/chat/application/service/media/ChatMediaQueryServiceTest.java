@@ -42,6 +42,10 @@ class ChatMediaQueryServiceTest {
         expectedObjectKey = String.format("chats/%s/%s", chatId, fileName);
     }
 
+    private void setupValidator() {
+        when(chatRoomValidator.validateAndGetParticipants(chatId, userId)).thenReturn(Set.of(userId, UUID.randomUUID()));
+    }
+
     @Nested
     class GetMediaViewUrl {
 
@@ -57,9 +61,5 @@ class ChatMediaQueryServiceTest {
             verify(chatRoomValidator).validateAndGetParticipants(chatId, userId);
             verify(storagePort).generateTempLinkForViewing(expectedObjectKey);
         }
-    }
-
-    private void setupValidator() {
-        when(chatRoomValidator.validateAndGetParticipants(chatId, userId)).thenReturn(Set.of(userId, UUID.randomUUID()));
     }
 }
