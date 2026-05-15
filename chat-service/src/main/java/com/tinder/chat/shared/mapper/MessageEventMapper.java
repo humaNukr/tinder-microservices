@@ -6,6 +6,8 @@ import com.tinder.chat.shared.dto.event.MessageAckDto;
 import com.tinder.chat.shared.dto.event.MessageDeletedEventDto;
 import com.tinder.chat.shared.dto.event.MessageEditedEventDto;
 import com.tinder.chat.shared.dto.event.MessageEventDto;
+import com.tinder.chat.shared.dto.event.MessageSentEvent;
+import com.tinder.chat.shared.dto.message.ReplyInfoDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -28,4 +30,8 @@ public interface MessageEventMapper {
 
     @Mapping(target = "dbId", source = "message.id")
     MessageAckDto toAckDto(Message message, UUID localId);
+
+    MessageSentEvent toMessageSentEvent(Message message, UUID eventId, UUID recipientId, String snippet);
+
+    ReplyInfoDto toReplyInfoDto(Message parentMessage);
 }

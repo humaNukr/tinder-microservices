@@ -1,4 +1,4 @@
-package com.tinder.chat.infrastructure.adapter.out.persistence;
+package com.tinder.chat.infrastructure.adapter.out.persistence.repository;
 
 import com.tinder.chat.infrastructure.adapter.out.persistence.entity.ChatJpaEntity;
 import com.tinder.chat.infrastructure.adapter.out.persistence.projections.ChatParticipantsProjection;

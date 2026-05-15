@@ -6,6 +6,7 @@ import com.tinder.chat.domain.exception.EntityNotFoundException;
 import com.tinder.chat.domain.model.Message;
 import com.tinder.chat.infrastructure.adapter.out.persistence.entity.MessageJpaEntity;
 import com.tinder.chat.infrastructure.adapter.out.persistence.mapper.MessageEntityMapper;
+import com.tinder.chat.infrastructure.adapter.out.persistence.repository.MessageJpaRepository;
 import com.tinder.chat.shared.dto.common.CursorPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -75,7 +76,6 @@ public class MessagePersistenceAdapter implements MessagePersistencePort {
 
         Long nextCursor = entities.isEmpty() ? null : entities.getLast().getId();
 
-        // Мапимо список Entity в список Доменних моделей
         List<Message> messages = entities.stream()
                 .map(mapper::toDomain)
                 .toList();
