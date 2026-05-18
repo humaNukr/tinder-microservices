@@ -1,7 +1,6 @@
 package com.tinder.auth.exception;
 
 import com.tinder.auth.dto.error.ErrorResponseDto;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -52,6 +51,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponse(status, ex.getMessage());
 	}
 
+	@ExceptionHandler(AuthenticationFailedException.class)
+	public ResponseEntity<Object> handleAuthenticationFailed(AuthenticationFailedException ex) {
+		log.warn("Authentication failed: {}", ex.getMessage());
+		return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+	}
+
 	@ExceptionHandler(TooManyRequestsException.class)
 	public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
 		return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests");
@@ -62,8 +67,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
 	}
 
-	@ExceptionHandler(EntityNotFoundException.class)
-	public ResponseEntity<Object> handleEntityNotFound(EntityNotFoundException ex) {
+	@ExceptionHandler(UserNotFoundException.class)
+	public ResponseEntity<Object> handleEntityNotFound(UserNotFoundException ex) {
 		log.warn("Resource not found: {}", ex.getMessage());
 		return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
 	}

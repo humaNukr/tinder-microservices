@@ -45,14 +45,17 @@ public class User {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private Role role;
+	@CreatedDate
+	@Column(updatable = false)
+	private Instant createdAt;
+	@LastModifiedDate
+	private Instant updatedAt;
+
+	public static User createNewVerifiedUser(String email) {
+		return User.builder().email(email).role(Role.USER).isEmailVerified(true).build();
+	}
 
 	public enum Role {
 		USER, ADMIN
 	}
-
-	@CreatedDate
-	private Instant createdAt;
-
-	@LastModifiedDate
-	private Instant updatedAt;
 }
