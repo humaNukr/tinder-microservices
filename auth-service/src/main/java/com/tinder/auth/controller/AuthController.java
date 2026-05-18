@@ -25,11 +25,12 @@ import java.util.UUID;
 @RequestMapping("/api/v1/auth")
 @Slf4j
 public class AuthController {
+
 	private final AuthFacade authFacade;
 
 	@PostMapping("/send-otp")
 	@ResponseStatus(HttpStatus.OK)
-	public void sendOtp(@RequestBody SendOtpRequest request) {
+	public void sendOtp(@RequestBody @Valid SendOtpRequest request) {
 		authFacade.sendOtp(request.destination(), request.channel());
 		log.info("Send otp code to destination: {}", request.destination());
 	}
@@ -37,14 +38,14 @@ public class AuthController {
 	@PostMapping("/verify")
 	@ResponseStatus(HttpStatus.OK)
 	public AuthResponse verifyOtp(@RequestHeader("X-Device-Id") String deviceId,
-			@RequestBody VerifyOtpRequest request) {
+			@RequestBody @Valid VerifyOtpRequest request) {
 		return authFacade.verifyAndAuthenticate(request.destination(), deviceId, request.otp());
 	}
 
 	@PostMapping("/refresh")
 	@ResponseStatus(HttpStatus.OK)
 	public AuthResponse refreshJwtToken(@RequestHeader("X-Device-Id") String deviceId,
-			@RequestBody RefreshTokenDto request) {
+			@RequestBody @Valid RefreshTokenDto request) {
 		return authFacade.refreshToken(request.refreshToken(), deviceId);
 	}
 

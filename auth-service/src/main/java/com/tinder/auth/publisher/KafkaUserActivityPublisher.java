@@ -1,4 +1,4 @@
-package com.tinder.auth.producer;
+package com.tinder.auth.publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.auth.event.ActivityType;
@@ -15,12 +15,13 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class UserActivityProducer {
+public class KafkaUserActivityPublisher implements UserActivityPublisher {
 
 	private final KafkaTemplate<String, String> kafkaTemplate;
 	private final ObjectMapper objectMapper;
 	private final KafkaProperties kafkaProperties;
 
+	@Override
 	public void publishActivity(UUID userId, ActivityType type) {
 		try {
 			UserActivityEvent event = new UserActivityEvent(UUID.randomUUID(), userId, type, Instant.now());

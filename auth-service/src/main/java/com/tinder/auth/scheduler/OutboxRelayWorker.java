@@ -2,10 +2,10 @@ package com.tinder.auth.scheduler;
 
 import com.tinder.auth.entity.OutboxEvent;
 import com.tinder.auth.properties.OutboxSchedulerProperties;
+import com.tinder.auth.publisher.MessageBroker;
 import com.tinder.auth.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 public class OutboxRelayWorker {
 
 	private final OutboxRepository outboxRepository;
-	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final MessageBroker messageBroker;
 	private final OutboxSchedulerProperties outboxSchedulerProperties;
 
 	@Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")
@@ -34,20 +34,17 @@ public class OutboxRelayWorker {
 		}
 
 		List<CompletableFuture<OutboxEvent>> futures = events.stream()
-				.map(event -> kafkaTemplate.send(event.getTopic(), String.valueOf(event.getId()), event.getPayload())
-						.thenApply(sendResult -> event).exceptionally(ex -> {
-							log.error("Failed to send event {}", event.getId(), ex);
-							return null;
-						}))
+				.map(event -> messageBroker.send(event.getTopic(), String.valueOf(event.getId()), event.getPayload())
+						.thenApply(isSuccess -> isSuccess ? event : null))
 				.toList();
 
 		try {
 			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
 					.get(outboxSchedulerProperties.batchProcessingTime(), TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
-			log.warn("Kafka batch processing timed out. Partially completed events will be saved.");
+			log.warn("Message broker batch processing timed out. Partially completed events will be saved.");
 		} catch (Exception e) {
-			log.error("Unexpected error while waiting for Kafka batch.", e);
+			log.error("Unexpected error while waiting for message broker batch.", e);
 		}
 
 		List<OutboxEvent> successfulEvents = futures.stream().filter(CompletableFuture::isDone)
