@@ -3,11 +3,11 @@ package com.tinder.auth.service.interfaces;
 import java.util.UUID;
 
 public interface TokenService {
-	void storeRefreshTokenToRedis(UUID userId, String deviceId, String token);
+	void storeRefreshToken(UUID userId, String deviceId, String token);
 
-	String getRefreshTokenFromRedis(UUID userId, String deviceId);
+	String getRefreshToken(UUID userId, String deviceId);
 
-	void deleteRefreshTokenFromRedis(UUID userId, String deviceId);
+	void deleteRefreshToken(UUID userId, String deviceId);
 
-	void deleteAllUserTokensFromRedis(UUID userId);
+	void deleteAllUserTokens(UUID userId);
 }

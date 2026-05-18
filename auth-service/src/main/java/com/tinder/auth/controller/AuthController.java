@@ -1,6 +1,6 @@
 package com.tinder.auth.controller;
 
-import com.tinder.auth.dto.AuthResponse;
+import com.tinder.auth.dto.auth.AuthResponse;
 import com.tinder.auth.dto.google.GoogleAuthRequest;
 import com.tinder.auth.dto.jwt.RefreshTokenDto;
 import com.tinder.auth.dto.otp.SendOtpRequest;
@@ -30,7 +30,7 @@ public class AuthController {
 	@PostMapping("/send-otp")
 	@ResponseStatus(HttpStatus.OK)
 	public void sendOtp(@RequestBody SendOtpRequest request) {
-		authFacade.sendOtp(request.destination());
+		authFacade.sendOtp(request.destination(), request.channel());
 		log.info("Send otp code to destination: {}", request.destination());
 	}
 

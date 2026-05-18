@@ -1,18 +1,17 @@
 package com.tinder.auth.exception;
 
-public class ExternalAuthVerificationException extends RuntimeException {
-	private final ErrorType type;
+import lombok.Getter;
 
-	public enum ErrorType {
-		NETWORK_ERROR, INVALID_TOKEN
-	}
+public class ExternalAuthVerificationException extends RuntimeException {
+	@Getter
+	private final ErrorType type;
 
 	public ExternalAuthVerificationException(String message, ErrorType type, Throwable cause) {
 		super(message, cause);
 		this.type = type;
 	}
 
-	public ErrorType getType() {
-		return type;
+	public enum ErrorType {
+		NETWORK_ERROR, INVALID_TOKEN
 	}
 }

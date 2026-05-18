@@ -52,6 +52,16 @@ jwt:
   refresh-token-expiration-ms: 2592000000
 
 app:
+  redis:
+    auth:
+      otp-prefix: "otp:"
+      otp-rate-limit-prefix: "rate_limit:otp:"
+      otp-ttl: 5m
+      otp-rate-limit-max-requests: 1
+      otp-rate-limit-window: 1m
+      session-prefix: "user:"
+      session-suffix: ":sessions"
+
   google:
     client-id: ${GOOGLE_CLIENT_ID}
 
@@ -59,9 +69,10 @@ app:
     topics:
       user-activity: user-activity-events
 
-outbox:
-  scheduler:
-    batch-size: 50
-    batch-processing-time: 5 #seconds
-    fixed-delay: 2000 #ms
-    cleanup-cron: "0 0 3 * * *"
+  outbox:
+    scheduler:
+      poll-interval: 1000
+      batch-size: 50
+      batch-processing-time: 5 #seconds
+      fixed-delay: 2000 #ms
+      cleanup-cron: "0 0 3 * * *"

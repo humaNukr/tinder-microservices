@@ -34,7 +34,6 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("io.hypersistence:hypersistence-utils-hibernate-60:3.9.4")
     implementation("io.minio:minio:9.0.0")
     implementation("org.mapstruct:mapstruct:1.6.3")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")

@@ -10,6 +10,7 @@ import com.tinder.auth.service.interfaces.OutboxService;
 import com.tinder.auth.service.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,9 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
 	private final UserRepository userRepository;
 	private final OutboxService outboxService;
 	private final KafkaProperties kafkaProperties;
@@ -27,16 +30,8 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public UserResult findOrCreateUser(String email) {
-		return userRepository.findByEmail(email).map(user -> new UserResult(user, false)).orElseGet(() -> {
-			try {
-				User newUser = User.builder().email(email).role(User.Role.USER).isEmailVerified(true).build();
-				return new UserResult(userRepository.save(newUser), true);
-			} catch (DataIntegrityViolationException e) {
-				User recoveredUser = userRepository.findByEmail(email)
-						.orElseThrow(() -> new IllegalStateException("Potential race condition failed to recover", e));
-				return new UserResult(recoveredUser, false);
-			}
-		});
+		return userRepository.findByEmail(email).map(user -> new UserResult(user, false))
+				.orElseGet(() -> createUserSafely(email));
 	}
 
 	@Override
@@ -55,6 +50,23 @@ public class UserServiceImpl implements UserService {
 
 		outboxService.saveEvent(kafkaProperties.userActivity(),
 				new UserActivityEvent(UUID.randomUUID(), userId, ActivityType.DELETE_ACCOUNT, Instant.now()));
+
 		userRepository.deleteById(userId);
+		log.info("User {} deleted and outbox event scheduled", userId);
+	}
+
+	private UserResult createUserSafely(String email) {
+		try {
+			User newUser = User.createNewVerifiedUser(email);
+			return new UserResult(userRepository.save(newUser), true);
+
+		} catch (DataIntegrityViolationException e) {
+			log.warn("Race condition detected while creating user with email: {}. Recovering...", email);
+
+			User recoveredUser = userRepository.findByEmail(email)
+					.orElseThrow(() -> new IllegalStateException("Potential race condition failed to recover", e));
+
+			return new UserResult(recoveredUser, false);
+		}
 	}
 }

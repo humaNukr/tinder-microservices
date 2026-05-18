@@ -1,12 +1,10 @@
 package com.tinder.auth.scheduler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.auth.entity.OutboxEvent;
+import com.tinder.auth.properties.OutboxSchedulerProperties;
 import com.tinder.auth.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -24,38 +22,28 @@ import java.util.concurrent.TimeoutException;
 public class OutboxRelayWorker {
 
 	private final OutboxRepository outboxRepository;
-	private final KafkaTemplate<String, Object> kafkaTemplate;
-	private final ObjectMapper objectMapper;
-	@Value("${outbox.scheduler.batch-size}")
-	private int batchSize;
-	@Value("${outbox.scheduler.batch-processing-time}")
-	private int batchProcessingTime;
+	private final KafkaTemplate<String, String> kafkaTemplate;
+	private final OutboxSchedulerProperties outboxSchedulerProperties;
 
-	@Scheduled(fixedDelayString = "${outbox.scheduler.fixed-delay}")
+	@Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")
 	@Transactional
 	public void processOutboxEvents() {
-		List<OutboxEvent> events = outboxRepository.findAndLockUnprocessedEvents(batchSize);
-		if (events.isEmpty())
+		List<OutboxEvent> events = outboxRepository.findAndLockUnprocessedEvents(outboxSchedulerProperties.batchSize());
+		if (events.isEmpty()) {
 			return;
+		}
 
-		List<CompletableFuture<OutboxEvent>> futures = events.stream().map(event -> {
-			try {
-				return kafkaTemplate
-						.send(event.getTopic(), String.valueOf(event.getId()),
-								objectMapper.writeValueAsString(event.getPayload()))
+		List<CompletableFuture<OutboxEvent>> futures = events.stream()
+				.map(event -> kafkaTemplate.send(event.getTopic(), String.valueOf(event.getId()), event.getPayload())
 						.thenApply(sendResult -> event).exceptionally(ex -> {
 							log.error("Failed to send event {}", event.getId(), ex);
 							return null;
-						});
-			} catch (JsonProcessingException e) {
-				log.error("Fatal error serializing event payload for eventId {}: {}", event.getId(), e.getMessage());
-				return CompletableFuture.<OutboxEvent>completedFuture(null);
-			}
-		}).toList();
+						}))
+				.toList();
 
 		try {
-			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(batchProcessingTime,
-					TimeUnit.SECONDS);
+			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+					.get(outboxSchedulerProperties.batchProcessingTime(), TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			log.warn("Kafka batch processing timed out. Partially completed events will be saved.");
 		} catch (Exception e) {

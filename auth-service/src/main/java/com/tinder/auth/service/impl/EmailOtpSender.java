@@ -1,5 +1,6 @@
 package com.tinder.auth.service.impl;
 
+import com.tinder.auth.dto.otp.DeliveryChannel;
 import com.tinder.auth.properties.MailProperties;
 import com.tinder.auth.service.interfaces.OtpSender;
 import jakarta.mail.MessagingException;
@@ -17,11 +18,11 @@ import org.thymeleaf.context.Context;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailOtpSender implements OtpSender {
+
+	private static final String TEMPLATE_NAME = "otp-mail";
 	private final JavaMailSender mailSender;
 	private final TemplateEngine templateEngine;
 	private final MailProperties mailProperties;
-	private static final String TEMPLATE_NAME = "otp-mail";
-	private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
 
 	@Async
 	@Override
@@ -49,7 +50,7 @@ public class EmailOtpSender implements OtpSender {
 	}
 
 	@Override
-	public boolean supports(String identifier) {
-		return identifier.matches(EMAIL_REGEX);
+	public boolean supports(DeliveryChannel channel) {
+		return channel == DeliveryChannel.EMAIL;
 	}
 }
