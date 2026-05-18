@@ -6,7 +6,7 @@ import com.tinder.auth.dto.user.UserResult;
 import com.tinder.auth.entity.User;
 import com.tinder.auth.event.ActivityType;
 import com.tinder.auth.exception.AuthenticationFailedException;
-import com.tinder.auth.producer.UserActivityProducer;
+import com.tinder.auth.publisher.UserActivityPublisher;
 import com.tinder.auth.service.interfaces.AuthFacade;
 import com.tinder.auth.service.interfaces.ExternalTokenVerifier;
 import com.tinder.auth.service.interfaces.JwtService;
@@ -28,7 +28,7 @@ public class AuthFacadeImpl implements AuthFacade {
 	private final TokenService tokenService;
 	private final JwtService jwtService;
 	private final UserService userService;
-	private final UserActivityProducer activityProducer;
+	private final UserActivityPublisher activityPublisher;
 	private final ExternalTokenVerifier googleAuthService;
 
 	@Override
@@ -68,7 +68,7 @@ public class AuthFacadeImpl implements AuthFacade {
 		String newRefreshToken = jwtService.generateRefreshToken(user);
 
 		tokenService.storeRefreshToken(userId, deviceId, newRefreshToken);
-		activityProducer.publishActivity(userId, ActivityType.TOKEN_REFRESH);
+		activityPublisher.publishActivity(userId, ActivityType.TOKEN_REFRESH);
 
 		log.info("Successfully refreshed tokens for user: {} on device: {}", userId, deviceId);
 		return new AuthResponse(newAccessToken, newRefreshToken, false);
@@ -104,7 +104,7 @@ public class AuthFacadeImpl implements AuthFacade {
 		String refreshToken = jwtService.generateRefreshToken(userResult.user());
 
 		tokenService.storeRefreshToken(userId, deviceId, refreshToken);
-		activityProducer.publishActivity(userId, ActivityType.LOGIN);
+		activityPublisher.publishActivity(userId, ActivityType.LOGIN);
 
 		log.info("User {} successfully authenticated. isNew: {}, device: {}", userId, userResult.isNew(), deviceId);
 		return new AuthResponse(accessToken, refreshToken, userResult.isNew());
