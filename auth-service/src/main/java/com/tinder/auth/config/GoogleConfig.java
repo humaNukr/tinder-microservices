@@ -14,11 +14,11 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class GoogleConfig {
 
-	private final GoogleProperties properties;
+    private final GoogleProperties properties;
 
-	@Bean
-	public GoogleIdTokenVerifier googleIdTokenVerifier() {
-		return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-				.setAudience(Collections.singletonList(properties.clientId())).build();
-	}
+    @Bean
+    public GoogleIdTokenVerifier googleIdTokenVerifier() {
+        return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                .setAudience(Collections.singletonList(properties.clientId())).build();
+    }
 }

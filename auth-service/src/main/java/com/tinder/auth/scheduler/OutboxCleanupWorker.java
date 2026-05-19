@@ -14,17 +14,17 @@ import java.time.LocalDateTime;
 @Slf4j
 public class OutboxCleanupWorker {
 
-	private final OutboxRepository outboxRepository;
+    private final OutboxRepository outboxRepository;
 
-	@Scheduled(cron = "${app.outbox.scheduler.cleanup-cron}")
-	@Transactional
-	public void cleanupOutbox() {
-		LocalDateTime threshold = LocalDateTime.now().minusDays(7);
+    @Scheduled(cron = "${app.outbox.scheduler.cleanup-cron}")
+    @Transactional
+    public void cleanupOutbox() {
+        LocalDateTime threshold = LocalDateTime.now().minusDays(7);
 
-		int deletedCount = outboxRepository.deleteProcessedAndOlderThan(threshold);
+        int deletedCount = outboxRepository.deleteProcessedAndOlderThan(threshold);
 
-		if (deletedCount > 0) {
-			log.info("Cleaned up {} old processed outbox events", deletedCount);
-		}
-	}
+        if (deletedCount > 0) {
+            log.info("Cleaned up {} old processed outbox events", deletedCount);
+        }
+    }
 }

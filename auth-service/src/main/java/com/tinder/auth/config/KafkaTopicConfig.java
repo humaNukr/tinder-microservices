@@ -9,11 +9,11 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 public class KafkaTopicConfig {
 
-	@Value("${app.kafka.topics.user-activity}")
-	private String userActivityTopic;
+    @Value("${app.kafka.topics.user-activity}")
+    private String userActivityTopic;
 
-	@Bean
-	public NewTopic userActivityEventsTopic() {
-		return TopicBuilder.name(userActivityTopic).partitions(3).replicas(1).build();
-	}
+    @Bean
+    public NewTopic userActivityEventsTopic() {
+        return TopicBuilder.name(userActivityTopic).partitions(3).replicas(1).build();
+    }
 }

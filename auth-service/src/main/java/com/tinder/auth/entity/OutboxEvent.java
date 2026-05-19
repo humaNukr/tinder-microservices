@@ -18,27 +18,27 @@ import java.time.LocalDateTime;
 @Getter
 @Table(name = "outbox_events")
 public class OutboxEvent {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Column(name = "topic", nullable = false)
-	private String topic;
+    @Column(name = "topic", nullable = false)
+    private String topic;
 
-	@Column(name = "payload", nullable = false, columnDefinition = "jsonb")
-	@ColumnTransformer(write = "?::jsonb")
-	private String payload;
+    @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
+    @ColumnTransformer(write = "?::jsonb")
+    private String payload;
 
-	@Column(name = "created_at", nullable = false)
-	private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-	@Column(name = "is_sent", nullable = false)
-	@Setter
-	private Boolean isSent = false;
+    @Column(name = "is_sent", nullable = false)
+    @Setter
+    private boolean isSent = false;
 
-	public OutboxEvent(String topic, String payload, LocalDateTime createdAt) {
-		this.topic = topic;
-		this.payload = payload;
-		this.createdAt = createdAt;
-	}
+    public OutboxEvent(String topic, String payload, LocalDateTime createdAt) {
+        this.topic = topic;
+        this.payload = payload;
+        this.createdAt = createdAt;
+    }
 }

@@ -24,89 +24,89 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthFacadeImpl implements AuthFacade {
 
-	private final OtpService otpService;
-	private final TokenService tokenService;
-	private final JwtService jwtService;
-	private final UserService userService;
-	private final UserActivityPublisher activityPublisher;
-	private final ExternalTokenVerifier googleAuthService;
+    private final OtpService otpService;
+    private final TokenService tokenService;
+    private final JwtService jwtService;
+    private final UserService userService;
+    private final UserActivityPublisher activityPublisher;
+    private final ExternalTokenVerifier googleAuthService;
 
-	@Override
-	public void sendOtp(String identifier, DeliveryChannel channel) {
-		log.info("Initiating OTP sending for identifier: {}", identifier);
-		otpService.generateAndSendOtp(identifier, channel);
-	}
+    @Override
+    public void sendOtp(String identifier, DeliveryChannel channel) {
+        log.info("Initiating OTP sending for identifier: {}", identifier);
+        otpService.generateAndSendOtp(identifier, channel);
+    }
 
-	@Override
-	public AuthResponse verifyAndAuthenticate(String email, String deviceId, String code) {
-		log.debug("Verifying OTP for email: {} from device: {}", email, deviceId);
+    @Override
+    public AuthResponse verifyAndAuthenticate(String email, String deviceId, String code) {
+        log.debug("Verifying OTP for email: {} from device: {}", email, deviceId);
 
-		if (!otpService.validateOtp(email, code)) {
-			log.warn("Failed OTP verification for email: {}", email);
-			throw new AuthenticationFailedException("Invalid OTP");
-		}
+        if (!otpService.validateOtp(email, code)) {
+            log.warn("Failed OTP verification for email: {}", email);
+            throw new AuthenticationFailedException("Invalid OTP");
+        }
 
-		return processAuthentication(email, deviceId);
-	}
+        return processAuthentication(email, deviceId);
+    }
 
-	@Override
-	public AuthResponse refreshToken(String requestRefreshToken, String deviceId) {
-		String userIdStr = jwtService.extractUserId(requestRefreshToken);
-		UUID userId = UUID.fromString(userIdStr);
+    @Override
+    public AuthResponse refreshToken(String requestRefreshToken, String deviceId) {
+        String userIdStr = jwtService.extractUserId(requestRefreshToken);
+        UUID userId = UUID.fromString(userIdStr);
 
-		log.debug("Attempting to refresh token for user: {} on device: {}", userId, deviceId);
+        log.debug("Attempting to refresh token for user: {} on device: {}", userId, deviceId);
 
-		String savedToken = tokenService.getRefreshToken(userId, deviceId);
-		if (savedToken == null || !savedToken.equals(requestRefreshToken)) {
-			log.warn("Token mismatch or missing in storage for user: {}, device: {}", userId, deviceId);
-			throw new AuthenticationFailedException("Invalid or revoked refresh token");
-		}
+        String savedToken = tokenService.getRefreshToken(userId, deviceId);
+        if (savedToken == null || !savedToken.equals(requestRefreshToken)) {
+            log.warn("Token mismatch or missing in storage for user: {}, device: {}", userId, deviceId);
+            throw new AuthenticationFailedException("Invalid or revoked refresh token");
+        }
 
-		User user = userService.findUserById(userId);
+        User user = userService.findUserById(userId);
 
-		String newAccessToken = jwtService.generateAccessToken(user);
-		String newRefreshToken = jwtService.generateRefreshToken(user);
+        String newAccessToken = jwtService.generateAccessToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user);
 
-		tokenService.storeRefreshToken(userId, deviceId, newRefreshToken);
-		activityPublisher.publishActivity(userId, ActivityType.TOKEN_REFRESH);
+        tokenService.storeRefreshToken(userId, deviceId, newRefreshToken);
+        activityPublisher.publishActivity(userId, ActivityType.TOKEN_REFRESH);
 
-		log.info("Successfully refreshed tokens for user: {} on device: {}", userId, deviceId);
-		return new AuthResponse(newAccessToken, newRefreshToken, false);
-	}
+        log.info("Successfully refreshed tokens for user: {} on device: {}", userId, deviceId);
+        return new AuthResponse(newAccessToken, newRefreshToken, false);
+    }
 
-	@Override
-	public AuthResponse authenticateWithGoogle(String idToken, String deviceId) {
-		log.debug("Authenticating with Google from device: {}", deviceId);
+    @Override
+    public AuthResponse authenticateWithGoogle(String idToken, String deviceId) {
+        log.debug("Authenticating with Google from device: {}", deviceId);
 
-		String email = googleAuthService.verifyTokenAndGetEmail(idToken);
+        String email = googleAuthService.verifyTokenAndGetEmail(idToken);
 
-		return processAuthentication(email, deviceId);
-	}
+        return processAuthentication(email, deviceId);
+    }
 
-	@Override
-	public void logout(UUID userId, String deviceId) {
-		log.info("Logging out user: {} from device: {}", userId, deviceId);
-		tokenService.deleteRefreshToken(userId, deviceId);
-	}
+    @Override
+    public void logout(UUID userId, String deviceId) {
+        log.info("Logging out user: {} from device: {}", userId, deviceId);
+        tokenService.deleteRefreshToken(userId, deviceId);
+    }
 
-	@Override
-	public void deleteAccount(UUID userId) {
-		log.info("Deleting account and revoking all tokens for user: {}", userId);
-		tokenService.deleteAllUserTokens(userId);
-		userService.deleteUser(userId);
-	}
+    @Override
+    public void deleteAccount(UUID userId) {
+        log.info("Deleting account and revoking all tokens for user: {}", userId);
+        tokenService.deleteAllUserTokens(userId);
+        userService.deleteUser(userId);
+    }
 
-	private AuthResponse processAuthentication(String email, String deviceId) {
-		UserResult userResult = userService.findOrCreateUser(email);
-		UUID userId = userResult.user().getId();
+    private AuthResponse processAuthentication(String email, String deviceId) {
+        UserResult userResult = userService.findOrCreateUser(email);
+        UUID userId = userResult.user().getId();
 
-		String accessToken = jwtService.generateAccessToken(userResult.user());
-		String refreshToken = jwtService.generateRefreshToken(userResult.user());
+        String accessToken = jwtService.generateAccessToken(userResult.user());
+        String refreshToken = jwtService.generateRefreshToken(userResult.user());
 
-		tokenService.storeRefreshToken(userId, deviceId, refreshToken);
-		activityPublisher.publishActivity(userId, ActivityType.LOGIN);
+        tokenService.storeRefreshToken(userId, deviceId, refreshToken);
+        activityPublisher.publishActivity(userId, ActivityType.LOGIN);
 
-		log.info("User {} successfully authenticated. isNew: {}, device: {}", userId, userResult.isNew(), deviceId);
-		return new AuthResponse(accessToken, refreshToken, userResult.isNew());
-	}
+        log.info("User {} successfully authenticated. isNew: {}, device: {}", userId, userResult.isNew(), deviceId);
+        return new AuthResponse(accessToken, refreshToken, userResult.isNew());
+    }
 }

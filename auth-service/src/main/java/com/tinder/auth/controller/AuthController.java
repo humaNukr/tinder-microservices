@@ -7,9 +7,13 @@ import com.tinder.auth.dto.otp.SendOtpRequest;
 import com.tinder.auth.dto.otp.VerifyOtpRequest;
 import com.tinder.auth.service.interfaces.AuthFacade;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,49 +28,50 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 @Slf4j
+@Validated
 public class AuthController {
 
-	private final AuthFacade authFacade;
+    private final AuthFacade authFacade;
 
-	@PostMapping("/send-otp")
-	@ResponseStatus(HttpStatus.OK)
-	public void sendOtp(@RequestBody @Valid SendOtpRequest request) {
-		authFacade.sendOtp(request.destination(), request.channel());
-		log.info("Send otp code to destination: {}", request.destination());
-	}
+    @PostMapping("/send-otp")
+    @ResponseStatus(HttpStatus.OK)
+    public void sendOtp(@RequestBody @Valid SendOtpRequest request) {
+        authFacade.sendOtp(request.destination(), request.channel());
+        log.info("Send otp code to destination: {}", request.destination());
+    }
 
-	@PostMapping("/verify")
-	@ResponseStatus(HttpStatus.OK)
-	public AuthResponse verifyOtp(@RequestHeader("X-Device-Id") String deviceId,
-			@RequestBody @Valid VerifyOtpRequest request) {
-		return authFacade.verifyAndAuthenticate(request.destination(), deviceId, request.otp());
-	}
+    @PostMapping("/verify")
+    @ResponseStatus(HttpStatus.OK)
+    public AuthResponse verifyOtp(@RequestHeader("X-Device-Id") @NotBlank @Size(max = 128) String deviceId,
+                                  @RequestBody @Valid VerifyOtpRequest request) {
+        return authFacade.verifyAndAuthenticate(request.destination(), deviceId, request.otp());
+    }
 
-	@PostMapping("/refresh")
-	@ResponseStatus(HttpStatus.OK)
-	public AuthResponse refreshJwtToken(@RequestHeader("X-Device-Id") String deviceId,
-			@RequestBody @Valid RefreshTokenDto request) {
-		return authFacade.refreshToken(request.refreshToken(), deviceId);
-	}
+    @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.OK)
+    public AuthResponse refreshJwtToken(@RequestHeader("X-Device-Id") @NotBlank @Size(max = 128) String deviceId,
+                                        @RequestBody @Valid RefreshTokenDto request) {
+        return authFacade.refreshToken(request.refreshToken(), deviceId);
+    }
 
-	@PostMapping("/google")
-	@ResponseStatus(HttpStatus.OK)
-	public AuthResponse authenticateWithGoogle(@RequestHeader("X-Device-Id") String deviceId,
-			@RequestBody @Valid GoogleAuthRequest request) {
-		return authFacade.authenticateWithGoogle(request.idToken(), deviceId);
-	}
+    @PostMapping("/google")
+    @ResponseStatus(HttpStatus.OK)
+    public AuthResponse authenticateWithGoogle(@RequestHeader("X-Device-Id") @NotBlank @Size(max = 128) String deviceId,
+                                               @RequestBody @Valid GoogleAuthRequest request) {
+        return authFacade.authenticateWithGoogle(request.idToken(), deviceId);
+    }
 
-	@PostMapping("/logout")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void logout(@RequestHeader("X-User-Id") UUID userId, @RequestHeader("X-Device-Id") String deviceId) {
-		authFacade.logout(userId, deviceId);
-		log.info("User {} logged out from device {}", userId, deviceId);
-	}
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@RequestHeader("X-User-Id") @NotNull UUID userId, @RequestHeader("X-Device-Id") @NotBlank @Size(max = 128) String deviceId) {
+        authFacade.logout(userId, deviceId);
+        log.info("User {} logged out from device {}", userId, deviceId);
+    }
 
-	@DeleteMapping("/me")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void deleteMyAccount(@RequestHeader("X-User-Id") UUID userId) {
-		authFacade.deleteAccount(userId);
-		log.info("User {} initiated account deletion", userId);
-	}
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMyAccount(@RequestHeader("X-User-Id") @NotNull UUID userId) {
+        authFacade.deleteAccount(userId);
+        log.info("User {} initiated account deletion", userId);
+    }
 }

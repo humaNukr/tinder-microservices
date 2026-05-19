@@ -4,11 +4,11 @@ import com.tinder.auth.dto.user.UserResult;
 import com.tinder.auth.entity.User;
 import com.tinder.auth.event.ActivityType;
 import com.tinder.auth.event.UserActivityEvent;
+import com.tinder.auth.exception.UserNotFoundException;
 import com.tinder.auth.properties.KafkaProperties;
 import com.tinder.auth.repository.UserRepository;
 import com.tinder.auth.service.impl.UserServiceImpl;
 import com.tinder.auth.service.interfaces.OutboxService;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -40,30 +40,30 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
-	private final UUID userId = UUID.randomUUID();
-	private final String email = "test@example.com";
-	@Mock
-	private UserRepository userRepository;
-	@Mock
-	private OutboxService outboxService;
-	@Mock
-	private KafkaProperties kafkaProperties;
-	@InjectMocks
-	private UserServiceImpl userService;
-	private User testUser;
+    private final UUID userId = UUID.randomUUID();
+    private final String email = "test@example.com";
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private OutboxService outboxService;
+    @Mock
+    private KafkaProperties kafkaProperties;
+    @InjectMocks
+    private UserServiceImpl userService;
+    private User testUser;
 
-	@BeforeEach
-	void setUp() {
-		testUser = new User();
-		ReflectionTestUtils.setField(testUser, "id", userId);
-		ReflectionTestUtils.setField(testUser, "email", email);
-	}
+    @BeforeEach
+    void setUp() {
+        testUser = new User();
+        ReflectionTestUtils.setField(testUser, "id", userId);
+        ReflectionTestUtils.setField(testUser, "email", email);
+    }
 
-	@Nested
-	@DisplayName("findOrCreateUser() Tests")
-	class FindOrCreateUserTests {
+    @Nested
+    @DisplayName("findOrCreateUser() Tests")
+    class FindOrCreateUserTests {
 
-		@Test
+        @Test
         void findOrCreateUser_UserExists_ReturnsExistingUser() {
             when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
 
@@ -77,7 +77,7 @@ class UserServiceImplTest {
             );
         }
 
-		@Test
+        @Test
         void findOrCreateUser_UserDoesNotExist_CreatesAndReturnsNewUser() {
             when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(testUser);
@@ -92,7 +92,7 @@ class UserServiceImplTest {
             );
         }
 
-		@Test
+        @Test
         void findOrCreateUser_RaceConditionDetected_RecoversAndReturnsExistingUser() {
             when(userRepository.findByEmail(email))
                     .thenReturn(Optional.empty())
@@ -110,7 +110,7 @@ class UserServiceImplTest {
             );
         }
 
-		@Test
+        @Test
         void findOrCreateUser_RaceConditionDetectedButRecoveryFails_ThrowsIllegalStateException() {
             when(userRepository.findByEmail(email))
                     .thenReturn(Optional.empty())
@@ -121,13 +121,13 @@ class UserServiceImplTest {
 
             assertThrows(IllegalStateException.class, () -> userService.findOrCreateUser(email));
         }
-	}
+    }
 
-	@Nested
-	@DisplayName("findUserById() Tests")
-	class FindUserByIdTests {
+    @Nested
+    @DisplayName("findUserById() Tests")
+    class FindUserByIdTests {
 
-		@Test
+        @Test
         void findUserById_UserExists_ReturnsUser() {
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
@@ -136,46 +136,46 @@ class UserServiceImplTest {
             assertEquals(testUser, result);
         }
 
-		@Test
-        void findUserById_UserDoesNotExist_ThrowsEntityNotFoundException() {
+        @Test
+        void findUserById_UserDoesNotExist_ThrowsUserNotFoundException() {
             when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-            assertThrows(EntityNotFoundException.class, () -> userService.findUserById(userId));
+            assertThrows(UserNotFoundException.class, () -> userService.findUserById(userId));
         }
-	}
+    }
 
-	@Nested
-	@DisplayName("deleteUser() Tests")
-	class DeleteUserTests {
+    @Nested
+    @DisplayName("deleteUser() Tests")
+    class DeleteUserTests {
 
-		@Test
-		void deleteUser_UserExists_DeletesUserAndSavesOutboxEvent() {
-			String expectedTopic = "user-activity-topic";
-			when(userRepository.existsById(userId)).thenReturn(true);
-			when(kafkaProperties.userActivity()).thenReturn(expectedTopic);
+        @Test
+        void deleteUser_UserExists_DeletesUserAndSavesOutboxEvent() {
+            String expectedTopic = "user-activity-topic";
+            when(userRepository.existsById(userId)).thenReturn(true);
+            when(kafkaProperties.userActivity()).thenReturn(expectedTopic);
 
-			userService.deleteUser(userId);
+            userService.deleteUser(userId);
 
-			ArgumentCaptor<UserActivityEvent> eventCaptor = ArgumentCaptor.forClass(UserActivityEvent.class);
+            ArgumentCaptor<UserActivityEvent> eventCaptor = ArgumentCaptor.forClass(UserActivityEvent.class);
 
-			assertAll(() -> verify(userRepository).deleteById(userId),
-					() -> verify(outboxService).saveEvent(eq(expectedTopic), eventCaptor.capture()), () -> {
-						UserActivityEvent capturedEvent = eventCaptor.getValue();
-						assertEquals(userId, capturedEvent.userId());
-						assertEquals(ActivityType.DELETE_ACCOUNT, capturedEvent.type());
-						assertNotNull(capturedEvent.eventId());
-						assertNotNull(capturedEvent.timestamp());
-					});
-		}
+            assertAll(() -> verify(userRepository).deleteById(userId),
+                    () -> verify(outboxService).saveEvent(eq(expectedTopic), eventCaptor.capture()), () -> {
+                        UserActivityEvent capturedEvent = eventCaptor.getValue();
+                        assertEquals(userId, capturedEvent.userId());
+                        assertEquals(ActivityType.DELETE_ACCOUNT, capturedEvent.type());
+                        assertNotNull(capturedEvent.eventId());
+                        assertNotNull(capturedEvent.timestamp());
+                    });
+        }
 
-		@Test
-        void deleteUser_UserDoesNotExist_ThrowsEntityNotFoundException() {
+        @Test
+        void deleteUser_UserDoesNotExist_ThrowsUserNotFoundException() {
             when(userRepository.existsById(userId)).thenReturn(false);
 
-            assertThrows(EntityNotFoundException.class, () -> userService.deleteUser(userId));
+            assertThrows(UserNotFoundException.class, () -> userService.deleteUser(userId));
 
             verify(userRepository, never()).deleteById(any());
             verifyNoInteractions(outboxService, kafkaProperties);
         }
-	}
+    }
 }

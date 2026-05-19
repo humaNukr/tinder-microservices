@@ -56,8 +56,10 @@ app:
     auth:
       otp-prefix: "otp:"
       otp-rate-limit-prefix: "rate_limit:otp:"
+      otp-attempts: "otp:attempts:"
       otp-ttl: 5m
       otp-rate-limit-max-requests: 1
+      otp-verification-max-attempts: 5
       otp-rate-limit-window: 1m
       session-prefix: "user:"
       session-suffix: ":sessions"

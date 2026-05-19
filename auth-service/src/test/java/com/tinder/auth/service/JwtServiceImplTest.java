@@ -25,81 +25,81 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class JwtServiceImplTest {
 
-	private final String secretKeyBase64 = "NmE1NjM1NGY1YjM3MzU2ZTU5MzM1MzQxNDU1OTQzNGU0ZjU1MzQ2ODU5MzQ2YjZhNTU=";
-	private final UUID userId = UUID.randomUUID();
-	@Mock
-	private JwtProperties jwtProperties;
-	@InjectMocks
-	private JwtServiceImpl jwtService;
-	private User testUser;
+    private final String secretKeyBase64 = "NmE1NjM1NGY1YjM3MzU2ZTU5MzM1MzQxNDU1OTQzNGU0ZjU1MzQ2ODU5MzQ2YjZhNTU=";
+    private final UUID userId = UUID.randomUUID();
+    @Mock
+    private JwtProperties jwtProperties;
+    @InjectMocks
+    private JwtServiceImpl jwtService;
+    private User testUser;
 
-	@BeforeEach
-	void setUp() {
-		testUser = new User();
-		ReflectionTestUtils.setField(testUser, "id", userId);
-		ReflectionTestUtils.setField(testUser, "email", "test@tinder.com");
-		ReflectionTestUtils.setField(testUser, "role", User.Role.USER);
+    @BeforeEach
+    void setUp() {
+        testUser = new User();
+        ReflectionTestUtils.setField(testUser, "id", userId);
+        ReflectionTestUtils.setField(testUser, "email", "test@tinder.com");
+        ReflectionTestUtils.setField(testUser, "role", User.Role.USER);
 
-		lenient().when(jwtProperties.secret()).thenReturn(secretKeyBase64);
-		lenient().when(jwtProperties.accessTokenExpirationMs()).thenReturn(900000L);
-		lenient().when(jwtProperties.refreshTokenExpirationMs()).thenReturn(604800000L);
+        lenient().when(jwtProperties.secret()).thenReturn(secretKeyBase64);
+        lenient().when(jwtProperties.accessTokenExpirationMs()).thenReturn(900000L);
+        lenient().when(jwtProperties.refreshTokenExpirationMs()).thenReturn(604800000L);
 
-		ReflectionTestUtils.invokeMethod(jwtService, "init");
-	}
+        ReflectionTestUtils.invokeMethod(jwtService, "init");
+    }
 
-	@Test
-	void generateAccessToken_ValidUser_ReturnsValidToken() {
-		String token = jwtService.generateAccessToken(testUser);
+    @Test
+    void generateAccessToken_ValidUser_ReturnsValidToken() {
+        String token = jwtService.generateAccessToken(testUser);
 
-		assertNotNull(token);
+        assertNotNull(token);
 
-		String extractedId = jwtService.extractUserId(token);
-		assertEquals(userId.toString(), extractedId);
-	}
+        String extractedId = jwtService.extractUserId(token);
+        assertEquals(userId.toString(), extractedId);
+    }
 
-	@Test
-	void generateRefreshToken_ValidUser_ReturnsValidToken() {
-		String token = jwtService.generateRefreshToken(testUser);
+    @Test
+    void generateRefreshToken_ValidUser_ReturnsValidToken() {
+        String token = jwtService.generateRefreshToken(testUser);
 
-		assertNotNull(token);
+        assertNotNull(token);
 
-		String extractedId = jwtService.extractUserId(token);
-		assertEquals(userId.toString(), extractedId);
-	}
+        String extractedId = jwtService.extractUserId(token);
+        assertEquals(userId.toString(), extractedId);
+    }
 
-	@Test
-	void extractUserId_ValidToken_ReturnsId() {
-		String token = jwtService.generateAccessToken(testUser);
-		String extractedId = jwtService.extractUserId(token);
+    @Test
+    void extractUserId_ValidToken_ReturnsId() {
+        String token = jwtService.generateAccessToken(testUser);
+        String extractedId = jwtService.extractUserId(token);
 
-		assertEquals(userId.toString(), extractedId);
-	}
+        assertEquals(userId.toString(), extractedId);
+    }
 
-	@Test
-	void extractUserId_InvalidTokenFormat_ThrowsException() {
-		assertThrows(AuthenticationFailedException.class, () -> jwtService.extractUserId("invalid.token.format"));
-	}
+    @Test
+    void extractUserId_InvalidTokenFormat_ThrowsException() {
+        assertThrows(AuthenticationFailedException.class, () -> jwtService.extractUserId("invalid.token.format"));
+    }
 
-	@Test
-	void extractUserId_ExpiredToken_ThrowsException() {
-		String expiredToken = Jwts.builder().subject(userId.toString())
-				.issuedAt(new Date(System.currentTimeMillis() - 10000))
-				.expiration(new Date(System.currentTimeMillis() - 1000))
-				.signWith(Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(secretKeyBase64))).compact();
+    @Test
+    void extractUserId_ExpiredToken_ThrowsException() {
+        String expiredToken = Jwts.builder().subject(userId.toString())
+                .issuedAt(new Date(System.currentTimeMillis() - 10000))
+                .expiration(new Date(System.currentTimeMillis() - 1000))
+                .signWith(Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(secretKeyBase64))).compact();
 
-		AuthenticationFailedException exception = assertThrows(AuthenticationFailedException.class,
-				() -> jwtService.extractUserId(expiredToken));
+        AuthenticationFailedException exception = assertThrows(AuthenticationFailedException.class,
+                () -> jwtService.extractUserId(expiredToken));
 
-		assertEquals("Invalid or expired JWT token", exception.getMessage());
-	}
+        assertEquals("Invalid or expired JWT token", exception.getMessage());
+    }
 
-	@Test
-	void extractUserId_WrongSignature_ThrowsException() {
-		String wrongKeyBase64 = "YWE1NjM1NGY1YjM3MzU2ZTU5MzM1MzQxNDU1OTQzNGU0ZjU1MzQ2ODU5MzQ2YjZhNTU=";
-		String forgedToken = Jwts.builder().subject(userId.toString()).issuedAt(new Date())
-				.expiration(new Date(System.currentTimeMillis() + 10000))
-				.signWith(Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(wrongKeyBase64))).compact();
+    @Test
+    void extractUserId_WrongSignature_ThrowsException() {
+        String wrongKeyBase64 = "YWE1NjM1NGY1YjM3MzU2ZTU5MzM1MzQxNDU1OTQzNGU0ZjU1MzQ2ODU5MzQ2YjZhNTU=";
+        String forgedToken = Jwts.builder().subject(userId.toString()).issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 10000))
+                .signWith(Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(wrongKeyBase64))).compact();
 
-		assertThrows(AuthenticationFailedException.class, () -> jwtService.extractUserId(forgedToken));
-	}
+        assertThrows(AuthenticationFailedException.class, () -> jwtService.extractUserId(forgedToken));
+    }
 }

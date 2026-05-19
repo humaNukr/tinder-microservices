@@ -23,29 +23,29 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GoogleTokenVerifierTest {
 
-	@Mock
-	private GoogleIdTokenVerifier googleIdTokenVerifier;
+    @Mock
+    private GoogleIdTokenVerifier googleIdTokenVerifier;
 
-	@InjectMocks
-	private GoogleTokenVerifier googleTokenVerifier;
+    @InjectMocks
+    private GoogleTokenVerifier googleTokenVerifier;
 
-	@Test
-	void verifyTokenAndGetEmail_Success_ReturnsEmail() throws Exception {
-		String expectedEmail = "test@google.com";
-		GoogleIdToken mockToken = mock(GoogleIdToken.class);
-		GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
-		payload.setEmail(expectedEmail);
-		payload.setEmailVerified(true);
+    @Test
+    void verifyTokenAndGetEmail_Success_ReturnsEmail() throws Exception {
+        String expectedEmail = "test@google.com";
+        GoogleIdToken mockToken = mock(GoogleIdToken.class);
+        GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
+        payload.setEmail(expectedEmail);
+        payload.setEmailVerified(true);
 
-		when(googleIdTokenVerifier.verify(anyString())).thenReturn(mockToken);
-		when(mockToken.getPayload()).thenReturn(payload);
+        when(googleIdTokenVerifier.verify(anyString())).thenReturn(mockToken);
+        when(mockToken.getPayload()).thenReturn(payload);
 
-		String actualEmail = googleTokenVerifier.verifyTokenAndGetEmail("valid-token");
+        String actualEmail = googleTokenVerifier.verifyTokenAndGetEmail("valid-token");
 
-		assertEquals(expectedEmail, actualEmail);
-	}
+        assertEquals(expectedEmail, actualEmail);
+    }
 
-	@Test
+    @Test
     void verifyTokenAndGetEmail_NullToken_ThrowsException() throws Exception {
         when(googleIdTokenVerifier.verify(anyString())).thenReturn(null);
 
@@ -58,24 +58,24 @@ class GoogleTokenVerifierTest {
         );
     }
 
-	@Test
-	void verifyTokenAndGetEmail_EmailNotVerified_ThrowsException() throws Exception {
-		GoogleIdToken mockToken = mock(GoogleIdToken.class);
-		GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
-		payload.setEmail("test@google.com");
-		payload.setEmailVerified(false);
+    @Test
+    void verifyTokenAndGetEmail_EmailNotVerified_ThrowsException() throws Exception {
+        GoogleIdToken mockToken = mock(GoogleIdToken.class);
+        GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
+        payload.setEmail("test@google.com");
+        payload.setEmailVerified(false);
 
-		when(googleIdTokenVerifier.verify(anyString())).thenReturn(mockToken);
-		when(mockToken.getPayload()).thenReturn(payload);
+        when(googleIdTokenVerifier.verify(anyString())).thenReturn(mockToken);
+        when(mockToken.getPayload()).thenReturn(payload);
 
-		ExternalAuthVerificationException exception = assertThrows(ExternalAuthVerificationException.class,
-				() -> googleTokenVerifier.verifyTokenAndGetEmail("unverified-token"));
+        ExternalAuthVerificationException exception = assertThrows(ExternalAuthVerificationException.class,
+                () -> googleTokenVerifier.verifyTokenAndGetEmail("unverified-token"));
 
-		assertAll(() -> assertEquals(ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, exception.getType()),
-				() -> assertEquals("Email not verified by Google", exception.getMessage()));
-	}
+        assertAll(() -> assertEquals(ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, exception.getType()),
+                () -> assertEquals("Email not verified by Google", exception.getMessage()));
+    }
 
-	@Test
+    @Test
     void verifyTokenAndGetEmail_IOException_ThrowsNetworkException() throws Exception {
         when(googleIdTokenVerifier.verify(anyString())).thenThrow(new IOException("Connection reset"));
 
@@ -88,7 +88,7 @@ class GoogleTokenVerifierTest {
         );
     }
 
-	@Test
+    @Test
     void verifyTokenAndGetEmail_GeneralSecurityException_ThrowsInvalidTokenException() throws Exception {
         when(googleIdTokenVerifier.verify(anyString())).thenThrow(new GeneralSecurityException("Invalid signature"));
 

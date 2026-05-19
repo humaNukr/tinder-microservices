@@ -7,15 +7,15 @@ import java.util.UUID;
 
 public interface AuthFacade {
 
-	void sendOtp(String identifier, DeliveryChannel channel);
+    void sendOtp(String identifier, DeliveryChannel channel);
 
-	AuthResponse verifyAndAuthenticate(String email, String deviceId, String code);
+    AuthResponse verifyAndAuthenticate(String email, String deviceId, String code);
 
-	AuthResponse refreshToken(String refreshToken, String deviceId);
+    AuthResponse refreshToken(String refreshToken, String deviceId);
 
-	AuthResponse authenticateWithGoogle(String idToken, String deviceId);
+    AuthResponse authenticateWithGoogle(String idToken, String deviceId);
 
-	void deleteAccount(UUID userId);
+    void deleteAccount(UUID userId);
 
-	void logout(UUID userId, String deviceId);
+    void logout(UUID userId, String deviceId);
 }

@@ -1,6 +1,7 @@
-package com.tinder.auth.publisher;
+package com.tinder.chat.infrastructure.adapter.out.kafka;
 
-import com.tinder.auth.entity.OutboxEvent;
+import com.tinder.chat.infrastructure.adapter.out.persistence.outbox.OutboxEventEntity;
+import com.tinder.chat.infrastructure.adapter.out.scheduler.outbox.port.OutboxPublisherPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -11,17 +12,16 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class KafkaMessageBroker implements MessageBroker {
+public class OutboxKafkaAdapter implements OutboxPublisherPort {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Override
-    public CompletableFuture<OutboxEvent> send(OutboxEvent event) {
+    public CompletableFuture<OutboxEventEntity> send(OutboxEventEntity event) {
         return kafkaTemplate
                 .send(event.getTopic(), String.valueOf(event.getId()), event.getPayload())
-                .thenApply(sendResult -> (OutboxEvent) null)
+                .thenApply(sendResult -> (OutboxEventEntity) null)
                 .exceptionally(ex -> {
-                    log.error("Failed to send event {}: {}", event.getId(), ex.getMessage());
+                    log.error("Failed to send OutboxEvent {}: {}", event.getId(), ex.getMessage());
                     return event;
                 });
     }

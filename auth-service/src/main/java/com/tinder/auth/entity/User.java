@@ -31,31 +31,31 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public class User {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	private UUID id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-	@Column(unique = true, nullable = false)
-	private String email;
+    @Column(unique = true, nullable = false)
+    private String email;
 
-	@Builder.Default
-	@Column(nullable = false)
-	private boolean isEmailVerified = false;
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isEmailVerified = false;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private Role role;
-	@CreatedDate
-	@Column(updatable = false)
-	private Instant createdAt;
-	@LastModifiedDate
-	private Instant updatedAt;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+    @CreatedDate
+    @Column(updatable = false)
+    private Instant createdAt;
+    @LastModifiedDate
+    private Instant updatedAt;
 
-	public static User createNewVerifiedUser(String email) {
-		return User.builder().email(email).role(Role.USER).isEmailVerified(true).build();
-	}
+    public static User createNewVerifiedUser(String email) {
+        return User.builder().email(email).role(Role.USER).isEmailVerified(true).build();
+    }
 
-	public enum Role {
-		USER, ADMIN
-	}
+    public enum Role {
+        USER, ADMIN
+    }
 }

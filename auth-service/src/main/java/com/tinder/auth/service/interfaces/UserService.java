@@ -6,9 +6,9 @@ import com.tinder.auth.entity.User;
 import java.util.UUID;
 
 public interface UserService {
-	UserResult findOrCreateUser(String email);
+    UserResult findOrCreateUser(String email);
 
-	User findUserById(UUID id);
+    User findUserById(UUID id);
 
-	void deleteUser(UUID userId);
+    void deleteUser(UUID userId);
 }

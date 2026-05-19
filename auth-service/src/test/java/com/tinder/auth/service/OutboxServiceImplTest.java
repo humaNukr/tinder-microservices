@@ -17,6 +17,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -27,53 +28,53 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OutboxServiceImplTest {
 
-	@Mock
-	private OutboxRepository outboxRepository;
+    @Mock
+    private OutboxRepository outboxRepository;
 
-	@Mock
-	private ObjectMapper objectMapper;
+    @Mock
+    private ObjectMapper objectMapper;
 
-	@InjectMocks
-	private OutboxServiceImpl outboxService;
+    @InjectMocks
+    private OutboxServiceImpl outboxService;
 
-	@Test
-	@DisplayName("saveEvent() should serialize object and save OutboxEvent to DB")
-	void saveEvent_ValidEvent_SavesToRepository() throws JsonProcessingException {
-		String topic = "user-activity";
-		Object eventPayload = Map.of("userId", "123");
-		String expectedJson = "{\"userId\":\"123\"}";
+    @Test
+    @DisplayName("saveEvent() should serialize object and save OutboxEvent to DB")
+    void saveEvent_ValidEvent_SavesToRepository() throws JsonProcessingException {
+        String topic = "user-activity";
+        Object eventPayload = Map.of("userId", "123");
+        String expectedJson = "{\"userId\":\"123\"}";
 
-		when(objectMapper.writeValueAsString(eventPayload)).thenReturn(expectedJson);
+        when(objectMapper.writeValueAsString(eventPayload)).thenReturn(expectedJson);
 
-		outboxService.saveEvent(topic, eventPayload);
+        outboxService.saveEvent(topic, eventPayload);
 
-		ArgumentCaptor<OutboxEvent> eventCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
-		verify(outboxRepository).save(eventCaptor.capture());
+        ArgumentCaptor<OutboxEvent> eventCaptor = ArgumentCaptor.forClass(OutboxEvent.class);
+        verify(outboxRepository).save(eventCaptor.capture());
 
-		OutboxEvent savedEvent = eventCaptor.getValue();
+        OutboxEvent savedEvent = eventCaptor.getValue();
 
-		assertAll(() -> assertEquals(topic, savedEvent.getTopic()),
-				() -> assertEquals(expectedJson, savedEvent.getPayload()),
-				() -> assertNotNull(savedEvent.getCreatedAt()), () -> assertEquals(false, savedEvent.getIsSent()));
-	}
+        assertAll(() -> assertEquals(topic, savedEvent.getTopic()),
+                () -> assertEquals(expectedJson, savedEvent.getPayload()),
+                () -> assertNotNull(savedEvent.getCreatedAt()), () -> assertFalse(savedEvent.isSent()));
+    }
 
-	@Test
-	@DisplayName("saveEvent() should throw IllegalArgumentException when event is null")
-	void saveEvent_NullEvent_ThrowsIllegalArgumentException() {
-		assertThrows(IllegalArgumentException.class, () -> outboxService.saveEvent("topic", null));
-		verifyNoInteractions(objectMapper, outboxRepository);
-	}
+    @Test
+    @DisplayName("saveEvent() should throw IllegalArgumentException when event is null")
+    void saveEvent_NullEvent_ThrowsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> outboxService.saveEvent("topic", null));
+        verifyNoInteractions(objectMapper, outboxRepository);
+    }
 
-	@Test
-	@DisplayName("saveEvent() should wrap JsonProcessingException in RuntimeException")
-	void saveEvent_JsonProcessingException_ThrowsRuntimeException() throws JsonProcessingException {
-		Object eventPayload = new Object();
-		when(objectMapper.writeValueAsString(eventPayload)).thenThrow(mock(JsonProcessingException.class));
+    @Test
+    @DisplayName("saveEvent() should wrap JsonProcessingException in RuntimeException")
+    void saveEvent_JsonProcessingException_ThrowsRuntimeException() throws JsonProcessingException {
+        Object eventPayload = new Object();
+        when(objectMapper.writeValueAsString(eventPayload)).thenThrow(mock(JsonProcessingException.class));
 
-		RuntimeException exception = assertThrows(RuntimeException.class,
-				() -> outboxService.saveEvent("topic", eventPayload));
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> outboxService.saveEvent("topic", eventPayload));
 
-		assertEquals("Failed to serialize outbox event payload", exception.getMessage());
-		verifyNoInteractions(outboxRepository);
-	}
+        assertEquals("Failed to serialize outbox event payload", exception.getMessage());
+        verifyNoInteractions(outboxRepository);
+    }
 }

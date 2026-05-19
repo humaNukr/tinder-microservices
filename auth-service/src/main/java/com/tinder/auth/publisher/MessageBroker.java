@@ -1,7 +1,9 @@
 package com.tinder.auth.publisher;
 
+import com.tinder.auth.entity.OutboxEvent;
+
 import java.util.concurrent.CompletableFuture;
 
 public interface MessageBroker {
-	CompletableFuture<Boolean> send(String topic, String key, String payload);
+    CompletableFuture<OutboxEvent> send(OutboxEvent event);
 }

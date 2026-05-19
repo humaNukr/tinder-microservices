@@ -18,32 +18,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class GoogleAuthIT extends BaseIT {
 
-	@Autowired
-	private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-	@MockitoBean
-	private GoogleIdTokenVerifier googleIdTokenVerifier;
+    @MockitoBean
+    private GoogleIdTokenVerifier googleIdTokenVerifier;
 
-	@Test
-	void authenticateWithGoogle_ShouldReturnTokens_WhenTokenIsValid() throws Exception {
-		GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
-		payload.setEmail("test.senior@gmail.com");
-		payload.setEmailVerified(true);
+    @Test
+    void authenticateWithGoogle_ShouldReturnTokens_WhenTokenIsValid() throws Exception {
+        GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
+        payload.setEmail("test.senior@gmail.com");
+        payload.setEmailVerified(true);
 
-		JsonWebSignature.Header header = new JsonWebSignature.Header();
-		byte[] signature = new byte[0];
-		GoogleIdToken fakeToken = new GoogleIdToken(header, payload, signature, signature);
+        JsonWebSignature.Header header = new JsonWebSignature.Header();
+        byte[] signature = new byte[0];
+        GoogleIdToken fakeToken = new GoogleIdToken(header, payload, signature, signature);
 
-		when(googleIdTokenVerifier.verify(anyString())).thenReturn(fakeToken);
+        when(googleIdTokenVerifier.verify(anyString())).thenReturn(fakeToken);
 
-		String requestBody = """
-				{
-				    "idToken": "some-fake-jwt-string"
-				}
-				""";
+        String requestBody = """
+                {
+                    "idToken": "some-fake-jwt-string"
+                }
+                """;
 
-		mockMvc.perform(post("/api/v1/auth/google").header("X-Device-Id", "test-device-uuid")
-				.contentType(MediaType.APPLICATION_JSON).content(requestBody)).andExpect(status().isOk())
-				.andExpect(jsonPath("$.accessToken").exists()).andExpect(jsonPath("$.refreshToken").exists());
-	}
+        mockMvc.perform(post("/api/v1/auth/google").header("X-Device-Id", "test-device-uuid")
+                        .contentType(MediaType.APPLICATION_JSON).content(requestBody)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists()).andExpect(jsonPath("$.refreshToken").exists());
+    }
 }
