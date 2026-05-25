@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public interface RedisService {
-
+public interface FeedStorageService {
     Set<UUID> fetchSwipedUsers(UUID userId);
 
     void saveNewDeck(UUID userId, List<UUID> batchCandidates);
 
-    List<UUID> fetchDeckForUser(UUID userId);
+    List<UUID> fetchDeckForUser(UUID userId, int limit);
 
     Long getDeckSize(UUID userId);
 
