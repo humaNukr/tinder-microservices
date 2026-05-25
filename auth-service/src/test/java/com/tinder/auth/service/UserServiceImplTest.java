@@ -42,14 +42,17 @@ class UserServiceImplTest {
 
     private final UUID userId = UUID.randomUUID();
     private final String email = "test@example.com";
+
     @Mock
     private UserRepository userRepository;
     @Mock
     private OutboxService outboxService;
     @Mock
     private KafkaProperties kafkaProperties;
+
     @InjectMocks
     private UserServiceImpl userService;
+
     private User testUser;
 
     @BeforeEach
@@ -57,6 +60,7 @@ class UserServiceImplTest {
         testUser = new User();
         ReflectionTestUtils.setField(testUser, "id", userId);
         ReflectionTestUtils.setField(testUser, "email", email);
+        ReflectionTestUtils.setField(testUser, "authProvider", User.AuthProvider.EMAIL_OTP);
     }
 
     @Nested
@@ -67,7 +71,7 @@ class UserServiceImplTest {
         void findOrCreateUser_UserExists_ReturnsExistingUser() {
             when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
 
-            UserResult result = userService.findOrCreateUser(email);
+            UserResult result = userService.findOrCreateUser(email, User.AuthProvider.EMAIL_OTP);
 
             assertAll(
                     () -> assertNotNull(result),
@@ -82,13 +86,31 @@ class UserServiceImplTest {
             when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            UserResult result = userService.findOrCreateUser(email);
+            UserResult result = userService.findOrCreateUser(email, User.AuthProvider.EMAIL_OTP);
 
             assertAll(
                     () -> assertNotNull(result),
                     () -> assertEquals(testUser, result.user()),
                     () -> assertTrue(result.isNew()),
                     () -> verify(userRepository).save(any(User.class))
+            );
+        }
+
+        @Test
+        void findOrCreateUser_NewGoogleUser_InvokesCorrectFactory() {
+            when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+            when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+            userService.findOrCreateUser(email, User.AuthProvider.GOOGLE);
+
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).save(userCaptor.capture());
+
+            User savedUser = userCaptor.getValue();
+            assertAll(
+                    () -> assertEquals(email, savedUser.getEmail()),
+                    () -> assertEquals(User.AuthProvider.GOOGLE, savedUser.getAuthProvider()),
+                    () -> assertTrue(savedUser.isEmailVerified())
             );
         }
 
@@ -101,7 +123,7 @@ class UserServiceImplTest {
             when(userRepository.save(any(User.class)))
                     .thenThrow(new DataIntegrityViolationException("Duplicate entry"));
 
-            UserResult result = userService.findOrCreateUser(email);
+            UserResult result = userService.findOrCreateUser(email, User.AuthProvider.EMAIL_OTP);
 
             assertAll(
                     () -> assertNotNull(result),
@@ -119,7 +141,8 @@ class UserServiceImplTest {
             when(userRepository.save(any(User.class)))
                     .thenThrow(new DataIntegrityViolationException("Duplicate entry"));
 
-            assertThrows(IllegalStateException.class, () -> userService.findOrCreateUser(email));
+            assertThrows(IllegalStateException.class,
+                    () -> userService.findOrCreateUser(email, User.AuthProvider.EMAIL_OTP));
         }
     }
 
@@ -158,14 +181,17 @@ class UserServiceImplTest {
 
             ArgumentCaptor<UserActivityEvent> eventCaptor = ArgumentCaptor.forClass(UserActivityEvent.class);
 
-            assertAll(() -> verify(userRepository).deleteById(userId),
-                    () -> verify(outboxService).saveEvent(eq(expectedTopic), eventCaptor.capture()), () -> {
+            assertAll(
+                    () -> verify(userRepository).deleteById(userId),
+                    () -> verify(outboxService).saveEvent(eq(expectedTopic), eventCaptor.capture()),
+                    () -> {
                         UserActivityEvent capturedEvent = eventCaptor.getValue();
                         assertEquals(userId, capturedEvent.userId());
                         assertEquals(ActivityType.DELETE_ACCOUNT, capturedEvent.type());
                         assertNotNull(capturedEvent.eventId());
                         assertNotNull(capturedEvent.timestamp());
-                    });
+                    }
+            );
         }
 
         @Test

@@ -38,12 +38,16 @@ public class GoogleAuthIT extends BaseIT {
 
         String requestBody = """
                 {
-                    "idToken": "some-fake-jwt-string"
+                    "token": "some-fake-jwt-string"
                 }
                 """;
 
-        mockMvc.perform(post("/api/v1/auth/google").header("X-Device-Id", "test-device-uuid")
-                        .contentType(MediaType.APPLICATION_JSON).content(requestBody)).andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").exists()).andExpect(jsonPath("$.refreshToken").exists());
+        mockMvc.perform(post("/api/v1/auth/oauth/google")
+                        .header("X-Device-Id", "test-device-uuid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.refreshToken").exists());
     }
 }

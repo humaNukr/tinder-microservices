@@ -28,9 +28,10 @@ public class UserServiceImpl implements UserService {
     private final KafkaProperties kafkaProperties;
 
     @Override
-    public UserResult findOrCreateUser(String email) {
-        return userRepository.findByEmail(email).map(user -> new UserResult(user, false))
-                .orElseGet(() -> createUserSafely(email));
+    public UserResult findOrCreateUser(String email, User.AuthProvider provider) {
+        return userRepository.findByEmail(email)
+                .map(user -> new UserResult(user, false))
+                .orElseGet(() -> createUserSafely(email, provider));
     }
 
     @Override
@@ -54,9 +55,12 @@ public class UserServiceImpl implements UserService {
         log.info("User {} deleted and outbox event scheduled", userId);
     }
 
-    private UserResult createUserSafely(String email) {
+    private UserResult createUserSafely(String email, User.AuthProvider provider) {
         try {
-            User newUser = User.createNewVerifiedUser(email);
+            User newUser = provider == User.AuthProvider.GOOGLE
+                    ? User.createViaGoogle(email)
+                    : User.createViaEmailOtp(email);
+
             return new UserResult(userRepository.save(newUser), true);
 
         } catch (DataIntegrityViolationException e) {

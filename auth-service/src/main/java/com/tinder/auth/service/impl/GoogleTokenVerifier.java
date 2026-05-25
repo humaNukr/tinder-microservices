@@ -2,6 +2,7 @@ package com.tinder.auth.service.impl;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.tinder.auth.entity.User;
 import com.tinder.auth.exception.ExternalAuthVerificationException;
 import com.tinder.auth.service.interfaces.ExternalTokenVerifier;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ public class GoogleTokenVerifier implements ExternalTokenVerifier {
 
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
 
-    @Override
     public String verifyTokenAndGetEmail(String idToken) {
         try {
             GoogleIdToken idTokenObj = googleIdTokenVerifier.verify(idToken);
@@ -49,5 +49,15 @@ public class GoogleTokenVerifier implements ExternalTokenVerifier {
             throw new ExternalAuthVerificationException("Invalid token signature",
                     ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, e);
         }
+    }
+
+    @Override
+    public User.AuthProvider getSupportedProvider() {
+        return User.AuthProvider.GOOGLE;
+    }
+
+    @Override
+    public String verifyTokenAndGetIdentifier(String token) {
+        return verifyTokenAndGetEmail(token);
     }
 }

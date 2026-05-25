@@ -1,10 +1,11 @@
 package com.tinder.auth.controller;
 
 import com.tinder.auth.dto.auth.AuthResponse;
-import com.tinder.auth.dto.google.GoogleAuthRequest;
+import com.tinder.auth.dto.auth.ExternalAuthRequest;
 import com.tinder.auth.dto.jwt.RefreshTokenDto;
 import com.tinder.auth.dto.otp.SendOtpRequest;
 import com.tinder.auth.dto.otp.VerifyOtpRequest;
+import com.tinder.auth.entity.User;
 import com.tinder.auth.service.interfaces.AuthFacade;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -54,11 +56,16 @@ public class AuthController {
         return authFacade.refreshToken(request.refreshToken(), deviceId);
     }
 
-    @PostMapping("/google")
+    @PostMapping("/oauth/{provider}")
     @ResponseStatus(HttpStatus.OK)
-    public AuthResponse authenticateWithGoogle(@RequestHeader("X-Device-Id") @NotBlank @Size(max = 128) String deviceId,
-                                               @RequestBody @Valid GoogleAuthRequest request) {
-        return authFacade.authenticateWithGoogle(request.idToken(), deviceId);
+    public AuthResponse authenticateWithExternalProvider(
+            @PathVariable String provider,
+            @RequestHeader("X-Device-Id") @NotBlank @Size(max = 128) String deviceId,
+            @RequestBody @Valid ExternalAuthRequest request
+    ) {
+        User.AuthProvider authProvider = User.AuthProvider.valueOf(provider.toUpperCase());
+
+        return authFacade.authenticateWithExternalProvider(request.token(), deviceId, authProvider);
     }
 
     @PostMapping("/logout")

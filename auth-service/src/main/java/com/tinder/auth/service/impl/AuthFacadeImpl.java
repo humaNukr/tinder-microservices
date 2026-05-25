@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -29,7 +30,7 @@ public class AuthFacadeImpl implements AuthFacade {
     private final JwtService jwtService;
     private final UserService userService;
     private final UserActivityPublisher activityPublisher;
-    private final ExternalTokenVerifier googleAuthService;
+    private final List<ExternalTokenVerifier> externalVerifiers;
 
     @Override
     public void sendOtp(String identifier, DeliveryChannel channel) {
@@ -38,15 +39,17 @@ public class AuthFacadeImpl implements AuthFacade {
     }
 
     @Override
-    public AuthResponse verifyAndAuthenticate(String email, String deviceId, String code) {
-        log.debug("Verifying OTP for email: {} from device: {}", email, deviceId);
+    public AuthResponse verifyAndAuthenticate(String identifier, String deviceId, String code) {
+        log.debug("Verifying OTP for identifier: {} from device: {}", identifier, deviceId);
 
-        if (!otpService.validateOtp(email, code)) {
-            log.warn("Failed OTP verification for email: {}", email);
+        if (!otpService.validateOtp(identifier, code)) {
+            log.warn("Failed OTP verification for identifier: {}", identifier);
             throw new AuthenticationFailedException("Invalid OTP");
         }
 
-        return processAuthentication(email, deviceId);
+        User.AuthProvider provider = determineAuthProvider(identifier);
+
+        return processAuthentication(identifier, deviceId, provider);
     }
 
     @Override
@@ -75,12 +78,17 @@ public class AuthFacadeImpl implements AuthFacade {
     }
 
     @Override
-    public AuthResponse authenticateWithGoogle(String idToken, String deviceId) {
-        log.debug("Authenticating with Google from device: {}", deviceId);
+    public AuthResponse authenticateWithExternalProvider(String externalToken, String deviceId, User.AuthProvider provider) {
+        log.debug("Authenticating via {} from device: {}", provider, deviceId);
 
-        String email = googleAuthService.verifyTokenAndGetEmail(idToken);
+        ExternalTokenVerifier verifier = externalVerifiers.stream()
+                .filter(v -> v.getSupportedProvider() == provider)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unsupported auth provider: " + provider));
 
-        return processAuthentication(email, deviceId);
+        String identifier = verifier.verifyTokenAndGetIdentifier(externalToken);
+
+        return processAuthentication(identifier, deviceId, provider);
     }
 
     @Override
@@ -96,8 +104,8 @@ public class AuthFacadeImpl implements AuthFacade {
         userService.deleteUser(userId);
     }
 
-    private AuthResponse processAuthentication(String email, String deviceId) {
-        UserResult userResult = userService.findOrCreateUser(email);
+    private AuthResponse processAuthentication(String identifier, String deviceId, User.AuthProvider provider) {
+        UserResult userResult = userService.findOrCreateUser(identifier, provider);
         UUID userId = userResult.user().getId();
 
         String accessToken = jwtService.generateAccessToken(userResult.user());
@@ -108,5 +116,9 @@ public class AuthFacadeImpl implements AuthFacade {
 
         log.info("User {} successfully authenticated. isNew: {}, device: {}", userId, userResult.isNew(), deviceId);
         return new AuthResponse(accessToken, refreshToken, userResult.isNew());
+    }
+
+    private User.AuthProvider determineAuthProvider(String identifier) {
+        return identifier.contains("@") ? User.AuthProvider.EMAIL_OTP : User.AuthProvider.PHONE;
     }
 }
