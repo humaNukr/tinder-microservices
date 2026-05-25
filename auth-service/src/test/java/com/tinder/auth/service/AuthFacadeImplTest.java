@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthFacadeImplTest {
 
-	private final String identifier = "test@example.com";
+	private final String email = "test@example.com";
 	private final String deviceId = "device-123";
 	private final String accessToken = "access.token.here";
 	private final String refreshToken = "refresh.token.here";
@@ -69,7 +69,7 @@ class AuthFacadeImplTest {
 	void setUp() {
 		testUser = new User();
 		ReflectionTestUtils.setField(testUser, "id", userId);
-		ReflectionTestUtils.setField(testUser, "email", identifier);
+		ReflectionTestUtils.setField(testUser, "email", email);
 
 		ReflectionTestUtils.setField(authFacade, "externalVerifiers", List.of(googleVerifier));
 	}
@@ -79,8 +79,8 @@ class AuthFacadeImplTest {
 	class SendOtpTests {
 		@Test
 		void sendOtp_ValidParameters_CallsOtpService() {
-			authFacade.sendOtp(identifier, DeliveryChannel.EMAIL);
-			verify(otpService).generateAndSendOtp(identifier, DeliveryChannel.EMAIL);
+			authFacade.sendOtp(email, DeliveryChannel.EMAIL);
+			verify(otpService).generateAndSendOtp(email, DeliveryChannel.EMAIL);
 		}
 	}
 
@@ -90,13 +90,13 @@ class AuthFacadeImplTest {
 		@Test
 		void verifyAndAuthenticate_ValidOtp_ReturnsAuthResponse() {
 			String code = "123456";
-			when(otpService.validateOtp(identifier, code)).thenReturn(true);
-			when(userService.findOrCreateUser(identifier, User.AuthProvider.EMAIL_OTP))
+			when(otpService.validateOtp(email, code)).thenReturn(true);
+			when(userService.findOrCreateUser(email, User.AuthProvider.EMAIL_OTP))
 					.thenReturn(new UserResult(testUser, true));
 			when(jwtService.generateAccessToken(testUser)).thenReturn(accessToken);
 			when(jwtService.generateRefreshToken(testUser)).thenReturn(refreshToken);
 
-			AuthResponse response = authFacade.verifyAndAuthenticate(identifier, deviceId, code);
+			AuthResponse response = authFacade.verifyAndAuthenticate(email, deviceId, code);
 
 			assertAll(() -> assertNotNull(response), () -> assertEquals(accessToken, response.accessToken()),
 					() -> assertEquals(refreshToken, response.refreshToken()), () -> assertTrue(response.isNewUser()));
@@ -108,10 +108,10 @@ class AuthFacadeImplTest {
 		@Test
 		void verifyAndAuthenticate_InvalidOtp_ThrowsException() {
 			String code = "wrong";
-			when(otpService.validateOtp(identifier, code)).thenReturn(false);
+			when(otpService.validateOtp(email, code)).thenReturn(false);
 
 			assertThrows(AuthenticationFailedException.class,
-					() -> authFacade.verifyAndAuthenticate(identifier, deviceId, code));
+					() -> authFacade.verifyAndAuthenticate(email, deviceId, code));
 
 			verifyNoInteractions(userService, jwtService, tokenService, activityPublisher);
 		}
@@ -121,51 +121,51 @@ class AuthFacadeImplTest {
 	@DisplayName("refreshToken() Tests")
 	class RefreshTokenTests {
 		@Test
-        void refreshToken_ValidToken_ReturnsNewTokens() {
-            when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
-            when(tokenService.getRefreshToken(userId, deviceId)).thenReturn(refreshToken);
-            when(userService.findUserById(userId)).thenReturn(testUser);
+		void refreshToken_ValidToken_ReturnsNewTokens() {
+			when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
+			when(tokenService.getRefreshToken(userId, deviceId)).thenReturn(refreshToken);
+			when(userService.findUserById(userId)).thenReturn(testUser);
 
-            String newAccessToken = "new.access.token";
-            String newRefreshToken = "new.refresh.token";
-            when(jwtService.generateAccessToken(testUser)).thenReturn(newAccessToken);
-            when(jwtService.generateRefreshToken(testUser)).thenReturn(newRefreshToken);
+			String newAccessToken = "new.access.token";
+			String newRefreshToken = "new.refresh.token";
+			when(jwtService.generateAccessToken(testUser)).thenReturn(newAccessToken);
+			when(jwtService.generateRefreshToken(testUser)).thenReturn(newRefreshToken);
 
-            AuthResponse response = authFacade.refreshToken(refreshToken, deviceId);
+			AuthResponse response = authFacade.refreshToken(refreshToken, deviceId);
 
-            assertAll(
-                    () -> assertNotNull(response),
-                    () -> assertEquals(newAccessToken, response.accessToken()),
-                    () -> assertEquals(newRefreshToken, response.refreshToken()),
-                    () -> assertFalse(response.isNewUser())
-            );
+			assertAll(
+					() -> assertNotNull(response),
+					() -> assertEquals(newAccessToken, response.accessToken()),
+					() -> assertEquals(newRefreshToken, response.refreshToken()),
+					() -> assertFalse(response.isNewUser())
+			);
 
-            verify(tokenService).storeRefreshToken(userId, deviceId, newRefreshToken);
-            verify(activityPublisher).publishActivity(userId, ActivityType.TOKEN_REFRESH);
-        }
-
-		@Test
-        void refreshToken_TokenMissingInStorage_ThrowsException() {
-            when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
-            when(tokenService.getRefreshToken(userId, deviceId)).thenReturn(null);
-
-            assertThrows(AuthenticationFailedException.class,
-                    () -> authFacade.refreshToken(refreshToken, deviceId));
-
-            verifyNoInteractions(userService, activityPublisher);
-            verify(jwtService, never()).generateAccessToken(any());
-        }
+			verify(tokenService).storeRefreshToken(userId, deviceId, newRefreshToken);
+			verify(activityPublisher).publishActivity(userId, ActivityType.TOKEN_REFRESH);
+		}
 
 		@Test
-        void refreshToken_TokenMismatch_ThrowsException() {
-            when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
-            when(tokenService.getRefreshToken(userId, deviceId)).thenReturn("different.token");
+		void refreshToken_TokenMissingInStorage_ThrowsException() {
+			when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
+			when(tokenService.getRefreshToken(userId, deviceId)).thenReturn(null);
 
-            assertThrows(AuthenticationFailedException.class,
-                    () -> authFacade.refreshToken(refreshToken, deviceId));
+			assertThrows(AuthenticationFailedException.class,
+					() -> authFacade.refreshToken(refreshToken, deviceId));
 
-            verifyNoInteractions(userService, activityPublisher);
-        }
+			verifyNoInteractions(userService, activityPublisher);
+			verify(jwtService, never()).generateAccessToken(any());
+		}
+
+		@Test
+		void refreshToken_TokenMismatch_ThrowsException() {
+			when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
+			when(tokenService.getRefreshToken(userId, deviceId)).thenReturn("different.token");
+
+			assertThrows(AuthenticationFailedException.class,
+					() -> authFacade.refreshToken(refreshToken, deviceId));
+
+			verifyNoInteractions(userService, activityPublisher);
+		}
 	}
 
 	@Nested
@@ -177,9 +177,9 @@ class AuthFacadeImplTest {
 			String idToken = "google.id.token";
 
 			when(googleVerifier.getSupportedProvider()).thenReturn(User.AuthProvider.GOOGLE);
-			when(googleVerifier.verifyTokenAndGetIdentifier(idToken)).thenReturn(identifier);
+			when(googleVerifier.verifyTokenAndGetIdentifier(idToken)).thenReturn(email);
 
-			when(userService.findOrCreateUser(identifier, User.AuthProvider.GOOGLE))
+			when(userService.findOrCreateUser(email, User.AuthProvider.GOOGLE))
 					.thenReturn(new UserResult(testUser, false));
 			when(jwtService.generateAccessToken(testUser)).thenReturn(accessToken);
 			when(jwtService.generateRefreshToken(testUser)).thenReturn(refreshToken);
@@ -200,7 +200,7 @@ class AuthFacadeImplTest {
 			when(googleVerifier.getSupportedProvider()).thenReturn(User.AuthProvider.GOOGLE);
 
 			assertThrows(IllegalArgumentException.class,
-					() -> authFacade.authenticateWithExternalProvider(idToken, deviceId, User.AuthProvider.PHONE));
+					() -> authFacade.authenticateWithExternalProvider(idToken, deviceId, User.AuthProvider.EMAIL_OTP));
 
 			verifyNoInteractions(userService, jwtService, tokenService);
 		}
