@@ -39,17 +39,15 @@ public class AuthFacadeImpl implements AuthFacade {
 	}
 
 	@Override
-	public AuthResponse verifyAndAuthenticate(String identifier, String deviceId, String code) {
-		log.debug("Verifying OTP for identifier: {} from device: {}", identifier, deviceId);
+	public AuthResponse verifyAndAuthenticate(String email, String deviceId, String code) {
+		log.debug("Verifying OTP for email: {} from device: {}", email, deviceId);
 
-		if (!otpService.validateOtp(identifier, code)) {
-			log.warn("Failed OTP verification for identifier: {}", identifier);
+		if (!otpService.validateOtp(email, code)) {
+			log.warn("Failed OTP verification for email: {}", email);
 			throw new AuthenticationFailedException("Invalid OTP");
 		}
 
-		User.AuthProvider provider = determineAuthProvider(identifier);
-
-		return processAuthentication(identifier, deviceId, provider);
+		return processAuthentication(email, deviceId, User.AuthProvider.EMAIL_OTP);
 	}
 
 	@Override
@@ -115,9 +113,5 @@ public class AuthFacadeImpl implements AuthFacade {
 
 		log.info("User {} successfully authenticated. isNew: {}, device: {}", userId, userResult.isNew(), deviceId);
 		return new AuthResponse(accessToken, refreshToken, userResult.isNew());
-	}
-
-	private User.AuthProvider determineAuthProvider(String identifier) {
-		return identifier.contains("@") ? User.AuthProvider.EMAIL_OTP : User.AuthProvider.PHONE;
 	}
 }

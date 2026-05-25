@@ -37,8 +37,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
 	}
 
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException ex) {
+		log.warn("Illegal argument: {}", ex.getMessage());
+		return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
 	@ExceptionHandler(ExternalAuthVerificationException.class)
-	public ResponseEntity<Object> handleGoogleTokenVerification(ExternalAuthVerificationException ex) {
+	public ResponseEntity<Object> handleExternalAuthVerificationException(ExternalAuthVerificationException ex) {
 		log.warn("External service token verification failed: {}", ex.getMessage());
 
 		HttpStatus status;

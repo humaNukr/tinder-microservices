@@ -68,7 +68,7 @@ class GlobalExceptionHandlerTest {
 		ExternalAuthVerificationException ex = new ExternalAuthVerificationException("Service unavailable",
 				ExternalAuthVerificationException.ErrorType.NETWORK_ERROR, null);
 
-		ResponseEntity<Object> responseEntity = globalExceptionHandler.handleGoogleTokenVerification(ex);
+		ResponseEntity<Object> responseEntity = globalExceptionHandler.handleExternalAuthVerificationException(ex);
 		ErrorResponseDto body = (ErrorResponseDto) responseEntity.getBody();
 
 		assertAll(() -> assertEquals(HttpStatus.SERVICE_UNAVAILABLE, responseEntity.getStatusCode()),

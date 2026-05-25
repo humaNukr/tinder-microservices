@@ -72,6 +72,6 @@ public class User {
 	}
 
 	public enum AuthProvider {
-		EMAIL_OTP, GOOGLE, PHONE
+		EMAIL_OTP, GOOGLE
 	}
 }
