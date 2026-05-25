@@ -17,22 +17,23 @@ public class TrackingFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-
-        if (!request.getHeaders().containsKey(CORRELATION_ID_HEADER)) {
-            String correlationId = UUID.randomUUID().toString();
-
-            request = exchange.getRequest()
-                    .mutate()
-                    .header(CORRELATION_ID_HEADER, correlationId)
-                    .build();
+        String correlationId = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
+        if (correlationId == null) {
+            correlationId = UUID.randomUUID().toString();
         }
+
+        exchange.getResponse().getHeaders().add(CORRELATION_ID_HEADER, correlationId);
+
+        ServerHttpRequest request = exchange.getRequest()
+                .mutate()
+                .header(CORRELATION_ID_HEADER, correlationId)
+                .build();
 
         return chain.filter(exchange.mutate().request(request).build());
     }
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE; 
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 }
