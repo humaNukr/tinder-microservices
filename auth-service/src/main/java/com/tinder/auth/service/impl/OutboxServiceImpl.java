@@ -18,50 +18,50 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OutboxServiceImpl implements OutboxService {
 
-    private final OutboxRepository outboxRepository;
-    private final ObjectMapper objectMapper;
+	private final OutboxRepository outboxRepository;
+	private final ObjectMapper objectMapper;
 
-    @Override
-    @Transactional
-    public void saveEvent(String topic, Object event) {
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null");
-        }
+	@Override
+	@Transactional
+	public void saveEvent(String topic, Object event) {
+		if (event == null) {
+			throw new IllegalArgumentException("Event cannot be null");
+		}
 
-        try {
-            String payloadJson = objectMapper.writeValueAsString(event);
+		try {
+			String payloadJson = objectMapper.writeValueAsString(event);
 
-            OutboxEvent outboxEvent = new OutboxEvent(topic, payloadJson, LocalDateTime.now());
-            outboxRepository.save(outboxEvent);
+			OutboxEvent outboxEvent = new OutboxEvent(topic, payloadJson, LocalDateTime.now());
+			outboxRepository.save(outboxEvent);
 
-            log.debug("Saved outbox event to DB for topic: {}", topic);
+			log.debug("Saved outbox event to DB for topic: {}", topic);
 
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize outbox event payload for topic: {}", topic, e);
-            throw new RuntimeException("Failed to serialize outbox event payload", e);
-        }
-    }
+		} catch (JsonProcessingException e) {
+			log.error("Failed to serialize outbox event payload for topic: {}", topic, e);
+			throw new RuntimeException("Failed to serialize outbox event payload", e);
+		}
+	}
 
-    @Override
-    @Transactional
-    public List<OutboxEvent> fetchAndLock(int batchSize) {
-        List<OutboxEvent> events = outboxRepository.findAndLockUnprocessedEvents(batchSize);
-        if (events.isEmpty()) {
-            return events;
-        }
+	@Override
+	@Transactional
+	public List<OutboxEvent> fetchAndLock(int batchSize) {
+		List<OutboxEvent> events = outboxRepository.findAndLockUnprocessedEvents(batchSize);
+		if (events.isEmpty()) {
+			return events;
+		}
 
-        events.forEach(e -> e.setSent(true));
-        return outboxRepository.saveAll(events);
-    }
+		events.forEach(e -> e.setSent(true));
+		return outboxRepository.saveAll(events);
+	}
 
-    @Override
-    @Transactional
-    public void markAsFailed(List<OutboxEvent> failedEvents) {
-        if (failedEvents.isEmpty()) {
-            return;
-        }
+	@Override
+	@Transactional
+	public void markAsFailed(List<OutboxEvent> failedEvents) {
+		if (failedEvents.isEmpty()) {
+			return;
+		}
 
-        failedEvents.forEach(e -> e.setSent(false));
-        outboxRepository.saveAll(failedEvents);
-    }
+		failedEvents.forEach(e -> e.setSent(false));
+		outboxRepository.saveAll(failedEvents);
+	}
 }

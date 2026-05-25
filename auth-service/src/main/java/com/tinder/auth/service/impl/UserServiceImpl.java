@@ -23,53 +23,52 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
-    private final OutboxService outboxService;
-    private final KafkaProperties kafkaProperties;
+	private final UserRepository userRepository;
+	private final OutboxService outboxService;
+	private final KafkaProperties kafkaProperties;
 
-    @Override
-    public UserResult findOrCreateUser(String email, User.AuthProvider provider) {
-        return userRepository.findByEmail(email)
-                .map(user -> new UserResult(user, false))
-                .orElseGet(() -> createUserSafely(email, provider));
-    }
+	@Override
+	public UserResult findOrCreateUser(String email, User.AuthProvider provider) {
+		return userRepository.findByEmail(email).map(user -> new UserResult(user, false))
+				.orElseGet(() -> createUserSafely(email, provider));
+	}
 
-    @Override
-    @Transactional(readOnly = true)
-    public User findUserById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
-    }
+	@Override
+	@Transactional(readOnly = true)
+	public User findUserById(UUID id) {
+		return userRepository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+	}
 
-    @Override
-    @Transactional
-    public void deleteUser(UUID userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException("User not found with id: " + userId);
-        }
+	@Override
+	@Transactional
+	public void deleteUser(UUID userId) {
+		if (!userRepository.existsById(userId)) {
+			throw new UserNotFoundException("User not found with id: " + userId);
+		}
 
-        outboxService.saveEvent(kafkaProperties.userActivity(),
-                new UserActivityEvent(UUID.randomUUID(), userId, ActivityType.DELETE_ACCOUNT, Instant.now()));
+		outboxService.saveEvent(kafkaProperties.userActivity(),
+				new UserActivityEvent(UUID.randomUUID(), userId, ActivityType.DELETE_ACCOUNT, Instant.now()));
 
-        userRepository.deleteById(userId);
-        log.info("User {} deleted and outbox event scheduled", userId);
-    }
+		userRepository.deleteById(userId);
+		log.info("User {} deleted and outbox event scheduled", userId);
+	}
 
-    private UserResult createUserSafely(String email, User.AuthProvider provider) {
-        try {
-            User newUser = provider == User.AuthProvider.GOOGLE
-                    ? User.createViaGoogle(email)
-                    : User.createViaEmailOtp(email);
+	private UserResult createUserSafely(String email, User.AuthProvider provider) {
+		try {
+			User newUser = provider == User.AuthProvider.GOOGLE
+					? User.createViaGoogle(email)
+					: User.createViaEmailOtp(email);
 
-            return new UserResult(userRepository.save(newUser), true);
+			return new UserResult(userRepository.save(newUser), true);
 
-        } catch (DataIntegrityViolationException e) {
-            log.warn("Race condition detected while creating user with email: {}. Recovering...", email);
+		} catch (DataIntegrityViolationException e) {
+			log.warn("Race condition detected while creating user with email: {}. Recovering...", email);
 
-            User recoveredUser = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new IllegalStateException("Potential race condition failed to recover", e));
+			User recoveredUser = userRepository.findByEmail(email)
+					.orElseThrow(() -> new IllegalStateException("Potential race condition failed to recover", e));
 
-            return new UserResult(recoveredUser, false);
-        }
-    }
+			return new UserResult(recoveredUser, false);
+		}
+	}
 }

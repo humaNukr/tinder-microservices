@@ -14,38 +14,38 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OutboxCleanupWorkerIT extends BaseIT {
 
-    @Autowired
-    private OutboxCleanupWorker outboxCleanupWorker;
+	@Autowired
+	private OutboxCleanupWorker outboxCleanupWorker;
 
-    @Autowired
-    private OutboxRepository outboxRepository;
+	@Autowired
+	private OutboxRepository outboxRepository;
 
-    @BeforeEach
-    void setUp() {
-        outboxRepository.deleteAll();
-    }
+	@BeforeEach
+	void setUp() {
+		outboxRepository.deleteAll();
+	}
 
-    @Test
-    void cleanupOutbox_DeletesOnlyProcessedAndOldEvents() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oldDate = now.minusDays(10);
+	@Test
+	void cleanupOutbox_DeletesOnlyProcessedAndOldEvents() {
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime oldDate = now.minusDays(10);
 
-        OutboxEvent oldProcessed = new OutboxEvent("topic-1", "{}", oldDate);
-        oldProcessed.setSent(true);
+		OutboxEvent oldProcessed = new OutboxEvent("topic-1", "{}", oldDate);
+		oldProcessed.setSent(true);
 
-        OutboxEvent oldUnprocessed = new OutboxEvent("topic-2", "{}", oldDate);
-        oldUnprocessed.setSent(false);
+		OutboxEvent oldUnprocessed = new OutboxEvent("topic-2", "{}", oldDate);
+		oldUnprocessed.setSent(false);
 
-        OutboxEvent newProcessed = new OutboxEvent("topic-3", "{}", now);
-        newProcessed.setSent(true);
+		OutboxEvent newProcessed = new OutboxEvent("topic-3", "{}", now);
+		newProcessed.setSent(true);
 
-        OutboxEvent newUnprocessed = new OutboxEvent("topic-4", "{}", now);
-        newUnprocessed.setSent(false);
+		OutboxEvent newUnprocessed = new OutboxEvent("topic-4", "{}", now);
+		newUnprocessed.setSent(false);
 
-        outboxRepository.saveAll(List.of(oldProcessed, oldUnprocessed, newProcessed, newUnprocessed));
+		outboxRepository.saveAll(List.of(oldProcessed, oldUnprocessed, newProcessed, newUnprocessed));
 
-        outboxCleanupWorker.cleanupOutbox();
+		outboxCleanupWorker.cleanupOutbox();
 
-        assertEquals(3, outboxRepository.count());
-    }
+		assertEquals(3, outboxRepository.count());
+	}
 }

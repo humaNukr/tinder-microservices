@@ -40,34 +40,34 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
-    private final UUID userId = UUID.randomUUID();
-    private final String email = "test@example.com";
+	private final UUID userId = UUID.randomUUID();
+	private final String email = "test@example.com";
 
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private OutboxService outboxService;
-    @Mock
-    private KafkaProperties kafkaProperties;
+	@Mock
+	private UserRepository userRepository;
+	@Mock
+	private OutboxService outboxService;
+	@Mock
+	private KafkaProperties kafkaProperties;
 
-    @InjectMocks
-    private UserServiceImpl userService;
+	@InjectMocks
+	private UserServiceImpl userService;
 
-    private User testUser;
+	private User testUser;
 
-    @BeforeEach
-    void setUp() {
-        testUser = new User();
-        ReflectionTestUtils.setField(testUser, "id", userId);
-        ReflectionTestUtils.setField(testUser, "email", email);
-        ReflectionTestUtils.setField(testUser, "authProvider", User.AuthProvider.EMAIL_OTP);
-    }
+	@BeforeEach
+	void setUp() {
+		testUser = new User();
+		ReflectionTestUtils.setField(testUser, "id", userId);
+		ReflectionTestUtils.setField(testUser, "email", email);
+		ReflectionTestUtils.setField(testUser, "authProvider", User.AuthProvider.EMAIL_OTP);
+	}
 
-    @Nested
-    @DisplayName("findOrCreateUser() Tests")
-    class FindOrCreateUserTests {
+	@Nested
+	@DisplayName("findOrCreateUser() Tests")
+	class FindOrCreateUserTests {
 
-        @Test
+		@Test
         void findOrCreateUser_UserExists_ReturnsExistingUser() {
             when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
 
@@ -81,7 +81,7 @@ class UserServiceImplTest {
             );
         }
 
-        @Test
+		@Test
         void findOrCreateUser_UserDoesNotExist_CreatesAndReturnsNewUser() {
             when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(testUser);
@@ -96,7 +96,7 @@ class UserServiceImplTest {
             );
         }
 
-        @Test
+		@Test
         void findOrCreateUser_NewGoogleUser_InvokesCorrectFactory() {
             when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(testUser);
@@ -114,7 +114,7 @@ class UserServiceImplTest {
             );
         }
 
-        @Test
+		@Test
         void findOrCreateUser_RaceConditionDetected_RecoversAndReturnsExistingUser() {
             when(userRepository.findByEmail(email))
                     .thenReturn(Optional.empty())
@@ -132,7 +132,7 @@ class UserServiceImplTest {
             );
         }
 
-        @Test
+		@Test
         void findOrCreateUser_RaceConditionDetectedButRecoveryFails_ThrowsIllegalStateException() {
             when(userRepository.findByEmail(email))
                     .thenReturn(Optional.empty())
@@ -144,13 +144,13 @@ class UserServiceImplTest {
             assertThrows(IllegalStateException.class,
                     () -> userService.findOrCreateUser(email, User.AuthProvider.EMAIL_OTP));
         }
-    }
+	}
 
-    @Nested
-    @DisplayName("findUserById() Tests")
-    class FindUserByIdTests {
+	@Nested
+	@DisplayName("findUserById() Tests")
+	class FindUserByIdTests {
 
-        @Test
+		@Test
         void findUserById_UserExists_ReturnsUser() {
             when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
 
@@ -159,42 +159,39 @@ class UserServiceImplTest {
             assertEquals(testUser, result);
         }
 
-        @Test
+		@Test
         void findUserById_UserDoesNotExist_ThrowsUserNotFoundException() {
             when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
             assertThrows(UserNotFoundException.class, () -> userService.findUserById(userId));
         }
-    }
+	}
 
-    @Nested
-    @DisplayName("deleteUser() Tests")
-    class DeleteUserTests {
+	@Nested
+	@DisplayName("deleteUser() Tests")
+	class DeleteUserTests {
 
-        @Test
-        void deleteUser_UserExists_DeletesUserAndSavesOutboxEvent() {
-            String expectedTopic = "user-activity-topic";
-            when(userRepository.existsById(userId)).thenReturn(true);
-            when(kafkaProperties.userActivity()).thenReturn(expectedTopic);
+		@Test
+		void deleteUser_UserExists_DeletesUserAndSavesOutboxEvent() {
+			String expectedTopic = "user-activity-topic";
+			when(userRepository.existsById(userId)).thenReturn(true);
+			when(kafkaProperties.userActivity()).thenReturn(expectedTopic);
 
-            userService.deleteUser(userId);
+			userService.deleteUser(userId);
 
-            ArgumentCaptor<UserActivityEvent> eventCaptor = ArgumentCaptor.forClass(UserActivityEvent.class);
+			ArgumentCaptor<UserActivityEvent> eventCaptor = ArgumentCaptor.forClass(UserActivityEvent.class);
 
-            assertAll(
-                    () -> verify(userRepository).deleteById(userId),
-                    () -> verify(outboxService).saveEvent(eq(expectedTopic), eventCaptor.capture()),
-                    () -> {
-                        UserActivityEvent capturedEvent = eventCaptor.getValue();
-                        assertEquals(userId, capturedEvent.userId());
-                        assertEquals(ActivityType.DELETE_ACCOUNT, capturedEvent.type());
-                        assertNotNull(capturedEvent.eventId());
-                        assertNotNull(capturedEvent.timestamp());
-                    }
-            );
-        }
+			assertAll(() -> verify(userRepository).deleteById(userId),
+					() -> verify(outboxService).saveEvent(eq(expectedTopic), eventCaptor.capture()), () -> {
+						UserActivityEvent capturedEvent = eventCaptor.getValue();
+						assertEquals(userId, capturedEvent.userId());
+						assertEquals(ActivityType.DELETE_ACCOUNT, capturedEvent.type());
+						assertNotNull(capturedEvent.eventId());
+						assertNotNull(capturedEvent.timestamp());
+					});
+		}
 
-        @Test
+		@Test
         void deleteUser_UserDoesNotExist_ThrowsUserNotFoundException() {
             when(userRepository.existsById(userId)).thenReturn(false);
 
@@ -203,5 +200,5 @@ class UserServiceImplTest {
             verify(userRepository, never()).deleteById(any());
             verifyNoInteractions(outboxService, kafkaProperties);
         }
-    }
+	}
 }

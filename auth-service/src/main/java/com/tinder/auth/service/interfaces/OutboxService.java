@@ -5,9 +5,9 @@ import com.tinder.auth.entity.OutboxEvent;
 import java.util.List;
 
 public interface OutboxService {
-    void saveEvent(String topic, Object event);
+	void saveEvent(String topic, Object event);
 
-    List<OutboxEvent> fetchAndLock(int batchSize);
+	List<OutboxEvent> fetchAndLock(int batchSize);
 
-    void markAsFailed(List<OutboxEvent> failedEvents);
+	void markAsFailed(List<OutboxEvent> failedEvents);
 }

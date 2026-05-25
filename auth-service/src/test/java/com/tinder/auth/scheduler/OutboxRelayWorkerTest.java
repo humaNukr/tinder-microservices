@@ -33,28 +33,28 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OutboxRelayWorkerTest {
 
-    @Mock
-    private OutboxService outboxService;
+	@Mock
+	private OutboxService outboxService;
 
-    @Mock
-    private MessageBroker messageBroker;
+	@Mock
+	private MessageBroker messageBroker;
 
-    @Mock
-    private OutboxSchedulerProperties properties;
+	@Mock
+	private OutboxSchedulerProperties properties;
 
-    @InjectMocks
-    private OutboxRelayWorker worker;
+	@InjectMocks
+	private OutboxRelayWorker worker;
 
-    @Captor
-    private ArgumentCaptor<List<OutboxEvent>> failedEventsCaptor;
+	@Captor
+	private ArgumentCaptor<List<OutboxEvent>> failedEventsCaptor;
 
-    @BeforeEach
-    void setUp() {
-        lenient().when(properties.batchSize()).thenReturn(10);
-        lenient().when(properties.batchProcessingTime()).thenReturn(5);
-    }
+	@BeforeEach
+	void setUp() {
+		lenient().when(properties.batchSize()).thenReturn(10);
+		lenient().when(properties.batchProcessingTime()).thenReturn(5);
+	}
 
-    @Test
+	@Test
     @DisplayName("Should do nothing when there are no unprocessed events")
     void processOutboxEvents_NoEvents_DoesNothing() {
         when(outboxService.fetchAndLock(10)).thenReturn(Collections.emptyList());
@@ -65,60 +65,58 @@ class OutboxRelayWorkerTest {
         verify(outboxService, never()).markAsFailed(any());
     }
 
-    @Test
-    @DisplayName("Should not revert any events if all were sent successfully")
-    void processOutboxEvents_AllSuccessful_NoEventsReverted() {
-        OutboxEvent event1 = createTestEvent(1L);
-        OutboxEvent event2 = createTestEvent(2L);
-        when(outboxService.fetchAndLock(10)).thenReturn(List.of(event1, event2));
+	@Test
+	@DisplayName("Should not revert any events if all were sent successfully")
+	void processOutboxEvents_AllSuccessful_NoEventsReverted() {
+		OutboxEvent event1 = createTestEvent(1L);
+		OutboxEvent event2 = createTestEvent(2L);
+		when(outboxService.fetchAndLock(10)).thenReturn(List.of(event1, event2));
 
-        when(messageBroker.send(event1)).thenReturn(CompletableFuture.completedFuture(null));
-        when(messageBroker.send(event2)).thenReturn(CompletableFuture.completedFuture(null));
+		when(messageBroker.send(event1)).thenReturn(CompletableFuture.completedFuture(null));
+		when(messageBroker.send(event2)).thenReturn(CompletableFuture.completedFuture(null));
 
-        worker.processOutboxEvents();
+		worker.processOutboxEvents();
 
-        verify(outboxService, never()).markAsFailed(anyList());
-    }
+		verify(outboxService, never()).markAsFailed(anyList());
+	}
 
-    @Test
-    @DisplayName("Should only revert events that failed to send (Partial Success)")
-    void processOutboxEvents_PartialSuccess_RevertsOnlyFailed() {
-        OutboxEvent successEvent = createTestEvent(1L);
-        OutboxEvent failedEvent = createTestEvent(2L);
-        when(outboxService.fetchAndLock(10)).thenReturn(List.of(successEvent, failedEvent));
+	@Test
+	@DisplayName("Should only revert events that failed to send (Partial Success)")
+	void processOutboxEvents_PartialSuccess_RevertsOnlyFailed() {
+		OutboxEvent successEvent = createTestEvent(1L);
+		OutboxEvent failedEvent = createTestEvent(2L);
+		when(outboxService.fetchAndLock(10)).thenReturn(List.of(successEvent, failedEvent));
 
-        when(messageBroker.send(successEvent)).thenReturn(CompletableFuture.completedFuture(null));
-        when(messageBroker.send(failedEvent)).thenReturn(CompletableFuture.completedFuture(failedEvent));
+		when(messageBroker.send(successEvent)).thenReturn(CompletableFuture.completedFuture(null));
+		when(messageBroker.send(failedEvent)).thenReturn(CompletableFuture.completedFuture(failedEvent));
 
-        worker.processOutboxEvents();
+		worker.processOutboxEvents();
 
-        verify(outboxService).markAsFailed(failedEventsCaptor.capture());
-        List<OutboxEvent> revertedEvents = failedEventsCaptor.getValue();
+		verify(outboxService).markAsFailed(failedEventsCaptor.capture());
+		List<OutboxEvent> revertedEvents = failedEventsCaptor.getValue();
 
-        assertAll(
-                () -> assertEquals(1, revertedEvents.size(), "Should only revert 1 failed event"),
-                () -> assertEquals(failedEvent.getId(), revertedEvents.getFirst().getId())
-        );
-    }
+		assertAll(() -> assertEquals(1, revertedEvents.size(), "Should only revert 1 failed event"),
+				() -> assertEquals(failedEvent.getId(), revertedEvents.getFirst().getId()));
+	}
 
-    @Test
-    @DisplayName("Should handle timeout gracefully and not revert pending futures")
-    void processOutboxEvents_Timeout_DoesNotRevertPending() {
-        OutboxEvent fastEvent = createTestEvent(1L);
-        OutboxEvent slowEvent = createTestEvent(2L);
-        when(outboxService.fetchAndLock(10)).thenReturn(List.of(fastEvent, slowEvent));
+	@Test
+	@DisplayName("Should handle timeout gracefully and not revert pending futures")
+	void processOutboxEvents_Timeout_DoesNotRevertPending() {
+		OutboxEvent fastEvent = createTestEvent(1L);
+		OutboxEvent slowEvent = createTestEvent(2L);
+		when(outboxService.fetchAndLock(10)).thenReturn(List.of(fastEvent, slowEvent));
 
-        when(messageBroker.send(fastEvent)).thenReturn(CompletableFuture.completedFuture(null));
-        when(messageBroker.send(slowEvent)).thenReturn(new CompletableFuture<>());
+		when(messageBroker.send(fastEvent)).thenReturn(CompletableFuture.completedFuture(null));
+		when(messageBroker.send(slowEvent)).thenReturn(new CompletableFuture<>());
 
-        worker.processOutboxEvents();
+		worker.processOutboxEvents();
 
-        verify(outboxService, never()).markAsFailed(anyList());
-    }
+		verify(outboxService, never()).markAsFailed(anyList());
+	}
 
-    private OutboxEvent createTestEvent(Long expectedId) {
-        OutboxEvent event = new OutboxEvent("test-topic", "{}", LocalDateTime.now());
-        ReflectionTestUtils.setField(event, "id", expectedId);
-        return event;
-    }
+	private OutboxEvent createTestEvent(Long expectedId) {
+		OutboxEvent event = new OutboxEvent("test-topic", "{}", LocalDateTime.now());
+		ReflectionTestUtils.setField(event, "id", expectedId);
+		return event;
+	}
 }

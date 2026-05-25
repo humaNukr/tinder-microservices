@@ -33,200 +33,174 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AuthControllerIT extends BaseIT {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private OutboxRepository outboxRepository;
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-    @Autowired
-    private JwtService jwtService;
-    @Autowired
-    private RedisAuthProperties redisAuthProperties;
+	@Autowired
+	private MockMvc mockMvc;
+	@Autowired
+	private ObjectMapper objectMapper;
+	@Autowired
+	private UserRepository userRepository;
+	@Autowired
+	private OutboxRepository outboxRepository;
+	@Autowired
+	private StringRedisTemplate redisTemplate;
+	@Autowired
+	private JwtService jwtService;
+	@Autowired
+	private RedisAuthProperties redisAuthProperties;
 
-    @BeforeEach
-    void setUp() {
-        userRepository.deleteAll();
-        redisTemplate.getRequiredConnectionFactory().getConnection().serverCommands().flushAll();
-    }
+	@BeforeEach
+	void setUp() {
+		userRepository.deleteAll();
+		redisTemplate.getRequiredConnectionFactory().getConnection().serverCommands().flushAll();
+	}
 
-    private void setupOtpInRedis(String identifier, String code) {
-        redisTemplate.opsForValue().set("otp:" + identifier, code, Duration.ofMinutes(5));
-    }
+	private void setupOtpInRedis(String identifier, String code) {
+		redisTemplate.opsForValue().set("otp:" + identifier, code, Duration.ofMinutes(5));
+	}
 
-    private void setupSessionInRedis(UUID userId, String deviceId, String token) {
-        String key = getSessionKey(userId);
-        redisTemplate.opsForHash().put(key, deviceId, token);
-    }
+	private void setupSessionInRedis(UUID userId, String deviceId, String token) {
+		String key = getSessionKey(userId);
+		redisTemplate.opsForHash().put(key, deviceId, token);
+	}
 
-    private String getSessionKey(UUID userId) {
-        return redisAuthProperties.sessionPrefix() + userId + redisAuthProperties.sessionSuffix();
-    }
+	private String getSessionKey(UUID userId) {
+		return redisAuthProperties.sessionPrefix() + userId + redisAuthProperties.sessionSuffix();
+	}
 
-    @Nested
-    @DisplayName("sendOtp() Validation & Logic")
-    class SendOtpTests {
+	@Nested
+	@DisplayName("sendOtp() Validation & Logic")
+	class SendOtpTests {
 
-        @Test
-        void sendOtp_ValidRequest_Returns200() throws Exception {
-            SendOtpRequest request = new SendOtpRequest("test@example.com", DeliveryChannel.EMAIL);
+		@Test
+		void sendOtp_ValidRequest_Returns200() throws Exception {
+			SendOtpRequest request = new SendOtpRequest("test@example.com", DeliveryChannel.EMAIL);
 
-            mockMvc.perform(post("/api/v1/auth/send-otp")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk());
-        }
+			mockMvc.perform(post("/api/v1/auth/send-otp").contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request))).andExpect(status().isOk());
+		}
 
-        @Test
-        void sendOtp_BlankDestination_Returns400() throws Exception {
-            SendOtpRequest request = new SendOtpRequest("", DeliveryChannel.EMAIL);
+		@Test
+		void sendOtp_BlankDestination_Returns400() throws Exception {
+			SendOtpRequest request = new SendOtpRequest("", DeliveryChannel.EMAIL);
 
-            mockMvc.perform(post("/api/v1/auth/send-otp")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
-        }
+			mockMvc.perform(post("/api/v1/auth/send-otp").contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest());
+		}
 
-        @Test
-        void sendOtp_RateLimited_Returns429() throws Exception {
-            String email = "fast@example.com";
-            SendOtpRequest request = new SendOtpRequest(email, DeliveryChannel.EMAIL);
+		@Test
+		void sendOtp_RateLimited_Returns429() throws Exception {
+			String email = "fast@example.com";
+			SendOtpRequest request = new SendOtpRequest(email, DeliveryChannel.EMAIL);
 
-            mockMvc.perform(post("/api/v1/auth/send-otp")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)));
+			mockMvc.perform(post("/api/v1/auth/send-otp").contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)));
 
-            mockMvc.perform(post("/api/v1/auth/send-otp")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isTooManyRequests());
-        }
-    }
+			mockMvc.perform(post("/api/v1/auth/send-otp").contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request))).andExpect(status().isTooManyRequests());
+		}
+	}
 
-    @Nested
-    @DisplayName("verifyOtp() Validation & Logic")
-    class VerifyOtpTests {
+	@Nested
+	@DisplayName("verifyOtp() Validation & Logic")
+	class VerifyOtpTests {
 
-        @Test
-        void verifyOtp_ValidNewUser_ReturnsTokensAndIsNewTrue() throws Exception {
-            String email = "new@test.com";
-            String code = "123456";
-            setupOtpInRedis(email, code);
+		@Test
+		void verifyOtp_ValidNewUser_ReturnsTokensAndIsNewTrue() throws Exception {
+			String email = "new@test.com";
+			String code = "123456";
+			setupOtpInRedis(email, code);
 
-            VerifyOtpRequest request = new VerifyOtpRequest(email, code);
+			VerifyOtpRequest request = new VerifyOtpRequest(email, code);
 
-            mockMvc.perform(post("/api/v1/auth/verify")
-                            .header("X-Device-Id", "d1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.accessToken").exists())
-                    .andExpect(jsonPath("$.isNewUser").value(true));
-        }
+			mockMvc.perform(post("/api/v1/auth/verify").header("X-Device-Id", "d1")
+					.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+					.andExpect(status().isOk()).andExpect(jsonPath("$.accessToken").exists())
+					.andExpect(jsonPath("$.isNewUser").value(true));
+		}
 
-        @Test
-        void verifyOtp_InvalidOtpFormat_Returns400() throws Exception {
-            VerifyOtpRequest request = new VerifyOtpRequest("test@test.com", "123");
+		@Test
+		void verifyOtp_InvalidOtpFormat_Returns400() throws Exception {
+			VerifyOtpRequest request = new VerifyOtpRequest("test@test.com", "123");
 
-            mockMvc.perform(post("/api/v1/auth/verify")
-                            .header("X-Device-Id", "d1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
-        }
+			mockMvc.perform(post("/api/v1/auth/verify").header("X-Device-Id", "d1")
+					.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+					.andExpect(status().isBadRequest());
+		}
 
-        @Test
-        void verifyOtp_WrongCode_Returns401() throws Exception {
-            String email = "test@test.com";
-            setupOtpInRedis(email, "111111");
+		@Test
+		void verifyOtp_WrongCode_Returns401() throws Exception {
+			String email = "test@test.com";
+			setupOtpInRedis(email, "111111");
 
-            VerifyOtpRequest request = new VerifyOtpRequest(email, "222222");
+			VerifyOtpRequest request = new VerifyOtpRequest(email, "222222");
 
-            mockMvc.perform(post("/api/v1/auth/verify")
-                            .header("X-Device-Id", "d1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isUnauthorized());
-        }
-    }
+			mockMvc.perform(post("/api/v1/auth/verify").header("X-Device-Id", "d1")
+					.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+					.andExpect(status().isUnauthorized());
+		}
+	}
 
-    @Nested
-    @DisplayName("refreshToken() Logic")
-    class RefreshTokenTests {
+	@Nested
+	@DisplayName("refreshToken() Logic")
+	class RefreshTokenTests {
 
-        @Test
-        void refreshToken_ValidRequest_ReturnsNewTokens() throws Exception {
-            User user = userRepository.save(User.createViaEmailOtp("refresh@test.com"));
-            String deviceId = "laptop";
-            String refreshToken = jwtService.generateRefreshToken(user);
-            setupSessionInRedis(user.getId(), deviceId, refreshToken);
+		@Test
+		void refreshToken_ValidRequest_ReturnsNewTokens() throws Exception {
+			User user = userRepository.save(User.createViaEmailOtp("refresh@test.com"));
+			String deviceId = "laptop";
+			String refreshToken = jwtService.generateRefreshToken(user);
+			setupSessionInRedis(user.getId(), deviceId, refreshToken);
 
-            RefreshTokenDto request = new RefreshTokenDto(refreshToken);
+			RefreshTokenDto request = new RefreshTokenDto(refreshToken);
 
-            mockMvc.perform(post("/api/v1/auth/refresh")
-                            .header("X-Device-Id", deviceId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.accessToken").exists());
-        }
+			mockMvc.perform(post("/api/v1/auth/refresh").header("X-Device-Id", deviceId)
+					.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+					.andExpect(status().isOk()).andExpect(jsonPath("$.accessToken").exists());
+		}
 
-        @Test
-        void refreshToken_InvalidOrStolenToken_Returns401() throws Exception {
-            User user = userRepository.save(User.createViaEmailOtp("stolen@test.com"));
-            String validToken = jwtService.generateRefreshToken(user);
-            setupSessionInRedis(user.getId(), "device-A", validToken);
+		@Test
+		void refreshToken_InvalidOrStolenToken_Returns401() throws Exception {
+			User user = userRepository.save(User.createViaEmailOtp("stolen@test.com"));
+			String validToken = jwtService.generateRefreshToken(user);
+			setupSessionInRedis(user.getId(), "device-A", validToken);
 
-            RefreshTokenDto request = new RefreshTokenDto(validToken);
+			RefreshTokenDto request = new RefreshTokenDto(validToken);
 
-            mockMvc.perform(post("/api/v1/auth/refresh")
-                            .header("X-Device-Id", "device-B")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isUnauthorized());
-        }
-    }
+			mockMvc.perform(post("/api/v1/auth/refresh").header("X-Device-Id", "device-B")
+					.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)))
+					.andExpect(status().isUnauthorized());
+		}
+	}
 
-    @Nested
-    @DisplayName("Session & Account Management")
-    class ManagementTests {
+	@Nested
+	@DisplayName("Session & Account Management")
+	class ManagementTests {
 
-        @Test
-        void logout_ExistingSession_DeletesFromRedis() throws Exception {
-            UUID userId = UUID.randomUUID();
-            String deviceId = "phone";
-            setupSessionInRedis(userId, deviceId, "token");
+		@Test
+		void logout_ExistingSession_DeletesFromRedis() throws Exception {
+			UUID userId = UUID.randomUUID();
+			String deviceId = "phone";
+			setupSessionInRedis(userId, deviceId, "token");
 
-            mockMvc.perform(post("/api/v1/auth/logout")
-                            .header("X-User-Id", userId)
-                            .header("X-Device-Id", deviceId))
-                    .andExpect(status().isNoContent());
+			mockMvc.perform(post("/api/v1/auth/logout").header("X-User-Id", userId).header("X-Device-Id", deviceId))
+					.andExpect(status().isNoContent());
 
-            assertFalse(redisTemplate.opsForHash().hasKey(getSessionKey(userId), deviceId));
-        }
+			assertFalse(redisTemplate.opsForHash().hasKey(getSessionKey(userId), deviceId));
+		}
 
-        @Test
-        void deleteMyAccount_ValidUser_RemovesAllDataAndSchedulesEvent() throws Exception {
-            User user = userRepository.save(User.createViaEmailOtp("rip@test.com"));
-            UUID userId = user.getId();
-            setupSessionInRedis(userId, "d1", "t1");
+		@Test
+		void deleteMyAccount_ValidUser_RemovesAllDataAndSchedulesEvent() throws Exception {
+			User user = userRepository.save(User.createViaEmailOtp("rip@test.com"));
+			UUID userId = user.getId();
+			setupSessionInRedis(userId, "d1", "t1");
 
-            mockMvc.perform(delete("/api/v1/auth/me")
-                            .header("X-User-Id", userId))
-                    .andExpect(status().isNoContent());
+			mockMvc.perform(delete("/api/v1/auth/me").header("X-User-Id", userId)).andExpect(status().isNoContent());
 
-            assertAll(
-                    () -> assertTrue(userRepository.findById(userId).isEmpty()),
-                    () -> assertFalse(redisTemplate.hasKey(getSessionKey(userId))),
-                    () -> {
-                        var events = outboxRepository.findAll();
-                        assertTrue(events.stream().anyMatch(e -> e.getPayload().contains("DELETE_ACCOUNT")));
-                    }
-            );
-        }
-    }
+			assertAll(() -> assertTrue(userRepository.findById(userId).isEmpty()),
+					() -> assertFalse(redisTemplate.hasKey(getSessionKey(userId))), () -> {
+						var events = outboxRepository.findAll();
+						assertTrue(events.stream().anyMatch(e -> e.getPayload().contains("DELETE_ACCOUNT")));
+					});
+		}
+	}
 }

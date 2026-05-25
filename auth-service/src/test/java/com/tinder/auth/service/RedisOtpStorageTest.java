@@ -29,26 +29,26 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RedisOtpStorageTest {
 
-    private final String identifier = "test@test.com";
-    @Mock
-    private StringRedisTemplate redisTemplate;
-    @Mock
-    private ValueOperations<String, String> valueOperations;
-    @Mock
-    private RedisAuthProperties props;
-    @InjectMocks
-    private RedisOtpStorage redisOtpStorage;
+	private final String identifier = "test@test.com";
+	@Mock
+	private StringRedisTemplate redisTemplate;
+	@Mock
+	private ValueOperations<String, String> valueOperations;
+	@Mock
+	private RedisAuthProperties props;
+	@InjectMocks
+	private RedisOtpStorage redisOtpStorage;
 
-    @BeforeEach
-    void setUp() {
-        lenient().when(props.otpPrefix()).thenReturn("otp:");
-    }
+	@BeforeEach
+	void setUp() {
+		lenient().when(props.otpPrefix()).thenReturn("otp:");
+	}
 
-    @Nested
-    @DisplayName("OTP CRUD Operations")
-    class CrudOperations {
+	@Nested
+	@DisplayName("OTP CRUD Operations")
+	class CrudOperations {
 
-        @Test
+		@Test
         void saveOtp_ValidData_SavesWithTtl() {
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             Duration ttl = Duration.ofMinutes(5);
@@ -59,7 +59,7 @@ class RedisOtpStorageTest {
             verify(valueOperations).set("otp:" + identifier, "123456", ttl);
         }
 
-        @Test
+		@Test
         void getOtp_ExistingKey_ReturnsCode() {
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             when(valueOperations.get("otp:" + identifier)).thenReturn("654321");
@@ -69,114 +69,109 @@ class RedisOtpStorageTest {
             assertEquals("654321", result);
         }
 
-        @Test
-        void deleteOtp_ValidIdentifier_DeletesKey() {
-            redisOtpStorage.deleteOtp(identifier);
+		@Test
+		void deleteOtp_ValidIdentifier_DeletesKey() {
+			redisOtpStorage.deleteOtp(identifier);
 
-            verify(redisTemplate).delete("otp:" + identifier);
-        }
-    }
+			verify(redisTemplate).delete("otp:" + identifier);
+		}
+	}
 
-    @Nested
-    @DisplayName("Rate Limiting Tests")
-    class RateLimitingTests {
+	@Nested
+	@DisplayName("Rate Limiting Tests")
+	class RateLimitingTests {
 
-        @BeforeEach
+		@BeforeEach
         void setUpRateLimiting() {
             when(props.otpRateLimitPrefix()).thenReturn("rl:");
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         }
 
-        @Test
-        void checkAndIncrementRateLimit_FirstRequest_IncrementsAndSetsExpire() {
-            String key = "rl:" + identifier;
-            Duration window = Duration.ofMinutes(1);
-            when(props.otpRateLimitWindow()).thenReturn(window);
-            when(props.otpRateLimitMaxRequests()).thenReturn(3);
-            when(valueOperations.increment(key)).thenReturn(1L);
+		@Test
+		void checkAndIncrementRateLimit_FirstRequest_IncrementsAndSetsExpire() {
+			String key = "rl:" + identifier;
+			Duration window = Duration.ofMinutes(1);
+			when(props.otpRateLimitWindow()).thenReturn(window);
+			when(props.otpRateLimitMaxRequests()).thenReturn(3);
+			when(valueOperations.increment(key)).thenReturn(1L);
 
-            redisOtpStorage.checkAndIncrementRateLimit(identifier);
+			redisOtpStorage.checkAndIncrementRateLimit(identifier);
 
-            assertAll(() -> verify(valueOperations).increment(key), () -> verify(redisTemplate).expire(key, window));
-        }
+			assertAll(() -> verify(valueOperations).increment(key), () -> verify(redisTemplate).expire(key, window));
+		}
 
-        @Test
-        void checkAndIncrementRateLimit_SecondRequest_IncrementsWithoutExpire() {
-            String key = "rl:" + identifier;
-            when(props.otpRateLimitMaxRequests()).thenReturn(3);
-            when(valueOperations.increment(key)).thenReturn(2L);
+		@Test
+		void checkAndIncrementRateLimit_SecondRequest_IncrementsWithoutExpire() {
+			String key = "rl:" + identifier;
+			when(props.otpRateLimitMaxRequests()).thenReturn(3);
+			when(valueOperations.increment(key)).thenReturn(2L);
 
-            redisOtpStorage.checkAndIncrementRateLimit(identifier);
+			redisOtpStorage.checkAndIncrementRateLimit(identifier);
 
-            assertAll(() -> verify(valueOperations).increment(key),
-                    () -> verify(redisTemplate, never()).expire(anyString(), any(Duration.class)));
-        }
+			assertAll(() -> verify(valueOperations).increment(key),
+					() -> verify(redisTemplate, never()).expire(anyString(), any(Duration.class)));
+		}
 
-        @Test
-        void checkAndIncrementRateLimit_LimitExceeded_ThrowsException() {
-            String key = "rl:" + identifier;
-            when(props.otpRateLimitMaxRequests()).thenReturn(3);
-            when(valueOperations.increment(key)).thenReturn(4L);
+		@Test
+		void checkAndIncrementRateLimit_LimitExceeded_ThrowsException() {
+			String key = "rl:" + identifier;
+			when(props.otpRateLimitMaxRequests()).thenReturn(3);
+			when(valueOperations.increment(key)).thenReturn(4L);
 
-            assertThrows(TooManyRequestsException.class, () -> redisOtpStorage.checkAndIncrementRateLimit(identifier));
+			assertThrows(TooManyRequestsException.class, () -> redisOtpStorage.checkAndIncrementRateLimit(identifier));
 
-            verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
-        }
-    }
+			verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
+		}
+	}
 
-    @Nested
-    @DisplayName("Verification Attempts Tests")
-    class VerificationAttemptsTests {
+	@Nested
+	@DisplayName("Verification Attempts Tests")
+	class VerificationAttemptsTests {
 
-        @BeforeEach
+		@BeforeEach
         void setUpAttempts() {
             when(props.otpAttempts()).thenReturn("attempts:");
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         }
 
-        @Test
-        @DisplayName("First attempt should increment counter and set expiration")
-        void checkAndIncrementVerificationAttempts_FirstAttempt_IncrementsAndSetsExpire() {
-            String key = "attempts:" + identifier;
-            Duration window = Duration.ofMinutes(15);
-            when(props.otpRateLimitWindow()).thenReturn(window);
-            when(props.otpVerificationMaxAttempts()).thenReturn(5);
-            when(valueOperations.increment(key)).thenReturn(1L);
+		@Test
+		@DisplayName("First attempt should increment counter and set expiration")
+		void checkAndIncrementVerificationAttempts_FirstAttempt_IncrementsAndSetsExpire() {
+			String key = "attempts:" + identifier;
+			Duration window = Duration.ofMinutes(15);
+			when(props.otpRateLimitWindow()).thenReturn(window);
+			when(props.otpVerificationMaxAttempts()).thenReturn(5);
+			when(valueOperations.increment(key)).thenReturn(1L);
 
-            redisOtpStorage.checkAndIncrementVerificationAttempts(identifier);
+			redisOtpStorage.checkAndIncrementVerificationAttempts(identifier);
 
-            assertAll(
-                    () -> verify(valueOperations).increment(key),
-                    () -> verify(redisTemplate).expire(key, window)
-            );
-        }
+			assertAll(() -> verify(valueOperations).increment(key), () -> verify(redisTemplate).expire(key, window));
+		}
 
-        @Test
-        @DisplayName("Subsequent attempts should increment without resetting expiration")
-        void checkAndIncrementVerificationAttempts_SubsequentAttempt_IncrementsWithoutExpire() {
-            String key = "attempts:" + identifier;
-            when(props.otpVerificationMaxAttempts()).thenReturn(5);
-            when(valueOperations.increment(key)).thenReturn(2L);
+		@Test
+		@DisplayName("Subsequent attempts should increment without resetting expiration")
+		void checkAndIncrementVerificationAttempts_SubsequentAttempt_IncrementsWithoutExpire() {
+			String key = "attempts:" + identifier;
+			when(props.otpVerificationMaxAttempts()).thenReturn(5);
+			when(valueOperations.increment(key)).thenReturn(2L);
 
-            redisOtpStorage.checkAndIncrementVerificationAttempts(identifier);
+			redisOtpStorage.checkAndIncrementVerificationAttempts(identifier);
 
-            assertAll(
-                    () -> verify(valueOperations).increment(key),
-                    () -> verify(redisTemplate, never()).expire(anyString(), any(Duration.class))
-            );
-        }
+			assertAll(() -> verify(valueOperations).increment(key),
+					() -> verify(redisTemplate, never()).expire(anyString(), any(Duration.class)));
+		}
 
-        @Test
-        @DisplayName("Should throw TooManyRequestsException when max attempts exceeded")
-        void checkAndIncrementVerificationAttempts_LimitExceeded_ThrowsException() {
-            String key = "attempts:" + identifier;
-            when(props.otpVerificationMaxAttempts()).thenReturn(5);
-            when(valueOperations.increment(key)).thenReturn(6L);
+		@Test
+		@DisplayName("Should throw TooManyRequestsException when max attempts exceeded")
+		void checkAndIncrementVerificationAttempts_LimitExceeded_ThrowsException() {
+			String key = "attempts:" + identifier;
+			when(props.otpVerificationMaxAttempts()).thenReturn(5);
+			when(valueOperations.increment(key)).thenReturn(6L);
 
-            assertThrows(TooManyRequestsException.class,
-                    () -> redisOtpStorage.checkAndIncrementVerificationAttempts(identifier));
+			assertThrows(TooManyRequestsException.class,
+					() -> redisOtpStorage.checkAndIncrementVerificationAttempts(identifier));
 
-            verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
-        }
-    }
+			verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
+		}
+	}
 }

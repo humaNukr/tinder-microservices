@@ -17,47 +17,47 @@ import java.security.GeneralSecurityException;
 @RequiredArgsConstructor
 public class GoogleTokenVerifier implements ExternalTokenVerifier {
 
-    private final GoogleIdTokenVerifier googleIdTokenVerifier;
+	private final GoogleIdTokenVerifier googleIdTokenVerifier;
 
-    public String verifyTokenAndGetEmail(String idToken) {
-        try {
-            GoogleIdToken idTokenObj = googleIdTokenVerifier.verify(idToken);
+	public String verifyTokenAndGetEmail(String idToken) {
+		try {
+			GoogleIdToken idTokenObj = googleIdTokenVerifier.verify(idToken);
 
-            if (idTokenObj == null) {
-                log.warn("Google token verification failed: token is null, invalid or expired");
-                throw new ExternalAuthVerificationException("Invalid token",
-                        ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, null);
-            }
+			if (idTokenObj == null) {
+				log.warn("Google token verification failed: token is null, invalid or expired");
+				throw new ExternalAuthVerificationException("Invalid token",
+						ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, null);
+			}
 
-            GoogleIdToken.Payload payload = idTokenObj.getPayload();
+			GoogleIdToken.Payload payload = idTokenObj.getPayload();
 
-            if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
-                log.warn("Google token verification failed: email {} is not verified by Google", payload.getEmail());
-                throw new ExternalAuthVerificationException("Email not verified by Google",
-                        ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, null);
-            }
+			if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
+				log.warn("Google token verification failed: email {} is not verified by Google", payload.getEmail());
+				throw new ExternalAuthVerificationException("Email not verified by Google",
+						ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, null);
+			}
 
-            log.debug("Successfully verified Google token for email: {}", payload.getEmail());
-            return payload.getEmail();
+			log.debug("Successfully verified Google token for email: {}", payload.getEmail());
+			return payload.getEmail();
 
-        } catch (IOException e) {
-            log.error("Network error while verifying Google token with Google servers", e);
-            throw new ExternalAuthVerificationException("Network error during verification",
-                    ExternalAuthVerificationException.ErrorType.NETWORK_ERROR, e);
-        } catch (GeneralSecurityException e) {
-            log.warn("Security exception (invalid signature) while verifying Google token", e);
-            throw new ExternalAuthVerificationException("Invalid token signature",
-                    ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, e);
-        }
-    }
+		} catch (IOException e) {
+			log.error("Network error while verifying Google token with Google servers", e);
+			throw new ExternalAuthVerificationException("Network error during verification",
+					ExternalAuthVerificationException.ErrorType.NETWORK_ERROR, e);
+		} catch (GeneralSecurityException e) {
+			log.warn("Security exception (invalid signature) while verifying Google token", e);
+			throw new ExternalAuthVerificationException("Invalid token signature",
+					ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, e);
+		}
+	}
 
-    @Override
-    public User.AuthProvider getSupportedProvider() {
-        return User.AuthProvider.GOOGLE;
-    }
+	@Override
+	public User.AuthProvider getSupportedProvider() {
+		return User.AuthProvider.GOOGLE;
+	}
 
-    @Override
-    public String verifyTokenAndGetIdentifier(String token) {
-        return verifyTokenAndGetEmail(token);
-    }
+	@Override
+	public String verifyTokenAndGetIdentifier(String token) {
+		return verifyTokenAndGetEmail(token);
+	}
 }

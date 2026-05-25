@@ -23,44 +23,43 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class KafkaMessageBrokerTest {
 
-    @Mock
-    private KafkaTemplate<String, String> kafkaTemplate;
+	@Mock
+	private KafkaTemplate<String, String> kafkaTemplate;
 
-    @InjectMocks
-    private KafkaMessageBroker messageBroker;
+	@InjectMocks
+	private KafkaMessageBroker messageBroker;
 
-    @Test
-    @DisplayName("Should return null when Kafka successfully sends the message")
-    void send_Success_ReturnsNull() {
-        OutboxEvent event = createTestEvent(1L, "test-topic", "test-payload");
+	@Test
+	@DisplayName("Should return null when Kafka successfully sends the message")
+	void send_Success_ReturnsNull() {
+		OutboxEvent event = createTestEvent(1L, "test-topic", "test-payload");
 
-        when(kafkaTemplate.send(eq("test-topic"), eq("1"), eq("test-payload")))
-                .thenReturn(CompletableFuture.completedFuture(new SendResult<>(null, null)));
+		when(kafkaTemplate.send(eq("test-topic"), eq("1"), eq("test-payload")))
+				.thenReturn(CompletableFuture.completedFuture(new SendResult<>(null, null)));
 
-        CompletableFuture<OutboxEvent> result = messageBroker.send(event);
+		CompletableFuture<OutboxEvent> result = messageBroker.send(event);
 
-        assertNull(result.join());
-    }
+		assertNull(result.join());
+	}
 
-    @Test
-    @DisplayName("Should return the original event when Kafka throws an exception")
-    void send_Failure_ReturnsEventForRollback() {
-        OutboxEvent event = createTestEvent(1L, "test-topic", "test-payload");
+	@Test
+	@DisplayName("Should return the original event when Kafka throws an exception")
+	void send_Failure_ReturnsEventForRollback() {
+		OutboxEvent event = createTestEvent(1L, "test-topic", "test-payload");
 
-        CompletableFuture<SendResult<String, String>> failedFuture = new CompletableFuture<>();
-        failedFuture.completeExceptionally(new RuntimeException("Kafka timeout"));
+		CompletableFuture<SendResult<String, String>> failedFuture = new CompletableFuture<>();
+		failedFuture.completeExceptionally(new RuntimeException("Kafka timeout"));
 
-        when(kafkaTemplate.send(eq("test-topic"), eq("1"), eq("test-payload")))
-                .thenReturn(failedFuture);
+		when(kafkaTemplate.send(eq("test-topic"), eq("1"), eq("test-payload"))).thenReturn(failedFuture);
 
-        CompletableFuture<OutboxEvent> result = messageBroker.send(event);
+		CompletableFuture<OutboxEvent> result = messageBroker.send(event);
 
-        assertEquals(event, result.join());
-    }
+		assertEquals(event, result.join());
+	}
 
-    private OutboxEvent createTestEvent(Long id, String topic, String payload) {
-        OutboxEvent event = new OutboxEvent(topic, payload, LocalDateTime.now());
-        ReflectionTestUtils.setField(event, "id", id);
-        return event;
-    }
+	private OutboxEvent createTestEvent(Long id, String topic, String payload) {
+		OutboxEvent event = new OutboxEvent(topic, payload, LocalDateTime.now());
+		ReflectionTestUtils.setField(event, "id", id);
+		return event;
+	}
 }

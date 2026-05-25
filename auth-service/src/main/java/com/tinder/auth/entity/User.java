@@ -31,55 +31,47 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+	@Column(unique = true, nullable = false)
+	private String email;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean isEmailVerified = false;
+	@Builder.Default
+	@Column(nullable = false)
+	private boolean isEmailVerified = false;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	private Role role;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auth_provider", nullable = false, length = 20)
-    private AuthProvider authProvider;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "auth_provider", nullable = false, length = 20)
+	private AuthProvider authProvider;
 
-    @CreatedDate
-    @Column(updatable = false)
-    private Instant createdAt;
+	@CreatedDate
+	@Column(updatable = false)
+	private Instant createdAt;
 
-    @LastModifiedDate
-    private Instant updatedAt;
+	@LastModifiedDate
+	private Instant updatedAt;
 
-    public static User createViaEmailOtp(String email) {
-        return User.builder()
-                .email(email)
-                .role(Role.USER)
-                .isEmailVerified(true)
-                .authProvider(AuthProvider.EMAIL_OTP)
-                .build();
-    }
+	public static User createViaEmailOtp(String email) {
+		return User.builder().email(email).role(Role.USER).isEmailVerified(true).authProvider(AuthProvider.EMAIL_OTP)
+				.build();
+	}
 
-    public static User createViaGoogle(String email) {
-        return User.builder()
-                .email(email)
-                .role(Role.USER)
-                .isEmailVerified(true)
-                .authProvider(AuthProvider.GOOGLE)
-                .build();
-    }
+	public static User createViaGoogle(String email) {
+		return User.builder().email(email).role(Role.USER).isEmailVerified(true).authProvider(AuthProvider.GOOGLE)
+				.build();
+	}
 
-    public enum Role {
-        USER, ADMIN
-    }
+	public enum Role {
+		USER, ADMIN
+	}
 
-    public enum AuthProvider {
-        EMAIL_OTP, GOOGLE, PHONE
-    }
+	public enum AuthProvider {
+		EMAIL_OTP, GOOGLE, PHONE
+	}
 }

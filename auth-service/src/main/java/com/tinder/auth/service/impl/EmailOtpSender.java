@@ -19,38 +19,38 @@ import org.thymeleaf.context.Context;
 @Slf4j
 public class EmailOtpSender implements OtpSender {
 
-    private static final String TEMPLATE_NAME = "otp-mail";
-    private final JavaMailSender mailSender;
-    private final TemplateEngine templateEngine;
-    private final MailProperties mailProperties;
+	private static final String TEMPLATE_NAME = "otp-mail";
+	private final JavaMailSender mailSender;
+	private final TemplateEngine templateEngine;
+	private final MailProperties mailProperties;
 
-    @Async
-    @Override
-    public void sendOtp(String destination, Integer otp) {
-        try {
-            Context thymeleafContext = new Context();
-            thymeleafContext.setVariable("OTP_CODE", otp);
+	@Async
+	@Override
+	public void sendOtp(String destination, Integer otp) {
+		try {
+			Context thymeleafContext = new Context();
+			thymeleafContext.setVariable("OTP_CODE", otp);
 
-            String htmlBody = templateEngine.process(TEMPLATE_NAME, thymeleafContext);
+			String htmlBody = templateEngine.process(TEMPLATE_NAME, thymeleafContext);
 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+			MimeMessage message = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(mailProperties.username());
-            helper.setTo(destination);
-            helper.setSubject("Your confirmation code");
-            helper.setText(htmlBody, true);
+			helper.setFrom(mailProperties.username());
+			helper.setTo(destination);
+			helper.setSubject("Your confirmation code");
+			helper.setText(htmlBody, true);
 
-            mailSender.send(message);
-            log.info("Email sent successfully to {}", destination);
+			mailSender.send(message);
+			log.info("Email sent successfully to {}", destination);
 
-        } catch (MessagingException e) {
-            log.error("Failed to send email to {}", destination, e);
-        }
-    }
+		} catch (MessagingException e) {
+			log.error("Failed to send email to {}", destination, e);
+		}
+	}
 
-    @Override
-    public boolean supports(DeliveryChannel channel) {
-        return channel == DeliveryChannel.EMAIL;
-    }
+	@Override
+	public boolean supports(DeliveryChannel channel) {
+		return channel == DeliveryChannel.EMAIL;
+	}
 }

@@ -29,27 +29,27 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OtpServiceImplTest {
 
-    private final String destination = "test@example.com";
-    @Mock
-    private OtpStorage otpStorage;
-    @Mock
-    private SecureRandom secureRandom;
-    @Mock
-    private OtpSender emailSender;
-    @Mock
-    private OtpSender smsSender;
-    private OtpServiceImpl otpService;
+	private final String destination = "test@example.com";
+	@Mock
+	private OtpStorage otpStorage;
+	@Mock
+	private SecureRandom secureRandom;
+	@Mock
+	private OtpSender emailSender;
+	@Mock
+	private OtpSender smsSender;
+	private OtpServiceImpl otpService;
 
-    @BeforeEach
-    void setUp() {
-        otpService = new OtpServiceImpl(List.of(emailSender, smsSender), otpStorage, secureRandom);
-    }
+	@BeforeEach
+	void setUp() {
+		otpService = new OtpServiceImpl(List.of(emailSender, smsSender), otpStorage, secureRandom);
+	}
 
-    @Nested
-    @DisplayName("generateAndSendOtp() Tests")
-    class GenerateAndSendOtpTests {
+	@Nested
+	@DisplayName("generateAndSendOtp() Tests")
+	class GenerateAndSendOtpTests {
 
-        @Test
+		@Test
         void generateAndSendOtp_ValidRequest_GeneratesSavesAndSends() {
             when(secureRandom.nextInt(900000)).thenReturn(234567);
             when(emailSender.supports(DeliveryChannel.EMAIL)).thenReturn(true);
@@ -64,7 +64,7 @@ class OtpServiceImplTest {
             );
         }
 
-        @Test
+		@Test
         void generateAndSendOtp_UnsupportedChannel_ThrowsException() {
             when(secureRandom.nextInt(900000)).thenReturn(111111);
             when(emailSender.supports(any())).thenReturn(false);
@@ -81,23 +81,23 @@ class OtpServiceImplTest {
                     () -> verify(smsSender, never()).sendOtp(anyString(), any())
             );
         }
-    }
+	}
 
-    @Nested
-    @DisplayName("validateOtp() Tests")
-    class ValidateOtpTests {
+	@Nested
+	@DisplayName("validateOtp() Tests")
+	class ValidateOtpTests {
 
-        @Test
-        void validateOtp_ValidCode_ReturnsTrueAndDeletesOtp() {
-            String validCode = "123456";
-            when(otpStorage.getOtp(destination)).thenReturn(validCode);
+		@Test
+		void validateOtp_ValidCode_ReturnsTrueAndDeletesOtp() {
+			String validCode = "123456";
+			when(otpStorage.getOtp(destination)).thenReturn(validCode);
 
-            boolean result = otpService.validateOtp(destination, validCode);
+			boolean result = otpService.validateOtp(destination, validCode);
 
-            assertAll(() -> assertTrue(result), () -> verify(otpStorage).deleteOtp(destination));
-        }
+			assertAll(() -> assertTrue(result), () -> verify(otpStorage).deleteOtp(destination));
+		}
 
-        @Test
+		@Test
         void validateOtp_InvalidCode_ReturnsFalseAndKeepsOtp() {
             when(otpStorage.getOtp(destination)).thenReturn("123456");
 
@@ -109,7 +109,7 @@ class OtpServiceImplTest {
             );
         }
 
-        @Test
+		@Test
         void validateOtp_NullCodeFromStorage_ReturnsFalse() {
             when(otpStorage.getOtp(destination)).thenReturn(null);
 
@@ -120,5 +120,5 @@ class OtpServiceImplTest {
                     () -> verify(otpStorage, never()).deleteOtp(anyString())
             );
         }
-    }
+	}
 }

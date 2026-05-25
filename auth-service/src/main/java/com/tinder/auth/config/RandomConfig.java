@@ -8,8 +8,8 @@ import java.security.SecureRandom;
 @Configuration
 public class RandomConfig {
 
-    @Bean
-    public SecureRandom secureRandom() {
-        return new SecureRandom();
-    }
+	@Bean
+	public SecureRandom secureRandom() {
+		return new SecureRandom();
+	}
 }

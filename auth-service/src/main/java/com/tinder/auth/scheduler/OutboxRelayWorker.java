@@ -20,40 +20,35 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class OutboxRelayWorker {
 
-    private final OutboxService outboxService;
-    private final MessageBroker messageBroker;
-    private final OutboxSchedulerProperties properties;
+	private final OutboxService outboxService;
+	private final MessageBroker messageBroker;
+	private final OutboxSchedulerProperties properties;
 
-    @Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")
-    public void processOutboxEvents() {
+	@Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")
+	public void processOutboxEvents() {
 
-        List<OutboxEvent> events = outboxService.fetchAndLock(properties.batchSize());
-        if (events.isEmpty()) {
-            return;
-        }
+		List<OutboxEvent> events = outboxService.fetchAndLock(properties.batchSize());
+		if (events.isEmpty()) {
+			return;
+		}
 
-        List<CompletableFuture<OutboxEvent>> futures = events.stream()
-                .map(messageBroker::send)
-                .toList();
+		List<CompletableFuture<OutboxEvent>> futures = events.stream().map(messageBroker::send).toList();
 
-        try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(properties.batchProcessingTime(), TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            log.warn("Message broker batch timed out after {}s", properties.batchProcessingTime());
-        } catch (Exception e) {
-            log.error("Unexpected error waiting for message broker batch", e);
-        }
+		try {
+			CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(properties.batchProcessingTime(),
+					TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			log.warn("Message broker batch timed out after {}s", properties.batchProcessingTime());
+		} catch (Exception e) {
+			log.error("Unexpected error waiting for message broker batch", e);
+		}
 
-        List<OutboxEvent> failedEvents = futures.stream()
-                .filter(CompletableFuture::isDone)
-                .map(CompletableFuture::join)
-                .filter(Objects::nonNull)
-                .toList();
+		List<OutboxEvent> failedEvents = futures.stream().filter(CompletableFuture::isDone).map(CompletableFuture::join)
+				.filter(Objects::nonNull).toList();
 
-        if (!failedEvents.isEmpty()) {
-            outboxService.markAsFailed(failedEvents);
-            log.debug("Reverted {} failed events back to pending", failedEvents.size());
-        }
-    }
+		if (!failedEvents.isEmpty()) {
+			outboxService.markAsFailed(failedEvents);
+			log.debug("Reverted {} failed events back to pending", failedEvents.size());
+		}
+	}
 }

@@ -30,32 +30,32 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class RedisTokenServiceImplTest {
 
-    private final UUID userId = UUID.randomUUID();
-    private final String deviceId = "device-123";
-    private final String token = "refresh.token.string";
+	private final UUID userId = UUID.randomUUID();
+	private final String deviceId = "device-123";
+	private final String token = "refresh.token.string";
 
-    @Mock
-    private StringRedisTemplate redisTemplate;
-    @Mock
-    private HashOperations<String, Object, Object> hashOperations;
-    @Mock
-    private JwtProperties jwtProperties;
-    @Mock
-    private RedisAuthProperties redisAuthProperties;
+	@Mock
+	private StringRedisTemplate redisTemplate;
+	@Mock
+	private HashOperations<String, Object, Object> hashOperations;
+	@Mock
+	private JwtProperties jwtProperties;
+	@Mock
+	private RedisAuthProperties redisAuthProperties;
 
-    @InjectMocks
-    private RedisTokenServiceImpl tokenService;
+	@InjectMocks
+	private RedisTokenServiceImpl tokenService;
 
-    private String expectedKey;
+	private String expectedKey;
 
-    @BeforeEach
-    void setUp() {
-        lenient().when(redisAuthProperties.sessionPrefix()).thenReturn("session:");
-        lenient().when(redisAuthProperties.sessionSuffix()).thenReturn(":tokens");
-        expectedKey = "session:" + userId + ":tokens";
-    }
+	@BeforeEach
+	void setUp() {
+		lenient().when(redisAuthProperties.sessionPrefix()).thenReturn("session:");
+		lenient().when(redisAuthProperties.sessionSuffix()).thenReturn(":tokens");
+		expectedKey = "session:" + userId + ":tokens";
+	}
 
-    @Test
+	@Test
     @DisplayName("Should store token and set expiration atomically via SessionCallback")
     @SuppressWarnings("unchecked")
     void storeRefreshToken_ValidData_StoresInHashAndSetsExpirationAtomically() {
@@ -77,7 +77,7 @@ class RedisTokenServiceImplTest {
         verify(operationsMock).exec();
     }
 
-    @Test
+	@Test
     void getRefreshToken_TokenExists_ReturnsToken() {
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
         when(hashOperations.get(expectedKey, deviceId)).thenReturn(token);
@@ -87,7 +87,7 @@ class RedisTokenServiceImplTest {
         assertEquals(token, result);
     }
 
-    @Test
+	@Test
     void getRefreshToken_TokenDoesNotExist_ReturnsNull() {
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
         when(hashOperations.get(expectedKey, deviceId)).thenReturn(null);
@@ -97,7 +97,7 @@ class RedisTokenServiceImplTest {
         assertNull(result);
     }
 
-    @Test
+	@Test
     void deleteRefreshToken_ValidData_DeletesFromHash() {
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
 
@@ -106,10 +106,10 @@ class RedisTokenServiceImplTest {
         verify(hashOperations).delete(expectedKey, deviceId);
     }
 
-    @Test
-    void deleteAllUserTokens_ValidUserId_DeletesKey() {
-        tokenService.deleteAllUserTokens(userId);
+	@Test
+	void deleteAllUserTokens_ValidUserId_DeletesKey() {
+		tokenService.deleteAllUserTokens(userId);
 
-        verify(redisTemplate).delete(expectedKey);
-    }
+		verify(redisTemplate).delete(expectedKey);
+	}
 }

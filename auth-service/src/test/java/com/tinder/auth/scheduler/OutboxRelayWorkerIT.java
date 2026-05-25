@@ -25,104 +25,100 @@ import static org.mockito.Mockito.when;
 
 class OutboxRelayWorkerIT extends BaseIT {
 
-    @Autowired
-    private OutboxRelayWorker outboxRelayWorker;
+	@Autowired
+	private OutboxRelayWorker outboxRelayWorker;
 
-    @Autowired
-    private OutboxRepository outboxRepository;
+	@Autowired
+	private OutboxRepository outboxRepository;
 
-    @MockitoBean
-    private MessageBroker messageBroker;
+	@MockitoBean
+	private MessageBroker messageBroker;
 
-    @BeforeEach
-    void setUp() {
-        outboxRepository.deleteAll();
-        when(messageBroker.send(any(OutboxEvent.class)))
-                .thenReturn(CompletableFuture.completedFuture(null));
-    }
+	@BeforeEach
+	void setUp() {
+		outboxRepository.deleteAll();
+		when(messageBroker.send(any(OutboxEvent.class))).thenReturn(CompletableFuture.completedFuture(null));
+	}
 
-    @Test
-    void processOutboxEvents_AllSuccessful_UpdatesDatabase() {
-        outboxRepository.save(new OutboxEvent("topic-1", "{}", LocalDateTime.now()));
-        outboxRepository.save(new OutboxEvent("topic-2", "{}", LocalDateTime.now()));
+	@Test
+	void processOutboxEvents_AllSuccessful_UpdatesDatabase() {
+		outboxRepository.save(new OutboxEvent("topic-1", "{}", LocalDateTime.now()));
+		outboxRepository.save(new OutboxEvent("topic-2", "{}", LocalDateTime.now()));
 
-        outboxRelayWorker.processOutboxEvents();
+		outboxRelayWorker.processOutboxEvents();
 
-        List<OutboxEvent> processedEvents = outboxRepository.findAll();
+		List<OutboxEvent> processedEvents = outboxRepository.findAll();
 
-        assertAll(() -> assertEquals(2, processedEvents.size()),
-                () -> assertTrue(processedEvents.stream().allMatch(OutboxEvent::isSent)));
+		assertAll(() -> assertEquals(2, processedEvents.size()),
+				() -> assertTrue(processedEvents.stream().allMatch(OutboxEvent::isSent)));
 
-        verify(messageBroker, atLeast(2)).send(any(OutboxEvent.class));
-    }
+		verify(messageBroker, atLeast(2)).send(any(OutboxEvent.class));
+	}
 
-    @Test
-    void processOutboxEvents_PartialSuccess_RevertsOnlyFailed() {
-        OutboxEvent successEvent = outboxRepository.save(new OutboxEvent("topic-success", "{}", LocalDateTime.now()));
-        OutboxEvent failEvent = outboxRepository.save(new OutboxEvent("topic-fail", "{}", LocalDateTime.now()));
+	@Test
+	void processOutboxEvents_PartialSuccess_RevertsOnlyFailed() {
+		OutboxEvent successEvent = outboxRepository.save(new OutboxEvent("topic-success", "{}", LocalDateTime.now()));
+		OutboxEvent failEvent = outboxRepository.save(new OutboxEvent("topic-fail", "{}", LocalDateTime.now()));
 
-        when(messageBroker.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(successEvent.getId()))))
-                .thenReturn(CompletableFuture.completedFuture(null));
+		when(messageBroker
+				.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(successEvent.getId()))))
+				.thenReturn(CompletableFuture.completedFuture(null));
 
-        when(messageBroker.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(failEvent.getId()))))
-                .thenReturn(CompletableFuture.completedFuture(failEvent));
+		when(messageBroker
+				.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(failEvent.getId()))))
+				.thenReturn(CompletableFuture.completedFuture(failEvent));
 
-        outboxRelayWorker.processOutboxEvents();
+		outboxRelayWorker.processOutboxEvents();
 
-        OutboxEvent updatedSuccessEvent = outboxRepository.findById(successEvent.getId()).orElseThrow();
-        OutboxEvent updatedFailEvent = outboxRepository.findById(failEvent.getId()).orElseThrow();
+		OutboxEvent updatedSuccessEvent = outboxRepository.findById(successEvent.getId()).orElseThrow();
+		OutboxEvent updatedFailEvent = outboxRepository.findById(failEvent.getId()).orElseThrow();
 
-        assertAll(
-                () -> assertTrue(updatedSuccessEvent.isSent(), "Successful event should remain sent"),
-                () -> assertFalse(updatedFailEvent.isSent(), "Failed event should be reverted to not sent")
-        );
-    }
+		assertAll(() -> assertTrue(updatedSuccessEvent.isSent(), "Successful event should remain sent"),
+				() -> assertFalse(updatedFailEvent.isSent(), "Failed event should be reverted to not sent"));
+	}
 
-    @Test
-    void processOutboxEvents_TimeoutOccurs_LeavesTimedOutAsSent() {
-        OutboxEvent fastEvent = outboxRepository.save(new OutboxEvent("topic-fast", "{}", LocalDateTime.now()));
-        OutboxEvent slowEvent = outboxRepository.save(new OutboxEvent("topic-slow", "{}", LocalDateTime.now()));
+	@Test
+	void processOutboxEvents_TimeoutOccurs_LeavesTimedOutAsSent() {
+		OutboxEvent fastEvent = outboxRepository.save(new OutboxEvent("topic-fast", "{}", LocalDateTime.now()));
+		OutboxEvent slowEvent = outboxRepository.save(new OutboxEvent("topic-slow", "{}", LocalDateTime.now()));
 
-        when(messageBroker.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(fastEvent.getId()))))
-                .thenReturn(CompletableFuture.completedFuture(null));
+		when(messageBroker
+				.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(fastEvent.getId()))))
+				.thenReturn(CompletableFuture.completedFuture(null));
 
-        when(messageBroker.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(slowEvent.getId()))))
-                .thenReturn(new CompletableFuture<>());
+		when(messageBroker
+				.send(org.mockito.ArgumentMatchers.argThat(e -> e != null && e.getId().equals(slowEvent.getId()))))
+				.thenReturn(new CompletableFuture<>());
 
-        outboxRelayWorker.processOutboxEvents();
+		outboxRelayWorker.processOutboxEvents();
 
-        OutboxEvent updatedFastEvent = outboxRepository.findById(fastEvent.getId()).orElseThrow();
-        OutboxEvent updatedSlowEvent = outboxRepository.findById(slowEvent.getId()).orElseThrow();
+		OutboxEvent updatedFastEvent = outboxRepository.findById(fastEvent.getId()).orElseThrow();
+		OutboxEvent updatedSlowEvent = outboxRepository.findById(slowEvent.getId()).orElseThrow();
 
-        assertAll(
-                () -> assertTrue(updatedFastEvent.isSent()),
-                () -> assertTrue(updatedSlowEvent.isSent())
-        );
-    }
+		assertAll(() -> assertTrue(updatedFastEvent.isSent()), () -> assertTrue(updatedSlowEvent.isSent()));
+	}
 
-    @Test
-    void processOutboxEvents_EmptyDatabase_DoesNothing() {
-        outboxRelayWorker.processOutboxEvents();
+	@Test
+	void processOutboxEvents_EmptyDatabase_DoesNothing() {
+		outboxRelayWorker.processOutboxEvents();
 
-        assertEquals(0, outboxRepository.count());
-        verify(messageBroker, times(0)).send(any());
-    }
+		assertEquals(0, outboxRepository.count());
+		verify(messageBroker, times(0)).send(any());
+	}
 
-    @Test
-    void processOutboxEvents_IgnoresAlreadySentEvents() {
-        OutboxEvent sentEvent = new OutboxEvent("topic-sent", "{}", LocalDateTime.now());
-        sentEvent.setSent(true);
-        outboxRepository.save(sentEvent);
+	@Test
+	void processOutboxEvents_IgnoresAlreadySentEvents() {
+		OutboxEvent sentEvent = new OutboxEvent("topic-sent", "{}", LocalDateTime.now());
+		sentEvent.setSent(true);
+		outboxRepository.save(sentEvent);
 
-        OutboxEvent unsentEvent = outboxRepository.save(new OutboxEvent("topic-unsent", "{}", LocalDateTime.now()));
+		OutboxEvent unsentEvent = outboxRepository.save(new OutboxEvent("topic-unsent", "{}", LocalDateTime.now()));
 
-        outboxRelayWorker.processOutboxEvents();
+		outboxRelayWorker.processOutboxEvents();
 
-        OutboxEvent updatedUnsentEvent = outboxRepository.findById(unsentEvent.getId()).orElseThrow();
+		OutboxEvent updatedUnsentEvent = outboxRepository.findById(unsentEvent.getId()).orElseThrow();
 
-        assertAll(
-                () -> assertTrue(updatedUnsentEvent.isSent()),
-                () -> verify(messageBroker, times(1)).send(any(OutboxEvent.class))
-        );
-    }
+		assertAll(() -> assertTrue(updatedUnsentEvent.isSent()),
+				() -> verify(messageBroker, times(1)).send(any(OutboxEvent.class)));
+	}
 }

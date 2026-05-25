@@ -8,15 +8,15 @@ import java.util.UUID;
 
 public interface AuthFacade {
 
-    void sendOtp(String identifier, DeliveryChannel channel);
+	void sendOtp(String identifier, DeliveryChannel channel);
 
-    AuthResponse verifyAndAuthenticate(String identifier, String deviceId, String code);
+	AuthResponse verifyAndAuthenticate(String identifier, String deviceId, String code);
 
-    AuthResponse refreshToken(String refreshToken, String deviceId);
+	AuthResponse refreshToken(String refreshToken, String deviceId);
 
-    AuthResponse authenticateWithExternalProvider(String externalToken, String deviceId, User.AuthProvider provider);
+	AuthResponse authenticateWithExternalProvider(String externalToken, String deviceId, User.AuthProvider provider);
 
-    void deleteAccount(UUID userId);
+	void deleteAccount(UUID userId);
 
-    void logout(UUID userId, String deviceId);
+	void logout(UUID userId, String deviceId);
 }

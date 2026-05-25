@@ -17,37 +17,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
 
-    private final List<OtpSender> otpSenders;
-    private final OtpStorage otpStorage;
-    private final SecureRandom secureRandom;
+	private final List<OtpSender> otpSenders;
+	private final OtpStorage otpStorage;
+	private final SecureRandom secureRandom;
 
-    @Override
-    public void generateAndSendOtp(String destination, DeliveryChannel channel) {
-        otpStorage.checkAndIncrementRateLimit(destination);
+	@Override
+	public void generateAndSendOtp(String destination, DeliveryChannel channel) {
+		otpStorage.checkAndIncrementRateLimit(destination);
 
-        String code = String.valueOf(100000 + secureRandom.nextInt(900000));
+		String code = String.valueOf(100000 + secureRandom.nextInt(900000));
 
-        otpStorage.saveOtp(destination, code);
-        OtpSender sender = otpSenders.stream().filter(s -> s.supports(channel)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No sender found for channel: " + channel));
-        sender.sendOtp(destination, Integer.parseInt(code));
+		otpStorage.saveOtp(destination, code);
+		OtpSender sender = otpSenders.stream().filter(s -> s.supports(channel)).findFirst()
+				.orElseThrow(() -> new IllegalArgumentException("No sender found for channel: " + channel));
+		sender.sendOtp(destination, Integer.parseInt(code));
 
-        log.info("OTP sent via {} to {}", channel, destination);
-    }
+		log.info("OTP sent via {} to {}", channel, destination);
+	}
 
-    @Override
-    public boolean validateOtp(String identifier, String code) {
-        String savedCode = otpStorage.getOtp(identifier);
+	@Override
+	public boolean validateOtp(String identifier, String code) {
+		String savedCode = otpStorage.getOtp(identifier);
 
-        if (savedCode == null || code == null) {
-            return false;
-        }
+		if (savedCode == null || code == null) {
+			return false;
+		}
 
-        if (MessageDigest.isEqual(savedCode.getBytes(), code.getBytes())) {
-            otpStorage.deleteOtp(identifier);
-            return true;
-        }
+		if (MessageDigest.isEqual(savedCode.getBytes(), code.getBytes())) {
+			otpStorage.deleteOtp(identifier);
+			return true;
+		}
 
-        return false;
-    }
+		return false;
+	}
 }

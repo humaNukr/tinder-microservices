@@ -16,15 +16,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OutboxUserActivityPublisher implements UserActivityPublisher {
 
-    private final OutboxService outboxService;
-    private final KafkaProperties kafkaProperties;
+	private final OutboxService outboxService;
+	private final KafkaProperties kafkaProperties;
 
-    @Override
-    public void publishActivity(UUID userId, ActivityType type) {
-        UserActivityEvent event = new UserActivityEvent(UUID.randomUUID(), userId, type, Instant.now());
+	@Override
+	public void publishActivity(UUID userId, ActivityType type) {
+		UserActivityEvent event = new UserActivityEvent(UUID.randomUUID(), userId, type, Instant.now());
 
-        outboxService.saveEvent(kafkaProperties.userActivity(), event);
+		outboxService.saveEvent(kafkaProperties.userActivity(), event);
 
-        log.debug("Saved user activity {} for user {} to outbox", type, userId);
-    }
+		log.debug("Saved user activity {} for user {} to outbox", type, userId);
+	}
 }

@@ -13,16 +13,14 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class KafkaMessageBroker implements MessageBroker {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+	private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Override
-    public CompletableFuture<OutboxEvent> send(OutboxEvent event) {
-        return kafkaTemplate
-                .send(event.getTopic(), String.valueOf(event.getId()), event.getPayload())
-                .thenApply(sendResult -> (OutboxEvent) null)
-                .exceptionally(ex -> {
-                    log.error("Failed to send event {}: {}", event.getId(), ex.getMessage());
-                    return event;
-                });
-    }
+	@Override
+	public CompletableFuture<OutboxEvent> send(OutboxEvent event) {
+		return kafkaTemplate.send(event.getTopic(), String.valueOf(event.getId()), event.getPayload())
+				.thenApply(sendResult -> (OutboxEvent) null).exceptionally(ex -> {
+					log.error("Failed to send event {}: {}", event.getId(), ex.getMessage());
+					return event;
+				});
+	}
 }

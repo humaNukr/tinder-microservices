@@ -26,35 +26,33 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OutboxUserActivityPublisherTest {
 
-    @Mock
-    private OutboxService outboxService;
+	@Mock
+	private OutboxService outboxService;
 
-    @Mock
-    private KafkaProperties kafkaProperties;
+	@Mock
+	private KafkaProperties kafkaProperties;
 
-    @InjectMocks
-    private OutboxUserActivityPublisher publisher;
+	@InjectMocks
+	private OutboxUserActivityPublisher publisher;
 
-    @Captor
-    private ArgumentCaptor<UserActivityEvent> eventCaptor;
+	@Captor
+	private ArgumentCaptor<UserActivityEvent> eventCaptor;
 
-    @Test
-    @DisplayName("Should successfully create UserActivityEvent and save it to OutboxService")
-    void publishActivity_Success_DelegatesToOutbox() {
-        UUID userId = UUID.randomUUID();
-        when(kafkaProperties.userActivity()).thenReturn("user-activity-topic");
+	@Test
+	@DisplayName("Should successfully create UserActivityEvent and save it to OutboxService")
+	void publishActivity_Success_DelegatesToOutbox() {
+		UUID userId = UUID.randomUUID();
+		when(kafkaProperties.userActivity()).thenReturn("user-activity-topic");
 
-        publisher.publishActivity(userId, ActivityType.LOGIN);
+		publisher.publishActivity(userId, ActivityType.LOGIN);
 
-        verify(outboxService).saveEvent(eq("user-activity-topic"), eventCaptor.capture());
+		verify(outboxService).saveEvent(eq("user-activity-topic"), eventCaptor.capture());
 
-        UserActivityEvent capturedEvent = eventCaptor.getValue();
+		UserActivityEvent capturedEvent = eventCaptor.getValue();
 
-        assertAll(
-                () -> assertNotNull(capturedEvent.eventId(), "Event ID should be generated"),
-                () -> assertNotNull(capturedEvent.timestamp(), "Timestamp should be generated"),
-                () -> assertEquals(userId, capturedEvent.userId(), "User ID should match the input"),
-                () -> assertEquals(ActivityType.LOGIN, capturedEvent.type(), "Activity type should match")
-        );
-    }
+		assertAll(() -> assertNotNull(capturedEvent.eventId(), "Event ID should be generated"),
+				() -> assertNotNull(capturedEvent.timestamp(), "Timestamp should be generated"),
+				() -> assertEquals(userId, capturedEvent.userId(), "User ID should match the input"),
+				() -> assertEquals(ActivityType.LOGIN, capturedEvent.type(), "Activity type should match"));
+	}
 }

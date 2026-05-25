@@ -41,90 +41,86 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AuthFacadeImplTest {
 
-    private final String identifier = "test@example.com";
-    private final String deviceId = "device-123";
-    private final String accessToken = "access.token.here";
-    private final String refreshToken = "refresh.token.here";
-    private final UUID userId = UUID.randomUUID();
+	private final String identifier = "test@example.com";
+	private final String deviceId = "device-123";
+	private final String accessToken = "access.token.here";
+	private final String refreshToken = "refresh.token.here";
+	private final UUID userId = UUID.randomUUID();
 
-    @Mock
-    private OtpService otpService;
-    @Mock
-    private TokenService tokenService;
-    @Mock
-    private JwtService jwtService;
-    @Mock
-    private UserService userService;
-    @Mock
-    private UserActivityPublisher activityPublisher;
-    @Mock
-    private ExternalTokenVerifier googleVerifier;
+	@Mock
+	private OtpService otpService;
+	@Mock
+	private TokenService tokenService;
+	@Mock
+	private JwtService jwtService;
+	@Mock
+	private UserService userService;
+	@Mock
+	private UserActivityPublisher activityPublisher;
+	@Mock
+	private ExternalTokenVerifier googleVerifier;
 
-    @InjectMocks
-    private AuthFacadeImpl authFacade;
+	@InjectMocks
+	private AuthFacadeImpl authFacade;
 
-    private User testUser;
+	private User testUser;
 
-    @BeforeEach
-    void setUp() {
-        testUser = new User();
-        ReflectionTestUtils.setField(testUser, "id", userId);
-        ReflectionTestUtils.setField(testUser, "email", identifier);
+	@BeforeEach
+	void setUp() {
+		testUser = new User();
+		ReflectionTestUtils.setField(testUser, "id", userId);
+		ReflectionTestUtils.setField(testUser, "email", identifier);
 
-        ReflectionTestUtils.setField(authFacade, "externalVerifiers", List.of(googleVerifier));
-    }
+		ReflectionTestUtils.setField(authFacade, "externalVerifiers", List.of(googleVerifier));
+	}
 
-    @Nested
-    @DisplayName("sendOtp() Tests")
-    class SendOtpTests {
-        @Test
-        void sendOtp_ValidParameters_CallsOtpService() {
-            authFacade.sendOtp(identifier, DeliveryChannel.EMAIL);
-            verify(otpService).generateAndSendOtp(identifier, DeliveryChannel.EMAIL);
-        }
-    }
+	@Nested
+	@DisplayName("sendOtp() Tests")
+	class SendOtpTests {
+		@Test
+		void sendOtp_ValidParameters_CallsOtpService() {
+			authFacade.sendOtp(identifier, DeliveryChannel.EMAIL);
+			verify(otpService).generateAndSendOtp(identifier, DeliveryChannel.EMAIL);
+		}
+	}
 
-    @Nested
-    @DisplayName("verifyAndAuthenticate() Tests")
-    class VerifyAndAuthenticateTests {
-        @Test
-        void verifyAndAuthenticate_ValidOtp_ReturnsAuthResponse() {
-            String code = "123456";
-            when(otpService.validateOtp(identifier, code)).thenReturn(true);
-            when(userService.findOrCreateUser(identifier, User.AuthProvider.EMAIL_OTP))
-                    .thenReturn(new UserResult(testUser, true));
-            when(jwtService.generateAccessToken(testUser)).thenReturn(accessToken);
-            when(jwtService.generateRefreshToken(testUser)).thenReturn(refreshToken);
+	@Nested
+	@DisplayName("verifyAndAuthenticate() Tests")
+	class VerifyAndAuthenticateTests {
+		@Test
+		void verifyAndAuthenticate_ValidOtp_ReturnsAuthResponse() {
+			String code = "123456";
+			when(otpService.validateOtp(identifier, code)).thenReturn(true);
+			when(userService.findOrCreateUser(identifier, User.AuthProvider.EMAIL_OTP))
+					.thenReturn(new UserResult(testUser, true));
+			when(jwtService.generateAccessToken(testUser)).thenReturn(accessToken);
+			when(jwtService.generateRefreshToken(testUser)).thenReturn(refreshToken);
 
-            AuthResponse response = authFacade.verifyAndAuthenticate(identifier, deviceId, code);
+			AuthResponse response = authFacade.verifyAndAuthenticate(identifier, deviceId, code);
 
-            assertAll(
-                    () -> assertNotNull(response),
-                    () -> assertEquals(accessToken, response.accessToken()),
-                    () -> assertEquals(refreshToken, response.refreshToken()),
-                    () -> assertTrue(response.isNewUser())
-            );
+			assertAll(() -> assertNotNull(response), () -> assertEquals(accessToken, response.accessToken()),
+					() -> assertEquals(refreshToken, response.refreshToken()), () -> assertTrue(response.isNewUser()));
 
-            verify(tokenService).storeRefreshToken(userId, deviceId, refreshToken);
-            verify(activityPublisher).publishActivity(userId, ActivityType.LOGIN);
-        }
+			verify(tokenService).storeRefreshToken(userId, deviceId, refreshToken);
+			verify(activityPublisher).publishActivity(userId, ActivityType.LOGIN);
+		}
 
-        @Test
-        void verifyAndAuthenticate_InvalidOtp_ThrowsException() {
-            String code = "wrong";
-            when(otpService.validateOtp(identifier, code)).thenReturn(false);
+		@Test
+		void verifyAndAuthenticate_InvalidOtp_ThrowsException() {
+			String code = "wrong";
+			when(otpService.validateOtp(identifier, code)).thenReturn(false);
 
-            assertThrows(AuthenticationFailedException.class,
-                    () -> authFacade.verifyAndAuthenticate(identifier, deviceId, code));
+			assertThrows(AuthenticationFailedException.class,
+					() -> authFacade.verifyAndAuthenticate(identifier, deviceId, code));
 
-            verifyNoInteractions(userService, jwtService, tokenService, activityPublisher);
-        }
-    }
+			verifyNoInteractions(userService, jwtService, tokenService, activityPublisher);
+		}
+	}
 
-    @Nested
-    @DisplayName("refreshToken() Tests")
-    class RefreshTokenTests {
-        @Test
+	@Nested
+	@DisplayName("refreshToken() Tests")
+	class RefreshTokenTests {
+		@Test
         void refreshToken_ValidToken_ReturnsNewTokens() {
             when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
             when(tokenService.getRefreshToken(userId, deviceId)).thenReturn(refreshToken);
@@ -148,7 +144,7 @@ class AuthFacadeImplTest {
             verify(activityPublisher).publishActivity(userId, ActivityType.TOKEN_REFRESH);
         }
 
-        @Test
+		@Test
         void refreshToken_TokenMissingInStorage_ThrowsException() {
             when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
             when(tokenService.getRefreshToken(userId, deviceId)).thenReturn(null);
@@ -160,7 +156,7 @@ class AuthFacadeImplTest {
             verify(jwtService, never()).generateAccessToken(any());
         }
 
-        @Test
+		@Test
         void refreshToken_TokenMismatch_ThrowsException() {
             when(jwtService.extractUserId(refreshToken)).thenReturn(userId.toString());
             when(tokenService.getRefreshToken(userId, deviceId)).thenReturn("different.token");
@@ -170,63 +166,60 @@ class AuthFacadeImplTest {
 
             verifyNoInteractions(userService, activityPublisher);
         }
-    }
+	}
 
-    @Nested
-    @DisplayName("authenticateWithExternalProvider() Tests")
-    class AuthenticateWithExternalProviderTests {
+	@Nested
+	@DisplayName("authenticateWithExternalProvider() Tests")
+	class AuthenticateWithExternalProviderTests {
 
-        @Test
-        void authenticateWithExternalProvider_ValidGoogleToken_ReturnsAuthResponse() {
-            String idToken = "google.id.token";
+		@Test
+		void authenticateWithExternalProvider_ValidGoogleToken_ReturnsAuthResponse() {
+			String idToken = "google.id.token";
 
-            when(googleVerifier.getSupportedProvider()).thenReturn(User.AuthProvider.GOOGLE);
-            when(googleVerifier.verifyTokenAndGetIdentifier(idToken)).thenReturn(identifier);
+			when(googleVerifier.getSupportedProvider()).thenReturn(User.AuthProvider.GOOGLE);
+			when(googleVerifier.verifyTokenAndGetIdentifier(idToken)).thenReturn(identifier);
 
-            when(userService.findOrCreateUser(identifier, User.AuthProvider.GOOGLE))
-                    .thenReturn(new UserResult(testUser, false));
-            when(jwtService.generateAccessToken(testUser)).thenReturn(accessToken);
-            when(jwtService.generateRefreshToken(testUser)).thenReturn(refreshToken);
+			when(userService.findOrCreateUser(identifier, User.AuthProvider.GOOGLE))
+					.thenReturn(new UserResult(testUser, false));
+			when(jwtService.generateAccessToken(testUser)).thenReturn(accessToken);
+			when(jwtService.generateRefreshToken(testUser)).thenReturn(refreshToken);
 
-            AuthResponse response = authFacade.authenticateWithExternalProvider(idToken, deviceId, User.AuthProvider.GOOGLE);
+			AuthResponse response = authFacade.authenticateWithExternalProvider(idToken, deviceId,
+					User.AuthProvider.GOOGLE);
 
-            assertAll(
-                    () -> assertNotNull(response),
-                    () -> assertEquals(accessToken, response.accessToken()),
-                    () -> assertEquals(refreshToken, response.refreshToken()),
-                    () -> assertFalse(response.isNewUser())
-            );
+			assertAll(() -> assertNotNull(response), () -> assertEquals(accessToken, response.accessToken()),
+					() -> assertEquals(refreshToken, response.refreshToken()), () -> assertFalse(response.isNewUser()));
 
-            verify(tokenService).storeRefreshToken(userId, deviceId, refreshToken);
-            verify(activityPublisher).publishActivity(userId, ActivityType.LOGIN);
-        }
+			verify(tokenService).storeRefreshToken(userId, deviceId, refreshToken);
+			verify(activityPublisher).publishActivity(userId, ActivityType.LOGIN);
+		}
 
-        @Test
-        void authenticateWithExternalProvider_UnsupportedProvider_ThrowsException() {
-            String idToken = "apple.id.token";
-            when(googleVerifier.getSupportedProvider()).thenReturn(User.AuthProvider.GOOGLE);
+		@Test
+		void authenticateWithExternalProvider_UnsupportedProvider_ThrowsException() {
+			String idToken = "apple.id.token";
+			when(googleVerifier.getSupportedProvider()).thenReturn(User.AuthProvider.GOOGLE);
 
-            assertThrows(IllegalArgumentException.class,
-                    () -> authFacade.authenticateWithExternalProvider(idToken, deviceId, User.AuthProvider.PHONE));
+			assertThrows(IllegalArgumentException.class,
+					() -> authFacade.authenticateWithExternalProvider(idToken, deviceId, User.AuthProvider.PHONE));
 
-            verifyNoInteractions(userService, jwtService, tokenService);
-        }
-    }
+			verifyNoInteractions(userService, jwtService, tokenService);
+		}
+	}
 
-    @Nested
-    @DisplayName("Account Management Tests")
-    class AccountManagementTests {
-        @Test
-        void logout_ValidRequest_DeletesRefreshToken() {
-            authFacade.logout(userId, deviceId);
-            verify(tokenService).deleteRefreshToken(userId, deviceId);
-        }
+	@Nested
+	@DisplayName("Account Management Tests")
+	class AccountManagementTests {
+		@Test
+		void logout_ValidRequest_DeletesRefreshToken() {
+			authFacade.logout(userId, deviceId);
+			verify(tokenService).deleteRefreshToken(userId, deviceId);
+		}
 
-        @Test
-        void deleteAccount_ValidRequest_DeletesUserAndTokens() {
-            authFacade.deleteAccount(userId);
-            verify(tokenService).deleteAllUserTokens(userId);
-            verify(userService).deleteUser(userId);
-        }
-    }
+		@Test
+		void deleteAccount_ValidRequest_DeletesUserAndTokens() {
+			authFacade.deleteAccount(userId);
+			verify(tokenService).deleteAllUserTokens(userId);
+			verify(userService).deleteUser(userId);
+		}
+	}
 }

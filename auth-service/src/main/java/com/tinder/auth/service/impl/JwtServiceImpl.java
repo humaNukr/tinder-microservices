@@ -21,37 +21,37 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
 
-    private final JwtProperties jwtProperties;
-    private SecretKey secretKey;
+	private final JwtProperties jwtProperties;
+	private SecretKey secretKey;
 
-    @PostConstruct
-    protected void init() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.secret());
-        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
-    }
+	@PostConstruct
+	protected void init() {
+		byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.secret());
+		this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+	}
 
-    @Override
-    public String generateAccessToken(User user) {
-        return Jwts.builder().subject(user.getId().toString()).claim("email", user.getEmail())
-                .claim("role", user.getRole().name()).issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtProperties.accessTokenExpirationMs()))
-                .signWith(secretKey).compact();
-    }
+	@Override
+	public String generateAccessToken(User user) {
+		return Jwts.builder().subject(user.getId().toString()).claim("email", user.getEmail())
+				.claim("role", user.getRole().name()).issuedAt(new Date())
+				.expiration(new Date(System.currentTimeMillis() + jwtProperties.accessTokenExpirationMs()))
+				.signWith(secretKey).compact();
+	}
 
-    @Override
-    public String generateRefreshToken(User user) {
-        return Jwts.builder().subject(user.getId().toString()).issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtProperties.refreshTokenExpirationMs()))
-                .signWith(secretKey).compact();
-    }
+	@Override
+	public String generateRefreshToken(User user) {
+		return Jwts.builder().subject(user.getId().toString()).issuedAt(new Date())
+				.expiration(new Date(System.currentTimeMillis() + jwtProperties.refreshTokenExpirationMs()))
+				.signWith(secretKey).compact();
+	}
 
-    @Override
-    public String extractUserId(String token) {
-        try {
-            return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getSubject();
-        } catch (JwtException | IllegalArgumentException e) {
-            log.warn("Invalid JWT token: {}", e.getMessage());
-            throw new AuthenticationFailedException("Invalid or expired JWT token");
-        }
-    }
+	@Override
+	public String extractUserId(String token) {
+		try {
+			return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getSubject();
+		} catch (JwtException | IllegalArgumentException e) {
+			log.warn("Invalid JWT token: {}", e.getMessage());
+			throw new AuthenticationFailedException("Invalid or expired JWT token");
+		}
+	}
 }
