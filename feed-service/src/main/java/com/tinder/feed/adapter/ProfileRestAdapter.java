@@ -2,9 +2,10 @@ package com.tinder.feed.adapter;
 
 import com.tinder.feed.dto.ProfileResponse;
 import com.tinder.feed.properties.FeedProperties;
+import com.tinder.feed.service.interfaces.ProfileProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 
 import java.util.Collections;
@@ -12,14 +13,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class ProfileServiceClient {
+public class ProfileRestAdapter implements ProfileProvider {
 
     private final FeedProperties feedProperties;
-
     private final ProfileClient profileClient;
 
+    @Override
     public List<UUID> fetchCandidates(UUID userId) {
         try {
             log.info("Fetching candidates for user {}", userId);
@@ -30,6 +31,7 @@ public class ProfileServiceClient {
         }
     }
 
+    @Override
     public List<ProfileResponse> batchProfiles(List<UUID> ids) {
         try {
             log.info("Fetching batch of profiles for ids {}", ids);

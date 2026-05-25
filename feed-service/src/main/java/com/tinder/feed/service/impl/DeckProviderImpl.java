@@ -1,11 +1,11 @@
 package com.tinder.feed.service.impl;
 
-import com.tinder.feed.adapter.ProfileServiceClient;
 import com.tinder.feed.dto.ProfileResponse;
 import com.tinder.feed.properties.FeedProperties;
 import com.tinder.feed.service.interfaces.DeckGeneratorService;
 import com.tinder.feed.service.interfaces.DeckProvider;
-import com.tinder.feed.service.interfaces.RedisService;
+import com.tinder.feed.service.interfaces.FeedStorageService;
+import com.tinder.feed.service.interfaces.ProfileProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,49 +21,45 @@ import java.util.UUID;
 public class DeckProviderImpl implements DeckProvider {
 
     private final DeckGeneratorService deckGeneratorService;
-    private final RedisService redisService;
-    private final ProfileServiceClient profileServiceClient;
+    private final AsyncDeckGenerator asyncDeckGenerator;
+    private final FeedStorageService storageService;
+    private final ProfileProvider profileProvider;
     private final FeedProperties feedProperties;
 
     @Override
     public List<ProfileResponse> getFeedForUser(UUID userId) {
-        List<UUID> deckOfUsers = redisService.fetchDeckForUser(userId);
+        List<UUID> deckOfUsers = storageService.fetchDeckForUser(userId, feedProperties.pageSize());
 
         if (deckOfUsers == null || deckOfUsers.isEmpty()) {
-            log.warn("No deck found for userId={} in redis cache, trying to generate new deck", userId);
+            log.warn("No deck found for userId={} in cache, generating synchronously", userId);
             deckGeneratorService.generateDeck(userId);
-            deckOfUsers = redisService.fetchDeckForUser(userId);
+            deckOfUsers = storageService.fetchDeckForUser(userId, feedProperties.pageSize());
         } else {
-            Long remainingInRedis = redisService.getDeckSize(userId);
+            Long remainingInRedis = storageService.getDeckSize(userId);
             if (remainingInRedis != null && remainingInRedis < feedProperties.refillThreshold()) {
-                log.info("Deck is running low. Generating in background for user {}", userId);
-                deckGeneratorService.generateDeckAsync(userId);
+                log.info("Deck running low for user {}. Triggering background generation.", userId);
+                asyncDeckGenerator.generateDeckAsync(userId);
             }
         }
 
         if (deckOfUsers == null || deckOfUsers.isEmpty()) {
-            log.warn("Failed to get feed for user with userId={}", userId);
+            log.warn("Feed exhausted for user {}", userId);
             return Collections.emptyList();
         }
 
-        List<ProfileResponse> cachedProfiles = redisService.getCachedProfiles(deckOfUsers);
+        List<ProfileResponse> cachedProfiles = storageService.getCachedProfiles(deckOfUsers);
 
         if (cachedProfiles == null || cachedProfiles.isEmpty()) {
-            return profileServiceClient.batchProfiles(deckOfUsers);
+            return profileProvider.batchProfiles(deckOfUsers);
         }
 
         if (cachedProfiles.size() != deckOfUsers.size()) {
-            List<UUID> cachedProfilesIds = cachedProfiles.stream()
-                    .map(ProfileResponse::userId)
-                    .toList();
-
+            List<UUID> cachedIds = cachedProfiles.stream().map(ProfileResponse::userId).toList();
             List<UUID> missingIds = new ArrayList<>(deckOfUsers);
-            missingIds.removeAll(cachedProfilesIds);
+            missingIds.removeAll(cachedIds);
 
-            List<ProfileResponse> restOfProfiles = profileServiceClient.batchProfiles(missingIds);
-
-            redisService.cacheProfiles(restOfProfiles);
-
+            List<ProfileResponse> restOfProfiles = profileProvider.batchProfiles(missingIds);
+            storageService.cacheProfiles(restOfProfiles);
             cachedProfiles.addAll(restOfProfiles);
         }
 
