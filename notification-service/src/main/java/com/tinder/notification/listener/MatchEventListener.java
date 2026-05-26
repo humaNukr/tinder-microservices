@@ -1,5 +1,6 @@
 package com.tinder.notification.listener;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.notification.event.MatchEvent;
 import com.tinder.notification.processor.MatchNotificationProcessor;
@@ -17,23 +18,16 @@ public class MatchEventListener {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
-            topics = "match-events",
-            groupId = "notification-group"
+            topics = "${app.kafka.topics.match-events}",
+            groupId = "${app.kafka.consumer-groups.notification-service}"
     )
-    public void handleMatchEvent(String payload) {
-        try {
-            MatchEvent event = objectMapper.readValue(payload, MatchEvent.class);
-
-            log.info("Successfully deserialized MatchEvent from Kafka. EventID: {}", event.eventId());
-
-            matchNotificationProcessor.process(
-                    event.eventId(),
-                    event.user1Id(),
-                    event.user2Id()
-            );
-
-        } catch (Exception e) {
-            log.error("Failed to parse match event payload from Kafka: {}", payload, e);
-        }
+    public void handleMatchEvent(String payload) throws JsonProcessingException {
+        MatchEvent event = objectMapper.readValue(payload, MatchEvent.class);
+        log.info("Successfully deserialized MatchEvent from Kafka. EventID: {}", event.eventId());
+        matchNotificationProcessor.process(
+                event.eventId(),
+                event.user1Id(),
+                event.user2Id()
+        );
     }
 }

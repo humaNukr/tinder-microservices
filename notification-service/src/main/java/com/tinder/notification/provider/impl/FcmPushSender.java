@@ -9,6 +9,7 @@ import com.tinder.notification.provider.PushSender;
 import com.tinder.notification.service.interfaces.DeviceTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -16,8 +17,10 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(FirebaseMessaging.class)
 public class FcmPushSender implements PushSender {
 
+    private final FirebaseMessaging firebaseMessaging;
     private final DeviceTokenService deviceTokenService;
 
     @Override
@@ -34,7 +37,7 @@ public class FcmPushSender implements PushSender {
                 .build();
 
         try {
-            String response = FirebaseMessaging.getInstance().send(message);
+            String response = firebaseMessaging.send(message);
             log.info("Push notification sent successfully. ID: {}", response);
         } catch (FirebaseMessagingException e) {
             log.error("Error sending push to token: {}", token);

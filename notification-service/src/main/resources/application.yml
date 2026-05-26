@@ -27,8 +27,18 @@ spring:
       enabled: true
 
 app:
+  security:
+    gateway-auth:
+      enabled: true
+      header-name: X-Gateway-Authenticated
+      expected-value: "true"
+      user-id-header: X-User-Id
+  notifications:
+    default-page-size: 20
+    max-page-size: 100
   kafka:
     topics:
       message-events: message-events
+      match-events: match-events
     consumer-groups:
       notification-service: notification-group
