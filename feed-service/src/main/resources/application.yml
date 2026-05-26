@@ -30,6 +30,8 @@ app:
   services:
     profile:
       url: http://localhost:8082
+      candidates-path: /api/v1/internal/profiles/candidates
+      batch-path: /api/v1/internal/profiles/batch
 
   feed:
     page-size: 10          # Number of cards returned to the frontend per request
