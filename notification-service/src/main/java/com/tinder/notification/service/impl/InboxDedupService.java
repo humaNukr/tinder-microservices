@@ -1,10 +1,8 @@
 package com.tinder.notification.service.impl;
 
-import com.tinder.notification.entity.InboxEvent;
 import com.tinder.notification.repository.InboxEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +17,11 @@ public class InboxDedupService {
 
     @Transactional
     public boolean tryRegister(UUID eventId) {
-        try {
-            inboxEventRepository.saveAndFlush(new InboxEvent(eventId));
-            return true;
-        } catch (DataIntegrityViolationException e) {
+        int inserted = inboxEventRepository.insertIfAbsent(eventId);
+        if (inserted == 0) {
             log.warn("Duplicate event detected (eventId: {}). Skipping.", eventId);
             return false;
         }
+        return true;
     }
 }

@@ -59,6 +59,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                 request = exchange.getRequest()
                         .mutate()
                         .header("X-User-Id", userId)
+                        .header("X-Gateway-Authenticated", "true")
                         .build();
 
             } catch (Exception e) {

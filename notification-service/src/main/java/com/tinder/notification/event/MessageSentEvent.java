@@ -12,4 +12,5 @@ public record MessageSentEvent(
         String contentType,
         String contentSnippet,
         Instant createdAt
-) {}
+) {
+}
