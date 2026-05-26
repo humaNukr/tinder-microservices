@@ -38,7 +38,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Start Infrastructure (Docker Compose)
-        if: matrix.service != 'api-gateway'
+        if: matrix.service != 'api-gateway' && matrix.service != 'notification-service'
         run: |
           docker compose up -d
           sleep 15
@@ -49,4 +49,4 @@ jobs:
 
       - name: Build and Test
         working-directory: ./${{ matrix.service }}
-        run: ./gradlew build
+        run: ./gradlew build --stacktrace
