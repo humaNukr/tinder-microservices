@@ -43,6 +43,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Bad request: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(SwipeAlreadyExistsException.class)
     public ResponseEntity<Object> handleSwipeAlreadyExists(SwipeAlreadyExistsException ex) {
         log.warn("Swipe conflict: {}", ex.getMessage());

@@ -10,7 +10,7 @@ import com.tinder.swipe.properties.KafkaProperties;
 import com.tinder.swipe.repository.SwipeRepository;
 import com.tinder.swipe.service.interfaces.OutboxService;
 import com.tinder.swipe.service.interfaces.SwipeRateLimiterService;
-import com.tinder.swipe.service.interfaces.SwipeSevice;
+import com.tinder.swipe.service.interfaces.SwipeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SwipeServiceImpl implements SwipeSevice {
+public class SwipeServiceImpl implements SwipeService {
     private final SwipeRepository swipeRepository;
     private final OutboxService outboxService;
     private final KafkaProperties kafkaProperties;
@@ -81,7 +81,7 @@ public class SwipeServiceImpl implements SwipeSevice {
 
 
     private boolean isFirstUser(UUID id1, UUID id2) {
-        return id1.toString().compareTo(id2.toString()) < 0;
+        return id1.compareTo(id2) < 0;
     }
 
 

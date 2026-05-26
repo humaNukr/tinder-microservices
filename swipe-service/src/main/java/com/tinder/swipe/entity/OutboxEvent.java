@@ -35,7 +35,7 @@ public class OutboxEvent {
 
     @Column(name = "is_sent", nullable = false)
     @Setter
-    private Boolean isSent = false;
+    private boolean sent;
 
     public OutboxEvent(String topic, Object payload, LocalDateTime createdAt) {
         this.topic = topic;

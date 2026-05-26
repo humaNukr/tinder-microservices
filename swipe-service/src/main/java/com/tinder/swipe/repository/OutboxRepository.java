@@ -20,6 +20,6 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
     List<OutboxEvent> findAndLockUnprocessedEvents(@Param("limit") int limit);
 
     @Modifying
-    @Query("DELETE FROM OutboxEvent e WHERE e.isSent = true AND e.createdAt < :threshold")
+    @Query("DELETE FROM OutboxEvent e WHERE e.sent = true AND e.createdAt < :threshold")
     int deleteProcessedAndOlderThan(@Param("threshold") LocalDateTime threshold);
 }

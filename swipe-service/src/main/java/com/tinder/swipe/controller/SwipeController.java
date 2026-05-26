@@ -2,7 +2,7 @@ package com.tinder.swipe.controller;
 
 import com.tinder.swipe.dto.swipe.SwipeRequestDto;
 import com.tinder.swipe.dto.swipe.SwipeResponseDto;
-import com.tinder.swipe.service.interfaces.SwipeSevice;
+import com.tinder.swipe.service.interfaces.SwipeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/swipes")
 public class SwipeController {
-    private final SwipeSevice swipeSevice;
+    private final SwipeService swipeService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
@@ -27,6 +27,6 @@ public class SwipeController {
             @RequestHeader("X-User-Id") UUID id,
             @RequestBody @Valid SwipeRequestDto swipeRequestDto
     ) {
-        return swipeSevice.processSwipe(id, swipeRequestDto);
+        return swipeService.processSwipe(id, swipeRequestDto);
     }
 }

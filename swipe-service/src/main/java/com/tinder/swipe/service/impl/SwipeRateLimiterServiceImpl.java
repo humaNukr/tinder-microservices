@@ -35,6 +35,8 @@ public class SwipeRateLimiterServiceImpl implements SwipeRateLimiterService {
             if (currentLikes != null && currentLikes > swipeRateLimitProperties.maxLikesPerDay()) {
                 throw new TooManyRequestsException("You have exceeded your daily like limit.");
             }
+        } catch (TooManyRequestsException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Redis is down. Rate limiter failed for user: {}", userId, e);
         }
