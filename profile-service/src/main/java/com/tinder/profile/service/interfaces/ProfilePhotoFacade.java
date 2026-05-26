@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ProfilePhotoFacade {
-    void uploadAndAttachPhotos(List<MultipartFile> files, String userId);
+    void uploadAndAttachPhotos(List<MultipartFile> files, UUID userId);
 
     void deletePhotos(List<String> photoKeys);
 

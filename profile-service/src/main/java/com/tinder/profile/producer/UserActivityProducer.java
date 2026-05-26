@@ -1,5 +1,7 @@
 package com.tinder.profile.producer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.profile.event.ActivityType;
 import com.tinder.profile.event.UserActivityEvent;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +18,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserActivityProducer {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.kafka.topics.user-activity}")
     private String activityTopic;
@@ -24,13 +27,18 @@ public class UserActivityProducer {
     public void publishActivity(UUID userId, ActivityType type) {
         UserActivityEvent event = new UserActivityEvent(UUID.randomUUID(), userId, type, Instant.now());
 
-        kafkaTemplate.send(activityTopic, userId.toString(), event)
-                .whenComplete((result, ex) -> {
-                    if (ex != null) {
-                        log.warn("Failed to send user activity event for user {}: {}", userId, ex.getMessage());
-                    } else {
-                        log.debug("Published activity {} for user {}", type, userId);
-                    }
-                });
+        try {
+            String payload = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send(activityTopic, userId.toString(), payload)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.warn("Failed to send user activity event for user {}: {}", userId, ex.getMessage());
+                        } else {
+                            log.debug("Published activity {} for user {}", type, userId);
+                        }
+                    });
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize user activity event for user {}: {}", userId, e.getMessage());
+        }
     }
 }

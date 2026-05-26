@@ -19,7 +19,10 @@ import com.tinder.profile.producer.UserActivityProducer;
 import com.tinder.profile.properties.ProfileProperties;
 import com.tinder.profile.repository.ProfileRepository;
 import com.tinder.profile.repository.ProfileSearchRepository;
+import com.tinder.profile.service.interfaces.ProfileCacheService;
 import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.storage.StorageService;
+import com.tinder.profile.util.ProfileAgeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -30,11 +33,15 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
+import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -49,6 +56,8 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileProperties profileProperties;
     private final ApplicationEventPublisher eventPublisher;
     private final MongoTemplate mongoTemplate;
+    private final ProfileCacheService profileCacheService;
+    private final StorageService storageService;
 
     @Override
     public ProfileResponse createProfile(UUID userId, CreateProfileRequest request) {
@@ -56,7 +65,7 @@ public class ProfileServiceImpl implements ProfileService {
             throw new IllegalStateException("There is already a profile with userId " + userId);
         }
 
-        int age = Period.between(request.birthDate(), LocalDate.now()).getYears();
+        int age = ProfileAgeUtils.calculateAge(request.birthDate());
         if (age < profileProperties.minAge()) {
             throw new IllegalArgumentException("User must be at least " + profileProperties.minAge() + " years old");
         }
@@ -85,28 +94,46 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public ProfileResponse getMyProfile(UUID userId) {
-
-        Profile profile = getProfileEntity(userId);
-
-        return profileMapper.toDto(profile);
+        return profileCacheService.getCachedProfile(userId)
+                .orElseGet(() -> {
+                    Profile profile = requireProfile(userId);
+                    ProfileResponse response = profileMapper.toDto(profile);
+                    profileCacheService.cacheProfile(response);
+                    return response;
+                });
     }
 
     @Override
     public void deleteProfile(UUID userId) {
-        Profile profile = getProfileEntity(userId);
-        profileRepository.delete(profile);
+        profileRepository.findByUserId(userId).ifPresent(profile -> {
+            profileRepository.delete(profile);
+            profileCacheService.evictProfile(userId);
+        });
+    }
+
+    @Override
+    public void deleteAccountData(UUID userId) {
+        profileRepository.findByUserId(userId).ifPresent(profile -> {
+            List<String> photoKeys = profile.getPhotos();
+            if (photoKeys != null && !photoKeys.isEmpty()) {
+                storageService.deleteFiles(photoKeys);
+            }
+            profileRepository.delete(profile);
+            profileCacheService.evictProfile(userId);
+            log.info("Deleted profile and photos for user {}", userId);
+        });
     }
 
     @Override
     public UserPreferencesResponse getMyPreferences(UUID userId) {
-        Profile profile = getProfileEntity(userId);
+        Profile profile = requireProfile(userId);
 
         return profileMapper.toUserPreferencesResponse(profile);
     }
 
     @Override
     public UserPreferencesResponse updateMyPreferences(UUID userId, UpdatePreferencesRequest request) {
-        Profile profile = getProfileEntity(userId);
+        Profile profile = requireProfile(userId);
 
         profile = profileRepository.save(profileMapper.updatePreferencesFromDto(request, profile));
 
@@ -117,7 +144,7 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public ProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
-        Profile profile = getProfileEntity(userId);
+        Profile profile = requireProfile(userId);
 
         profile = profileRepository.save(profileMapper.updateEntityFromDto(request, profile));
 
@@ -128,14 +155,13 @@ public class ProfileServiceImpl implements ProfileService {
         return response;
     }
 
-
     @Override
     public void addPhotosToProfile(UUID userId, List<String> photoUrls) {
         if (photoUrls == null || photoUrls.isEmpty()) {
             throw new EmptyOrNullValueException("Photos can't be empty or null");
         }
 
-        Profile profile = getProfileEntity(userId);
+        Profile profile = requireProfile(userId);
 
         if (profile.getPhotos().size() + photoUrls.size() > profileProperties.maxPhotos()) {
             throw new IllegalArgumentException(
@@ -150,20 +176,27 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public void updateLocation(UUID userId, LocationUpdateRequest request) {
-
         GeoJsonPoint point = new GeoJsonPoint(request.longitude(), request.latitude());
+        LocalDateTime now = LocalDateTime.now();
 
-        Profile profile = getProfileEntity(userId);
-        profile.setLocation(point);
-        profile.setLastSeen(LocalDateTime.now());
-        profile = profileRepository.save(profile);
+        Query query = new Query(Criteria.where("userId").is(userId));
+        Update update = new Update()
+                .set("location", point)
+                .set("lastSeen", now);
+
+        var result = mongoTemplate.updateFirst(query, update, Profile.class);
+        if (result.getMatchedCount() == 0) {
+            throw new ProfileNotFoundException("Profile with id " + userId + " not found");
+        }
+
+        Profile profile = requireProfile(userId);
         eventPublisher.publishEvent(new ProfileChangedEvent(profileMapper.toDto(profile)));
         activityProducer.publishActivity(userId, ActivityType.LOCATION_UPDATE);
     }
 
     @Override
-    public List<UUID> getCandidatesForFeed(UUID userId, int limit) {
-        Profile searcher = getProfileEntity(userId);
+    public List<UUID> getCandidatesForFeed(UUID userId, int limit, Collection<UUID> excludeUserIds) {
+        Profile searcher = requireProfile(userId);
 
         if (searcher.getLocation() == null) {
             throw new IllegalStateException("User location is not set. Cannot generate feed.");
@@ -174,6 +207,12 @@ public class ProfileServiceImpl implements ProfileService {
             throw new EmptyOrNullValueException("User preferences are missing for user: " + userId);
         }
 
+        Set<UUID> exclude = new HashSet<>();
+        exclude.add(userId);
+        if (excludeUserIds != null) {
+            exclude.addAll(excludeUserIds);
+        }
+
         LocalDate now = LocalDate.now();
         LocalDate maxBirthDate = now.minusYears(prefs.getMinAge());
         LocalDate minBirthDate = now.minusYears(prefs.getMaxAge() + 1).plusDays(1);
@@ -182,11 +221,12 @@ public class ProfileServiceImpl implements ProfileService {
 
         List<ProfileCandidateDto> candidates = profileSearchRepository.findCandidates(
                 prefs.getTargetGender(), minBirthDate, maxBirthDate,
-                searcher.getLocation(), currentRadius, searcher.getInterests(), limit
+                searcher.getLocation(), currentRadius, searcher.getInterests(), limit, exclude
         );
 
-        if (candidates.size() < 50) {
-            log.info("Not enough candidates for user {}. Relaxing search constraints.", userId);
+        if (candidates.size() < limit) {
+            log.info("Not enough candidates for user {} ({} / {}). Relaxing search constraints.",
+                    userId, candidates.size(), limit);
 
             double relaxedRadius = currentRadius * 3.0;
             LocalDate relaxedMinBirth = minBirthDate.minusYears(2);
@@ -194,13 +234,12 @@ public class ProfileServiceImpl implements ProfileService {
 
             candidates = profileSearchRepository.findCandidates(
                     prefs.getTargetGender(), relaxedMinBirth, relaxedMaxBirth,
-                    searcher.getLocation(), relaxedRadius, searcher.getInterests(), limit
+                    searcher.getLocation(), relaxedRadius, searcher.getInterests(), limit, exclude
             );
         }
 
         return candidates.stream()
                 .map(ProfileCandidateDto::userId)
-                .filter(id -> !id.equals(userId))
                 .toList();
     }
 
@@ -217,7 +256,7 @@ public class ProfileServiceImpl implements ProfileService {
             return Collections.emptyList();
         }
 
-        Profile profile = getProfileEntity(userId);
+        Profile profile = requireProfile(userId);
         List<String> currentPhotos = profile.getPhotos();
 
         List<String> validPhotosToRemove = photoUrlsToRemove.stream()
@@ -235,19 +274,20 @@ public class ProfileServiceImpl implements ProfileService {
         return validPhotosToRemove;
     }
 
-    public Profile getProfileEntity(UUID userId) {
-        return profileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ProfileNotFoundException("Profile with id " + userId + " not found"));
-    }
-
     @Override
-    public void updateLastSeen(UUID userId, LocalDateTime timestamp) {
-        Query query = new Query(Criteria.where("userId").is(userId));
+    public void updateLastSeen(UUID userId, Instant timestamp) {
+        LocalDateTime lastSeen = LocalDateTime.ofInstant(timestamp, ZoneOffset.UTC);
 
-        Update update = new Update().max("lastSeen", timestamp);
+        Query query = new Query(Criteria.where("userId").is(userId));
+        Update update = new Update().max("lastSeen", lastSeen);
 
         mongoTemplate.updateFirst(query, update, Profile.class);
 
-        log.debug("Attempted to update last_seen for user {} to {}", userId, timestamp);
+        log.debug("Attempted to update last_seen for user {} to {}", userId, lastSeen);
+    }
+
+    private Profile requireProfile(UUID userId) {
+        return profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ProfileNotFoundException("Profile with id " + userId + " not found"));
     }
 }

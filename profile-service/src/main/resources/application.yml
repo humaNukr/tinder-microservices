@@ -8,7 +8,10 @@ spring:
   data:
     mongodb:
       uri: mongodb://admin:password@localhost:27017/profile_db?authSource=admin
-      auto-index-creation: true
+      auto-index-creation: false
+    redis:
+      host: localhost
+      port: 6379
 
   threads:
     virtual:
@@ -23,6 +26,13 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 app:
+  security:
+    gateway-auth:
+      enabled: true
+      header-name: X-Gateway-Authenticated
+      expected-value: "true"
+      user-id-header: X-User-Id
+      internal-path-prefix: /api/v1/internal/
   kafka:
     topics:
       user-activity: user-activity-events

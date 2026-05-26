@@ -1,16 +1,14 @@
 package com.tinder.profile.mapper;
 
 import com.tinder.profile.config.MapperConfig;
-import com.tinder.profile.domain.Gender;
 import com.tinder.profile.domain.Profile;
-import com.tinder.profile.domain.UserPreferences;
 import com.tinder.profile.dto.CreateProfileRequest;
 import com.tinder.profile.dto.ProfileResponse;
 import com.tinder.profile.dto.UpdatePreferencesRequest;
 import com.tinder.profile.dto.UpdateProfileRequest;
 import com.tinder.profile.dto.UserPreferencesResponse;
 import com.tinder.profile.properties.MinioProperties;
-import org.mapstruct.AfterMapping;
+import com.tinder.profile.util.ProfileAgeUtils;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -21,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,10 +59,7 @@ public abstract class ProfileMapper {
 
     @Named("calculateAge")
     protected int calculateAge(LocalDate birthDate) {
-        if (birthDate == null) {
-            return 0;
-        }
-        return Period.between(birthDate, LocalDate.now()).getYears();
+        return ProfileAgeUtils.calculateAge(birthDate);
     }
 
     @Named("buildPublicUrls")
@@ -81,25 +75,4 @@ public abstract class ProfileMapper {
         }).toList();
     }
 
-    @AfterMapping
-    protected void setDefaultPreferences(CreateProfileRequest request, @MappingTarget Profile profile) {
-        int userAge = calculateAge(request.birthDate());
-
-        int minAge = Math.max(18, userAge - 3);
-        int maxAge = userAge + 5;
-        double defaultDistance = 30.0;
-
-        if (profile.getPreferences() != null) {
-            profile.getPreferences().setMinAge(minAge);
-            profile.getPreferences().setMaxAge(maxAge);
-            profile.getPreferences().setMaxDistanceKm(defaultDistance);
-        } else {
-            UserPreferences prefs = new UserPreferences();
-            prefs.setTargetGender(Gender.valueOf(request.targetGender()));
-            prefs.setMinAge(minAge);
-            prefs.setMaxAge(maxAge);
-            prefs.setMaxDistanceKm(defaultDistance);
-            profile.setPreferences(prefs);
-        }
-    }
 }

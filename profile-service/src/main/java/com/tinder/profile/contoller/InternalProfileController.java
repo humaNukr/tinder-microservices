@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,9 +27,11 @@ public class InternalProfileController {
     @ResponseStatus(HttpStatus.OK)
     public List<UUID> getCandidatesForUser(
             @RequestParam UUID userId,
-            @RequestParam int limit
+            @RequestParam int limit,
+            @RequestParam(required = false) List<UUID> excludeUserIds
     ) {
-        return profileService.getCandidatesForFeed(userId, limit);
+        List<UUID> exclude = excludeUserIds != null ? excludeUserIds : Collections.emptyList();
+        return profileService.getCandidatesForFeed(userId, limit, exclude);
     }
 
     @PostMapping("/batch")

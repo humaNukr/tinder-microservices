@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -21,10 +23,10 @@ public class ProfileRestAdapter implements ProfileProvider {
     private final ProfileClient profileClient;
 
     @Override
-    public List<UUID> fetchCandidates(UUID userId) {
+    public List<UUID> fetchCandidates(UUID userId, Collection<UUID> excludeUserIds) {
         try {
             log.info("Fetching candidates for user {}", userId);
-            return profileClient.fetchCandidates(userId, feedProperties.fetchLimit());
+            return profileClient.fetchCandidates(userId, feedProperties.fetchLimit(), excludeUserIds);
         } catch (RestClientException e) {
             log.error("Error while fetching candidates for user {}", userId, e);
             return Collections.emptyList();
