@@ -1,0 +1,319 @@
+version: '3.8'
+
+services:
+  # --- MICROSERVICES ---
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_REDIS_HOST=shared_redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      - shared_redis
+    networks:
+      - app-network
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://auth_postgres:5432/auth_db
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_REDIS_HOST=shared_redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
+    depends_on:
+      - auth_postgres
+      - shared_redis
+      - shared_kafka
+    networks:
+      - app-network
+
+  chat-service:
+    build:
+      context: ./chat-service
+      dockerfile: Dockerfile
+    container_name: chat-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://chat_postgres:5432/chat_db
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_REDIS_HOST=shared_redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
+      - MINIO_ENDPOINT=shared_minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=password123
+    depends_on:
+      - chat_postgres
+      - shared_redis
+      - shared_kafka
+      - shared_minio
+    networks:
+      - app-network
+
+  feed-service:
+    build:
+      context: ./feed-service
+      dockerfile: Dockerfile
+    container_name: feed-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_REDIS_HOST=shared_redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
+    depends_on:
+      - shared_redis
+      - shared_kafka
+    networks:
+      - app-network
+
+  profile-service:
+    build:
+      context: ./profile-service
+      dockerfile: Dockerfile
+    container_name: profile-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password@profile_mongodb:27017/profile_db?authSource=admin
+      - SPRING_REDIS_HOST=shared_redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
+      - MINIO_ENDPOINT=shared_minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=password123
+    depends_on:
+      - profile_mongodb
+      - shared_redis
+      - shared_kafka
+      - shared_minio
+    networks:
+      - app-network
+
+  swipe-service:
+    build:
+      context: ./swipe-service
+      dockerfile: Dockerfile
+    container_name: swipe-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://swipe_postgres:5432/swipe_db
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_REDIS_HOST=shared_redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
+    depends_on:
+      - swipe_postgres
+      - shared_redis
+      - shared_kafka
+    networks:
+      - app-network
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://notification_postgres:5432/notification_db
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
+    depends_on:
+      - notification_postgres
+      - shared_kafka
+    networks:
+      - app-network
+
+  # --- DATABASES (Isolated per service) ---
+  auth_postgres:
+    image: postgres:15-alpine
+    container_name: auth_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  profile_mongodb:
+    image: mongo:7.0
+    container_name: profile_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: profile_db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
+
+  swipe_postgres:
+    image: postgres:15-alpine
+    container_name: swipe_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: swipe_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - swipe_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  chat_postgres:
+    image: postgres:15-alpine
+    container_name: chat_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: chat_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - chat_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  notification_postgres:
+    image: postgres:15-alpine
+    container_name: notification_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: notification_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - notification_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # --- SHARED INFRASTRUCTURE ---
+  shared_redis:
+    image: redis:7-alpine
+    container_name: shared_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --notify-keyspace-events Ex
+    networks:
+      - app-network
+
+  shared_minio:
+    image: minio/minio
+    container_name: shared_minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+      MINIO_NOTIFY_KAFKA_ENABLE_1: "on"
+      MINIO_NOTIFY_KAFKA_BROKERS_1: "shared-kafka:29092"
+      MINIO_NOTIFY_KAFKA_TOPIC_1: "minio-chat-media-events"
+      MINIO_NOTIFY_KAFKA_PRODUCER_ACKS_1: "all"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    depends_on:
+      - shared_kafka
+    networks:
+      app-network:
+        aliases:
+          - shared-minio
+
+  minio-init:
+    image: minio/mc
+    container_name: minio-init
+    depends_on:
+      - shared_minio
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO to start...';
+      while ! /usr/bin/mc alias set myminio http://shared-minio:9000 admin password123; do
+        echo 'MinIO is not ready yet, retrying in 2 seconds...';
+        sleep 2;
+      done;
+      echo 'MinIO is up! Configuring bucket and events...';
+      /usr/bin/mc mb myminio/tinder-chat-media --ignore-existing;
+      /usr/bin/mc event add myminio/tinder-chat-media arn:minio:sqs::1:kafka --event put;
+      echo 'MinIO initialization complete.';
+      exit 0;
+      "
+    networks:
+      - app-network
+
+  shared_kafka:
+    image: apache/kafka:3.7.0
+    container_name: shared_kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://shared_kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@shared_kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/kafka/data
+    networks:
+      app-network:
+        aliases:
+          - shared-kafka
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: shared_kafka:29092
+    depends_on:
+      - shared_kafka
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  auth_postgres_data:
+  swipe_postgres_data:
+  chat_postgres_data:
+  notification_postgres_data:
+  mongo_data:
+  minio_data:
+  kafka_data:
