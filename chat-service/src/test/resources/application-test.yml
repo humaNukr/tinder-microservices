@@ -1,0 +1,6 @@
+spring:
+  kafka:
+    listener:
+      auto-startup: false
+    consumer:
+      auto-offset-reset: earliest

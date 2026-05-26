@@ -34,106 +34,79 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 @ActiveProfiles("test")
 class GatewayApplicationIT {
 
-    private final UUID testUserId = UUID.randomUUID();
-    @Autowired
-    private WebTestClient webClient;
+	private final UUID testUserId = UUID.randomUUID();
+	@Autowired
+	private WebTestClient webClient;
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+	@Value("${jwt.secret}")
+	private String jwtSecret;
 
-    private String validToken;
+	private String validToken;
 
-    @BeforeEach
-    void setUp() {
-        SecretKey key = Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(jwtSecret));
-        validToken = Jwts.builder()
-                .subject(testUserId.toString())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
-                .signWith(key)
-                .compact();
+	@BeforeEach
+	void setUp() {
+		SecretKey key = Keys.hmacShaKeyFor(io.jsonwebtoken.io.Decoders.BASE64.decode(jwtSecret));
+		validToken = Jwts.builder().subject(testUserId.toString()).issuedAt(new Date())
+				.expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)).signWith(key).compact();
 
-        stubFor(get(urlEqualTo("/api/v1/profiles/me"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withBody("{\"status\": \"ok\"}")));
-    }
+		stubFor(get(urlEqualTo("/api/v1/profiles/me"))
+				.willReturn(aResponse().withStatus(200).withBody("{\"status\": \"ok\"}")));
+	}
 
-    @Test
-    @DisplayName("TrackingFilter should add X-Correlation-Id to Request and Response")
-    void trackingFilter_GeneratesAndReturnsCorrelationId() {
-        webClient.get().uri("/api/v1/profiles/me")
-                .header("Authorization", "Bearer " + validToken)
-                .exchange()
-                .expectStatus().isOk()
-                .expectHeader().exists("X-Correlation-Id");
+	@Test
+	@DisplayName("TrackingFilter should add X-Correlation-Id to Request and Response")
+	void trackingFilter_GeneratesAndReturnsCorrelationId() {
+		webClient.get().uri("/api/v1/profiles/me").header("Authorization", "Bearer " + validToken).exchange()
+				.expectStatus().isOk().expectHeader().exists("X-Correlation-Id");
 
-        verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me"))
-                .withHeader("X-Correlation-Id", matching(".*")));
-    }
+		verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me")).withHeader("X-Correlation-Id", matching(".*")));
+	}
 
-    @Test
-    @DisplayName("TrackingFilter should keep existing X-Correlation-Id if provided")
-    void trackingFilter_KeepsExistingCorrelationId() {
-        String existingId = "mobile-app-uuid-123";
+	@Test
+	@DisplayName("TrackingFilter should keep existing X-Correlation-Id if provided")
+	void trackingFilter_KeepsExistingCorrelationId() {
+		String existingId = "mobile-app-uuid-123";
 
-        webClient.get().uri("/api/v1/profiles/me")
-                .header("Authorization", "Bearer " + validToken)
-                .header("X-Correlation-Id", existingId)
-                .exchange()
-                .expectStatus().isOk()
-                .expectHeader().valueEquals("X-Correlation-Id", existingId);
+		webClient.get().uri("/api/v1/profiles/me").header("Authorization", "Bearer " + validToken)
+				.header("X-Correlation-Id", existingId).exchange().expectStatus().isOk().expectHeader()
+				.valueEquals("X-Correlation-Id", existingId);
 
-        verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me"))
-                .withHeader("X-Correlation-Id", equalTo(existingId)));
-    }
+		verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me")).withHeader("X-Correlation-Id", equalTo(existingId)));
+	}
 
-    @Test
-    @DisplayName("AuthenticationFilter should reject request without token on secured endpoint")
-    void authFilter_MissingToken_Returns401() {
-        webClient.get().uri("/api/v1/profiles/me")
-                .exchange()
-                .expectStatus().isUnauthorized()
-                .expectBody()
-                .jsonPath("$.error").isEqualTo("Unauthorized")
-                .jsonPath("$.message").isEqualTo("Authorization header is missing");
-    }
+	@Test
+	@DisplayName("AuthenticationFilter should reject request without token on secured endpoint")
+	void authFilter_MissingToken_Returns401() {
+		webClient.get().uri("/api/v1/profiles/me").exchange().expectStatus().isUnauthorized().expectBody()
+				.jsonPath("$.error").isEqualTo("Unauthorized").jsonPath("$.message")
+				.isEqualTo("Authorization header is missing");
+	}
 
-    @Test
-    @DisplayName("AuthenticationFilter should allow request to open endpoints without token")
-    void authFilter_OpenEndpoint_AllowsWithoutToken() {
-        stubFor(get(urlEqualTo("/api/v1/auth/send-otp"))
-                .willReturn(aResponse().withStatus(200)));
+	@Test
+	@DisplayName("AuthenticationFilter should allow request to open endpoints without token")
+	void authFilter_OpenEndpoint_AllowsWithoutToken() {
+		stubFor(get(urlEqualTo("/api/v1/auth/send-otp")).willReturn(aResponse().withStatus(200)));
 
-        webClient.get().uri("/api/v1/auth/send-otp")
-                .exchange()
-                .expectStatus().isOk();
-    }
+		webClient.get().uri("/api/v1/auth/send-otp").exchange().expectStatus().isOk();
+	}
 
-    @Test
-    @DisplayName("AuthenticationFilter should extract userId and pass it as header")
-    void authFilter_ValidToken_AddsUserIdHeader() {
-        webClient.get().uri("/api/v1/profiles/me")
-                .header("Authorization", "Bearer " + validToken)
-                .exchange()
-                .expectStatus().isOk();
+	@Test
+	@DisplayName("AuthenticationFilter should extract userId and pass it as header")
+	void authFilter_ValidToken_AddsUserIdHeader() {
+		webClient.get().uri("/api/v1/profiles/me").header("Authorization", "Bearer " + validToken).exchange()
+				.expectStatus().isOk();
 
-        verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me"))
-                .withHeader("X-User-Id", equalTo(testUserId.toString())));
-    }
+		verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me")).withHeader("X-User-Id",
+				equalTo(testUserId.toString())));
+	}
 
-    @TestConfiguration
-    static class WireMockRouteConfig {
-        @Bean
-        public RouteLocator wireMockRoutes(RouteLocatorBuilder builder, @Value("${wiremock.server.port}") int port) {
-            return builder.routes()
-                    .route("test-profile-service", r -> r
-                            .path("/api/v1/profiles/**")
-                            .uri("http://localhost:" + port))
-                    .route("test-auth-service", r -> r
-                            .path("/api/v1/auth/**")
-                            .uri("http://localhost:" + port))
-                    .build();
-        }
-    }
+	@TestConfiguration
+	static class WireMockRouteConfig {
+		@Bean
+		public RouteLocator wireMockRoutes(RouteLocatorBuilder builder, @Value("${wiremock.server.port}") int port) {
+			return builder.routes()
+					.route("test-profile-service", r -> r.path("/api/v1/profiles/**").uri("http://localhost:" + port))
+					.route("test-auth-service", r -> r.path("/api/v1/auth/**").uri("http://localhost:" + port)).build();
+		}
+	}
 }

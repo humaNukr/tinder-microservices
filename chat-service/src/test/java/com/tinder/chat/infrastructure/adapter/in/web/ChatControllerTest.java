@@ -3,13 +3,17 @@ package com.tinder.chat.infrastructure.adapter.in.web;
 import com.tinder.chat.application.port.in.room.GetChatHistoryQuery;
 import com.tinder.chat.application.port.in.room.GetChatListQuery;
 import com.tinder.chat.application.port.in.room.InitChatQuery;
+import com.tinder.chat.config.GatewayAuthFilter;
 import com.tinder.chat.shared.dto.room.ChatHistoryResponseDto;
 import com.tinder.chat.shared.dto.room.ChatInitResponseDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,7 +25,14 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ChatController.class)
+@WebMvcTest(
+        controllers = ChatController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = GatewayAuthFilter.class
+        )
+)
+@AutoConfigureMockMvc(addFilters = false)
 class ChatControllerTest {
 
     private final String userIdHeader = "X-User-Id";

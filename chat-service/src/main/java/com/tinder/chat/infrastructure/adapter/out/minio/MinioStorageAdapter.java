@@ -8,11 +8,16 @@ import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.Http;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectsArgs;
+import io.minio.Result;
+import io.minio.messages.DeleteRequest;
+import io.minio.messages.DeleteResult;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -54,6 +59,33 @@ public class MinioStorageAdapter implements MediaStoragePort {
         } catch (Exception e) {
             log.error("Error generating view link for object: {}", objectKey, e);
             throw new StorageException("Could not generate view link", e);
+        }
+    }
+
+    @Override
+    public void deleteObjects(List<String> objectKeys) {
+        if (objectKeys == null || objectKeys.isEmpty()) {
+            return;
+        }
+
+        List<DeleteRequest.Object> objectsToDelete =
+                objectKeys.stream().map(DeleteRequest.Object::new).toList();
+
+        try {
+            Iterable<Result<DeleteResult.Error>> results = minioClient.removeObjects(
+                    RemoveObjectsArgs.builder()
+                            .bucket(minioProperties.bucketName())
+                            .objects(objectsToDelete)
+                            .build());
+
+            for (Result<DeleteResult.Error> result : results) {
+                DeleteResult.Error error = result.get();
+                log.warn("Failed to delete chat media {}: {}", error.objectName(), error.message());
+            }
+            log.info("Deleted {} chat media object(s) from MinIO", objectKeys.size());
+        } catch (Exception e) {
+            log.error("Bulk deletion of chat media failed", e);
+            throw new StorageException("Failed to delete chat media from storage", e);
         }
     }
 

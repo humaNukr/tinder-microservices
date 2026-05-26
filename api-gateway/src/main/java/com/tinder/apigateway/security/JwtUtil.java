@@ -11,24 +11,19 @@ import javax.crypto.SecretKey;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secret;
+	@Value("${jwt.secret}")
+	private String secret;
 
-    public void validateToken(final String token) {
-        Jwts.parser().verifyWith(getSignKey()).build().parseSignedClaims(token);
-    }
+	public void validateToken(final String token) {
+		Jwts.parser().verifyWith(getSignKey()).build().parseSignedClaims(token);
+	}
 
-    public String extractUserId(String token) {
-        return Jwts.parser()
-                .verifyWith(getSignKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-    }
+	public String extractUserId(String token) {
+		return Jwts.parser().verifyWith(getSignKey()).build().parseSignedClaims(token).getPayload().getSubject();
+	}
 
-    private SecretKey getSignKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
+	private SecretKey getSignKey() {
+		byte[] keyBytes = Decoders.BASE64.decode(secret);
+		return Keys.hmacShaKeyFor(keyBytes);
+	}
 }

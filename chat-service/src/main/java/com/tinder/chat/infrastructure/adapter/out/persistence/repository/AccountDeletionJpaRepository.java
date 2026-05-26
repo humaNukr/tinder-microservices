@@ -14,6 +14,18 @@ public interface AccountDeletionJpaRepository extends JpaRepository<ChatJpaEntit
     @Query("SELECT c.id FROM ChatJpaEntity c WHERE c.user1Id = :userId OR c.user2Id = :userId")
     List<UUID> findChatIdsByUserId(@Param("userId") UUID userId);
 
+    @Query(
+            value =
+                    """
+                            SELECT DISTINCT m.content
+                            FROM messages m
+                            INNER JOIN chats c ON m.chat_id = c.id
+                            WHERE (c.user1_id = :userId OR c.user2_id = :userId)
+                              AND m.content_type IN ('IMAGE', 'VIDEO', 'AUDIO')
+                            """,
+            nativeQuery = true)
+    List<String> findMediaObjectKeysByUserId(@Param("userId") UUID userId);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
             value =

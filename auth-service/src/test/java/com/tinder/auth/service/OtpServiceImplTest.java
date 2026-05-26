@@ -94,8 +94,7 @@ class OtpServiceImplTest {
 
 			boolean result = otpService.validateOtp(destination, validCode);
 
-			assertAll(
-					() -> assertTrue(result),
+			assertAll(() -> assertTrue(result),
 					() -> verify(otpStorage).checkAndIncrementVerificationAttempts(destination),
 					() -> verify(otpStorage).deleteOtp(destination));
 		}

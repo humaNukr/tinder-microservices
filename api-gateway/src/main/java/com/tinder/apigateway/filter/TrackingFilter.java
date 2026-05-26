@@ -13,27 +13,24 @@ import java.util.UUID;
 @Component
 public class TrackingFilter implements GlobalFilter, Ordered {
 
-    public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+	public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
 
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String correlationId = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
-        if (correlationId == null) {
-            correlationId = UUID.randomUUID().toString();
-        }
+	@Override
+	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		String correlationId = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
+		if (correlationId == null) {
+			correlationId = UUID.randomUUID().toString();
+		}
 
-        exchange.getResponse().getHeaders().add(CORRELATION_ID_HEADER, correlationId);
+		exchange.getResponse().getHeaders().add(CORRELATION_ID_HEADER, correlationId);
 
-        ServerHttpRequest request = exchange.getRequest()
-                .mutate()
-                .header(CORRELATION_ID_HEADER, correlationId)
-                .build();
+		ServerHttpRequest request = exchange.getRequest().mutate().header(CORRELATION_ID_HEADER, correlationId).build();
 
-        return chain.filter(exchange.mutate().request(request).build());
-    }
+		return chain.filter(exchange.mutate().request(request).build());
+	}
 
-    @Override
-    public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
-    }
+	@Override
+	public int getOrder() {
+		return Ordered.HIGHEST_PRECEDENCE;
+	}
 }

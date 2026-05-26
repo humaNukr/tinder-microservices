@@ -20,7 +20,7 @@ public class UserActivityKafkaAdapter {
 
     @KafkaListener(
             topics = "${app.kafka.topics.user-activity}",
-            groupId = "${app.kafka.consumer-groups.chat-service}")
+            groupId = "${app.kafka.consumer-groups.user-activity}")
     public void listen(String payload) throws JsonProcessingException {
         UserActivityEvent event = objectMapper.readValue(payload, UserActivityEvent.class);
 

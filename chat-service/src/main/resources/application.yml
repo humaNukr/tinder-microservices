@@ -46,6 +46,7 @@ app:
       user-activity: user-activity-events
     consumer-groups:
       chat-service: chat-service-group
+      user-activity: chat-service-user-activity-group
 
   redis:
     chat:

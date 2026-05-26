@@ -10,10 +10,9 @@ import java.util.Objects;
 @Configuration
 public class RateLimiterConfig {
 
-    @Bean
-    public KeyResolver ipKeyResolver() {
-        return exchange -> Mono.just(
-                Objects.requireNonNull(exchange.getRequest().getRemoteAddress()).getAddress().getHostAddress()
-        );
-    }
+	@Bean
+	public KeyResolver ipKeyResolver() {
+		return exchange -> Mono
+				.just(Objects.requireNonNull(exchange.getRequest().getRemoteAddress()).getAddress().getHostAddress());
+	}
 }

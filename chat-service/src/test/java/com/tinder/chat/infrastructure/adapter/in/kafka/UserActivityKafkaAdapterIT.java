@@ -14,14 +14,18 @@ import com.tinder.chat.infrastructure.adapter.out.persistence.repository.Message
 import com.tinder.chat.infrastructure.config.properties.RedisChatProperties;
 import com.tinder.chat.infrastructure.config.properties.RedisPresenceProperties;
 import com.tinder.chat.shared.dto.event.UserActivityEvent;
-import com.tinder.chat.util.IntegrationTestBase;
+import com.tinder.chat.util.KafkaIntegrationTestBase;
+import com.tinder.chat.util.KafkaListenerAwait;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -33,7 +37,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("UserActivityKafkaAdapter — Integration Tests")
-class UserActivityKafkaAdapterIT extends IntegrationTestBase {
+class UserActivityKafkaAdapterIT extends KafkaIntegrationTestBase {
+
+    private static final String ACTIVITY_TOPIC = "user-activity-chat-it";
+    private static final String CONSUMER_GROUP = "user-activity-chat-it-group";
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
@@ -62,8 +69,20 @@ class UserActivityKafkaAdapterIT extends IntegrationTestBase {
     @Autowired
     private RedisPresenceProperties redisPresenceProperties;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @Value("${app.kafka.topics.user-activity}")
     private String topic;
+
+    @DynamicPropertySource
+    static void kafkaIntegration(DynamicPropertyRegistry registry) {
+        registry.add("app.kafka.topics.user-activity", () -> ACTIVITY_TOPIC);
+        registry.add("app.kafka.consumer-groups.user-activity", () -> CONSUMER_GROUP);
+        registry.add(
+                "spring.kafka.producer.value-serializer",
+                () -> "org.apache.kafka.common.serialization.StringSerializer");
+    }
 
     @BeforeEach
     void setUp() {
@@ -71,6 +90,7 @@ class UserActivityKafkaAdapterIT extends IntegrationTestBase {
         accountDeletionJpaRepository.deleteAll();
         inboxEventRepository.deleteAll();
         objectMapper.registerModule(new JavaTimeModule());
+        KafkaListenerAwait.awaitAssignment(applicationContext, CONSUMER_GROUP);
     }
 
     @Test
@@ -78,16 +98,9 @@ class UserActivityKafkaAdapterIT extends IntegrationTestBase {
     void deleteAccount_RemovesData() throws Exception {
         UUID userId = UUID.randomUUID();
         UUID partnerId = UUID.randomUUID();
-        boolean userIsSmaller = userId.compareTo(partnerId) < 0;
-        UUID user1 = userIsSmaller ? userId : partnerId;
-        UUID user2 = userIsSmaller ? partnerId : userId;
-
         UUID chatId = UUID.randomUUID();
-        chatPersistenceAdapter.save(Chat.builder()
-                .id(chatId)
-                .user1Id(user1)
-                .user2Id(user2)
-                .build());
+        Chat chat = Chat.createNewChat(chatId, userId, partnerId);
+        chatPersistenceAdapter.save(chat);
 
         MessageJpaEntity message = MessageJpaEntity.builder()
                 .chatId(chatId)
@@ -107,8 +120,9 @@ class UserActivityKafkaAdapterIT extends IntegrationTestBase {
                 new UserActivityEvent(eventId, userId, ActivityType.DELETE_ACCOUNT, Instant.now());
         kafkaTemplate.send(topic, userId.toString(), objectMapper.writeValueAsString(event)).get();
 
-        await().atMost(Duration.ofSeconds(20))
-                .pollInterval(Duration.ofMillis(300))
+        await()
+                .pollInterval(Duration.ofMillis(200))
+                .atMost(Duration.ofSeconds(30))
                 .untilAsserted(() -> {
                     assertEquals(0, accountDeletionJpaRepository.count());
                     assertEquals(0, messageJpaRepository.count());

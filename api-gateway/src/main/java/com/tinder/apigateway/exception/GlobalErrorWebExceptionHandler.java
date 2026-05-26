@@ -19,26 +19,24 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GlobalErrorWebExceptionHandler implements ErrorWebExceptionHandler {
 
-    private final ObjectMapper objectMapper;
+	private final ObjectMapper objectMapper;
 
-    @Override
-    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
-        log.error("Gateway error: {}", ex.getMessage(), ex);
+	@Override
+	public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
+		log.error("Gateway error: {}", ex.getMessage(), ex);
 
-        exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
-        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+		exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+		exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-        Map<String, String> error = Map.of(
-                "error", "Gateway Error",
-                "message", "An internal error occurred in the gateway"
-        );
+		Map<String, String> error = Map.of("error", "Gateway Error", "message",
+				"An internal error occurred in the gateway");
 
-        try {
-            byte[] bytes = objectMapper.writeValueAsBytes(error);
-            DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
-            return exchange.getResponse().writeWith(Mono.just(buffer));
-        } catch (JsonProcessingException e) {
-            return exchange.getResponse().setComplete();
-        }
-    }
+		try {
+			byte[] bytes = objectMapper.writeValueAsBytes(error);
+			DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+			return exchange.getResponse().writeWith(Mono.just(buffer));
+		} catch (JsonProcessingException e) {
+			return exchange.getResponse().setComplete();
+		}
+	}
 }

@@ -2,6 +2,7 @@ package com.tinder.chat.util;
 
 import com.tinder.chat.infrastructure.adapter.out.minio.MinioStorageAdapter;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -12,6 +13,7 @@ import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @TestPropertySource(properties = {
         "app.redis.chat.channel=chat-channel",
         "app.redis.chat.typing-channel=chat-typing-channel",
@@ -29,10 +31,7 @@ import org.testcontainers.utility.DockerImageName;
         "app.kafka.topics.match-events=match-events",
         "app.kafka.topics.message-events=message-events",
         "app.kafka.topics.minio-chat-media-events=minio-chat-media-events",
-        "app.kafka.topics.user-presence-events=user-presence-events",
-        "app.kafka.topics.user-activity=user-activity-events-test",
-        "spring.kafka.consumer.auto-offset-reset=earliest",
-        "spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.StringSerializer"
+        "app.kafka.topics.user-presence-events=user-presence-events"
 })
 public abstract class IntegrationTestBase {
 
