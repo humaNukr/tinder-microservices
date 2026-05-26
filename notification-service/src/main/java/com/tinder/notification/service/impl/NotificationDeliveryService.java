@@ -24,10 +24,13 @@ public class NotificationDeliveryService {
     private final PushSender pushSender;
 
     public void deliver(UUID userId, String title, String body, NotificationType type, Map<String, Object> metadata) {
-
         notificationLogService.createNotification(userId, title, body, type, metadata);
         log.info("Saved In-App notification for user {}", userId);
 
+        sendPush(userId, title, body, metadata);
+    }
+
+    private void sendPush(UUID userId, String title, String body, Map<String, Object> metadata) {
         List<DeviceTokenInfo> tokens = deviceTokenService.getUserTokens(userId);
 
         if (tokens.isEmpty()) {
@@ -36,13 +39,14 @@ public class NotificationDeliveryService {
         }
 
         Map<String, String> stringData = metadata.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> String.valueOf(entry.getValue()) // Робимо безпечний .toString()
-                ));
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.valueOf(entry.getValue())));
 
         for (DeviceTokenInfo tokenInfo : tokens) {
-            pushSender.sendNotification(tokenInfo.getToken(), title, body, stringData);
+            try {
+                pushSender.sendNotification(tokenInfo.getToken(), title, body, stringData);
+            } catch (RuntimeException e) {
+                log.error("Push failed for user {} token {}: {}", userId, tokenInfo.getToken(), e.getMessage(), e);
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ import com.tinder.notification.repository.NotificationRepository;
 import com.tinder.notification.service.interfaces.NotificationLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -48,7 +49,7 @@ public class NotificationLogServiceImpl implements NotificationLogService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void createNotification(UUID userId, String title, String body, NotificationType type, Map<String, Object> metadata) {
         Notification notification = Notification.builder()
                 .userId(userId)

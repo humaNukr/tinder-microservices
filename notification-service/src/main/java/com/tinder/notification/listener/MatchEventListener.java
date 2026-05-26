@@ -17,8 +17,8 @@ public class MatchEventListener {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
-            topics = "match-events",
-            groupId = "notification-group"
+            topics = "${app.kafka.topics.match-events}",
+            groupId = "${app.kafka.consumer-groups.notification-service}"
     )
     public void handleMatchEvent(String payload) {
         try {

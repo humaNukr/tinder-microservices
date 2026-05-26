@@ -1,6 +1,7 @@
 package com.tinder.notification.controller;
 
 import com.tinder.notification.dto.NotificationResponseDto;
+import com.tinder.notification.dto.UnreadCountResponse;
 import com.tinder.notification.service.interfaces.NotificationLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,11 @@ public class NotificationController {
             @RequestHeader("X-User-Id") UUID userId
     ) {
         return notificationLogService.getUserNotifications(userId);
+    }
+
+    @GetMapping("/unread-count")
+    public UnreadCountResponse getUnreadCount(@RequestHeader("X-User-Id") UUID userId) {
+        return new UnreadCountResponse(notificationLogService.getUnreadCount(userId));
     }
 
     @PatchMapping("/{id}/read")

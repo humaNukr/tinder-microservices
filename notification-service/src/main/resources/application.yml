@@ -30,5 +30,6 @@ app:
   kafka:
     topics:
       message-events: message-events
+      match-events: match-events
     consumer-groups:
       notification-service: notification-group

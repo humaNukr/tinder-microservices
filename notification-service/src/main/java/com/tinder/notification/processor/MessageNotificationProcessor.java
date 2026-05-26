@@ -1,15 +1,13 @@
 package com.tinder.notification.processor;
 
-import com.tinder.notification.entity.InboxEvent;
 import com.tinder.notification.enums.MessageContentType;
 import com.tinder.notification.enums.NotificationType;
 import com.tinder.notification.event.MessageSentEvent;
-import com.tinder.notification.repository.InboxEventRepository;
+import com.tinder.notification.service.impl.InboxDedupService;
 import com.tinder.notification.service.impl.NotificationDeliveryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
@@ -18,19 +16,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MessageNotificationProcessor {
 
-    private final InboxEventRepository inboxEventRepository;
+    private final InboxDedupService inboxDedupService;
     private final NotificationDeliveryService deliveryService;
 
-    @Transactional
     public void process(MessageSentEvent event) {
         log.info("Processing message notification for event: {}", event.eventId());
 
-        if (inboxEventRepository.existsByEventId(event.eventId())) {
-            log.warn("Duplicate event detected (eventId: {}). Skipping.", event.eventId());
+        if (!inboxDedupService.tryRegister(event.eventId())) {
             return;
         }
-
-        inboxEventRepository.save(new InboxEvent(event.eventId()));
 
         String title = "New message 💬";
         String body = determineBody(event);
