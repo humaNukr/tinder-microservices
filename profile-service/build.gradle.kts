@@ -40,7 +40,12 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.testcontainers:testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:mongodb")
+    testImplementation("org.testcontainers:kafka")
     testImplementation("org.testcontainers:minio:1.21.4")
+    testImplementation("org.awaitility:awaitility:4.2.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -45,6 +45,11 @@ public class RedisProfileCacheServiceImpl implements ProfileCacheService {
         }
     }
 
+    @Override
+    public void evictProfile(UUID userId) {
+        stringRedisTemplate.delete(cacheKey(userId));
+    }
+
     private static String cacheKey(UUID userId) {
         return "user:" + userId + ":profile";
     }

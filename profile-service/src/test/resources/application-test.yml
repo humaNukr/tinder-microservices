@@ -1,0 +1,44 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: profile-service-test
+
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+
+  data:
+    mongodb:
+      auto-index-creation: true
+
+app:
+  security:
+    gateway-auth:
+      enabled: false
+      header-name: X-Gateway-Authenticated
+      expected-value: "true"
+      user-id-header: X-User-Id
+      internal-path-prefix: /api/v1/internal/
+  kafka:
+    topics:
+      user-activity: user-activity-events-test
+      user-presence: user-presence-events-test
+  profile:
+    max-photos: 9
+    min-age: 18
+    default-search-radius-km: 50.0
+  media:
+    public-prefix: "/media/"
+
+minio:
+  url: http://localhost:9000
+  access-key: admin
+  secret-key: password123
+  bucket-name: tinder-media-test
+
+logging:
+  level:
+    com.tinder.profile: DEBUG
+    org.springframework.kafka: WARN

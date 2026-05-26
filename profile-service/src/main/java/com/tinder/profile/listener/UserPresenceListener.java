@@ -1,5 +1,6 @@
 package com.tinder.profile.listener;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.profile.event.UserPresenceEvent;
 import com.tinder.profile.service.interfaces.ProfileService;
@@ -21,14 +22,10 @@ public class UserPresenceListener {
             groupId = "${spring.kafka.consumer.group-id}",
             concurrency = "3"
     )
-    public void handlePresenceEvent(String payload) {
-        try {
-            UserPresenceEvent event = objectMapper.readValue(payload, UserPresenceEvent.class);
-            log.debug("Received presence event: user={}, online={}", event.userId(), event.isOnline());
+    public void handlePresenceEvent(String payload) throws JsonProcessingException {
+        UserPresenceEvent event = objectMapper.readValue(payload, UserPresenceEvent.class);
+        log.debug("Received presence event: user={}, online={}", event.userId(), event.isOnline());
 
-            profileService.updateLastSeen(event.userId(), event.timestamp());
-        } catch (Exception e) {
-            log.error("Failed to process user presence event: {}", payload, e);
-        }
+        profileService.updateLastSeen(event.userId(), event.timestamp());
     }
 }

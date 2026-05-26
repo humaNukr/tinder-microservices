@@ -26,6 +26,13 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 app:
+  security:
+    gateway-auth:
+      enabled: true
+      header-name: X-Gateway-Authenticated
+      expected-value: "true"
+      user-id-header: X-User-Id
+      internal-path-prefix: /api/v1/internal/
   kafka:
     topics:
       user-activity: user-activity-events

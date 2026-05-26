@@ -105,7 +105,10 @@ public class ProfileServiceImpl implements ProfileService {
 
     @Override
     public void deleteProfile(UUID userId) {
-        profileRepository.findByUserId(userId).ifPresent(profileRepository::delete);
+        profileRepository.findByUserId(userId).ifPresent(profile -> {
+            profileRepository.delete(profile);
+            profileCacheService.evictProfile(userId);
+        });
     }
 
     @Override
@@ -116,6 +119,7 @@ public class ProfileServiceImpl implements ProfileService {
                 storageService.deleteFiles(photoKeys);
             }
             profileRepository.delete(profile);
+            profileCacheService.evictProfile(userId);
             log.info("Deleted profile and photos for user {}", userId);
         });
     }

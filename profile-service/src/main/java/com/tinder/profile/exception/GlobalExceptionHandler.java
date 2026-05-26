@@ -11,9 +11,11 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
@@ -35,6 +37,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         }
 
         return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<Object> handleMissingRequestHeader(MissingRequestHeaderException ex) {
+        log.warn("Missing required header: {}", ex.getHeaderName());
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Required request header '%s' is not present".formatted(ex.getHeaderName())
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Object> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = "Invalid value '%s' for parameter '%s'".formatted(ex.getValue(), ex.getName());
+        log.warn("Type mismatch: {}", message);
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(BadCredentialsException.class)

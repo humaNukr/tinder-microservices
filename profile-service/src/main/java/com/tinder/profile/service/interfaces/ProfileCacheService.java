@@ -9,4 +9,6 @@ public interface ProfileCacheService {
     void cacheProfile(ProfileResponse profile);
 
     Optional<ProfileResponse> getCachedProfile(UUID userId);
+
+    void evictProfile(UUID userId);
 }

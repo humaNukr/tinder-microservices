@@ -23,15 +23,11 @@ public class UserActivityListener {
             groupId = "${spring.kafka.consumer.group-id}",
             concurrency = "3"
     )
-    public void handleUserActivity(String payload) {
-        try {
-            UserActivityEvent event = objectMapper.readValue(payload, UserActivityEvent.class);
+    public void handleUserActivity(String payload) throws JsonProcessingException {
+        UserActivityEvent event = objectMapper.readValue(payload, UserActivityEvent.class);
 
-            if (event.type() == ActivityType.DELETE_ACCOUNT) {
-                userActivityProcessor.deleteProfileData(event);
-            }
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse event", e);
+        if (event.type() == ActivityType.DELETE_ACCOUNT) {
+            userActivityProcessor.deleteProfileData(event);
         }
     }
 }
