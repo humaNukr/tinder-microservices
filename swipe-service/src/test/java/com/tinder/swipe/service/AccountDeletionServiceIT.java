@@ -38,24 +38,29 @@ class AccountDeletionServiceIT extends BaseIT {
     @Test
     @DisplayName("deleteUserData removes swipes and rate-limit key")
     void deleteUserData_RemovesSwipesAndRedisKey() {
-        UUID userId = UUID.randomUUID();
-        UUID otherUser = UUID.randomUUID();
-        UUID user1 = userId.compareTo(otherUser) < 0 ? userId : otherUser;
-        UUID user2 = userId.compareTo(otherUser) < 0 ? otherUser : userId;
+        UUID userIdToDelete = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID otherUserId = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
-        Swipe swipe = new Swipe();
-        swipe.setUser1Id(user1);
-        swipe.setUser2Id(user2);
-        swipe.setIsLikedByUser1(true);
-        swipe.setIsLikedByUser2(false);
-        swipeRepository.save(swipe);
+        saveSwipe(userIdToDelete, otherUserId, true, false);
 
-        String rateLimitKey = redisPrefixesProperties.limitKeyPrefix() + userId;
+        String rateLimitKey = redisPrefixesProperties.limitKeyPrefix() + userIdToDelete;
         stringRedisTemplate.opsForValue().set(rateLimitKey, "3");
 
-        accountDeletionService.deleteUserData(userId);
+        accountDeletionService.deleteUserData(userIdToDelete);
 
-        assertEquals(0, swipeRepository.count());
-        assertFalse(Boolean.TRUE.equals(stringRedisTemplate.hasKey(rateLimitKey)));
+        assertEquals(0, swipeRepository.count(), "Swipe should be deleted from DB");
+        assertFalse(Boolean.TRUE.equals(stringRedisTemplate.hasKey(rateLimitKey)), "Rate limit key should be deleted from Redis");
+    }
+
+    private void saveSwipe(UUID initiator, UUID target, boolean initiatorLikes, boolean targetLikes) {
+        boolean isInitiatorUser1 = initiator.toString().compareTo(target.toString()) < 0;
+
+        Swipe swipe = new Swipe();
+        swipe.setUser1Id(isInitiatorUser1 ? initiator : target);
+        swipe.setUser2Id(isInitiatorUser1 ? target : initiator);
+        swipe.setIsLikedByUser1(isInitiatorUser1 ? initiatorLikes : targetLikes);
+        swipe.setIsLikedByUser2(isInitiatorUser1 ? targetLikes : initiatorLikes);
+
+        swipeRepository.save(swipe);
     }
 }
