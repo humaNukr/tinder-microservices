@@ -9,13 +9,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 
-@Component
 @RequiredArgsConstructor
 public class GatewayAuthFilter extends OncePerRequestFilter {
 
@@ -24,9 +22,6 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        if (!gatewayAuthProperties.enabled()) {
-            return true;
-        }
         String path = request.getRequestURI();
         if (!path.startsWith("/api/")) {
             return true;

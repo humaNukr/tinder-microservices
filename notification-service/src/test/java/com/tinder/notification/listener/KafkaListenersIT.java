@@ -25,6 +25,7 @@ import java.util.UUID;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("Kafka Listeners — Integration Tests")
@@ -100,11 +101,11 @@ class KafkaListenersIT extends BaseIT {
 
         await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
             assertTrue(inboxEventRepository.existsById(eventId));
-                assertEquals(1, notificationRepository.countByUserId(recipientId));
-                var notification = notificationRepository.findAllByUserId(recipientId, PageRequest.of(0, 1))
-                        .getContent().getFirst();
-                assertEquals("Hello there", notification.getBody());
-                assertEquals(NotificationType.MESSAGE, notification.getType());
+            assertEquals(1, notificationRepository.countByUserId(recipientId));
+            var notification = notificationRepository.findAllByUserId(recipientId, PageRequest.of(0, 1))
+                    .getContent().getFirst();
+            assertEquals("Hello there", notification.getBody());
+            assertEquals(NotificationType.MESSAGE, notification.getType());
         });
     }
 
@@ -114,13 +115,13 @@ class KafkaListenersIT extends BaseIT {
         UUID eventId = UUID.randomUUID();
         publishMessageEvent(messageEvent(eventId, "IMAGE", null));
 
-        await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofMillis(200)).untilAsserted(() ->
-                assertEquals(
-                        "📷 User sent a media file",
-                        notificationRepository.findAllByUserId(recipientId, PageRequest.of(0, 1))
-                                .getContent().getFirst().getBody()
-                )
-        );
+        await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            var page = notificationRepository.findAllByUserId(recipientId, PageRequest.of(0, 1));
+
+            assertFalse(page.isEmpty(), "Notification was not saved in DB");
+
+            assertEquals("📷 User sent a media file", page.getContent().get(0).getBody());
+        });
     }
 
     @Test

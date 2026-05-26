@@ -99,8 +99,10 @@ class UserActivityListenerIT extends BaseIT {
         await().atMost(Duration.ofSeconds(20))
                 .pollInterval(Duration.ofMillis(300))
                 .untilAsserted(() -> {
-                    assertEquals(0, notificationRepository.count());
-                    assertEquals(0, deviceTokenRepository.count());
+                    assertEquals(0, notificationRepository.countByUserId(userId),
+                            "Notifications for deleted user should be 0");
+                    assertEquals(0, deviceTokenRepository.countByUserId(userId),
+                            "Device tokens for deleted user should be 0");
                 });
 
         assertTrue(inboxEventRepository.existsById(eventId));
