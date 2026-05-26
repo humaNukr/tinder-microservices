@@ -5,6 +5,6 @@ import com.tinder.swipe.dto.swipe.SwipeResponseDto;
 
 import java.util.UUID;
 
-public interface SwipeSevice {
+public interface SwipeService {
     SwipeResponseDto processSwipe(UUID actorId, SwipeRequestDto requestDto);
 }

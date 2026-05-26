@@ -8,4 +8,5 @@ public record SwipeCreatedEvent(
         UUID swipedId,
         boolean isLiked,
         Instant timestamp
-) {}
+) {
+}

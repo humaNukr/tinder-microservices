@@ -1,0 +1,44 @@
+server:
+  port: 0
+
+spring:
+  task:
+    scheduling:
+      enabled: false
+
+  kafka:
+    producer:
+      properties:
+        spring.json.add.type.headers: false
+        spring.json.trusted.packages: com.tinder.swipe.event
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  liquibase:
+    enabled: true
+
+app:
+  kafka:
+    topics:
+      match: match-events-test
+      swipe: swipe-events-test
+  swipe:
+    rate-limit:
+      max-likes-per-day: 3
+  redis:
+    prefixes:
+      limit-key-prefix: "swipe:rate_limit:test:"
+
+outbox:
+  scheduler:
+    batch-size: 10
+    batch-processing-time: 15
+    fixed-delay: 60000
+    cleanup-cron: "0 0 0 1 1 ?"
+
+logging:
+  level:
+    com.tinder.swipe: DEBUG

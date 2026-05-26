@@ -1,14 +1,14 @@
 package com.tinder.swipe.scheduler;
 
 import com.tinder.swipe.entity.OutboxEvent;
-import com.tinder.swipe.repository.OutboxRepository;
+import com.tinder.swipe.properties.OutboxSchedulerProperties;
+import com.tinder.swipe.service.impl.OutboxRelayTxHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,34 +21,32 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class OutboxRelayWorker {
 
-    private final OutboxRepository outboxRepository;
+    private final OutboxRelayTxHelper outboxRelayTxHelper;
+    private final OutboxSchedulerProperties outboxSchedulerProperties;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    @Value("${outbox.scheduler.batch-size}")
-    private int batchSize;
-    @Value("${outbox.scheduler.batch-processing-time}")
-    private int batchProcessingTime;
 
     @Scheduled(fixedDelayString = "${outbox.scheduler.fixed-delay}")
-    @Transactional
+    @SchedulerLock(name = "outboxRelay", lockAtLeastFor = "2s", lockAtMostFor = "10m")
     public void processOutboxEvents() {
-        List<OutboxEvent> events = outboxRepository.findAndLockUnprocessedEvents(batchSize);
-        if (events.isEmpty()) return;
+        List<OutboxEvent> events = outboxRelayTxHelper.findAndLockUnprocessed(
+                outboxSchedulerProperties.batchSize());
+        if (events.isEmpty()) {
+            return;
+        }
 
         List<CompletableFuture<OutboxEvent>> futures = events.stream()
-                .map(event -> kafkaTemplate.send
-                                (
-                                        event.getTopic(),
-                                        String.valueOf(event.getId()),
-                                        event.getPayload()
-                                )
+                .map(event -> kafkaTemplate.send(
+                                event.getTopic(),
+                                String.valueOf(event.getId()),
+                                event.getPayload())
                         .thenApply(sendResult -> event)
                         .exceptionally(ex -> {
                             log.error("Failed to send event {}", event.getId(), ex);
                             return null;
-                        })
-                )
+                        }))
                 .toList();
 
+        int batchProcessingTime = outboxSchedulerProperties.batchProcessingTime();
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .get(batchProcessingTime, TimeUnit.SECONDS);
@@ -60,13 +58,13 @@ public class OutboxRelayWorker {
 
         List<OutboxEvent> successfulEvents = futures.stream()
                 .filter(CompletableFuture::isDone)
+                .filter(future -> !future.isCompletedExceptionally())
                 .map(CompletableFuture::join)
                 .filter(Objects::nonNull)
-                .peek(event -> event.setIsSent(true))
                 .toList();
 
         if (!successfulEvents.isEmpty()) {
-            outboxRepository.saveAll(successfulEvents);
+            outboxRelayTxHelper.markAsSent(successfulEvents);
             log.debug("Successfully processed and saved {}/{} events", successfulEvents.size(), events.size());
         }
     }
