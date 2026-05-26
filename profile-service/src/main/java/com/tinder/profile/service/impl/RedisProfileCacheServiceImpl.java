@@ -19,6 +19,10 @@ public class RedisProfileCacheServiceImpl implements ProfileCacheService {
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
 
+    private static String cacheKey(UUID userId) {
+        return "user:" + userId + ":profile";
+    }
+
     @Override
     public Optional<ProfileResponse> getCachedProfile(UUID userId) {
         String key = cacheKey(userId);
@@ -48,9 +52,5 @@ public class RedisProfileCacheServiceImpl implements ProfileCacheService {
     @Override
     public void evictProfile(UUID userId) {
         stringRedisTemplate.delete(cacheKey(userId));
-    }
-
-    private static String cacheKey(UUID userId) {
-        return "user:" + userId + ":profile";
     }
 }

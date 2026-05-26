@@ -30,7 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb:3.5.12")
     implementation("org.mapstruct:mapstruct:1.6.3")
-    implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("io.minio:minio:9.0.0")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")

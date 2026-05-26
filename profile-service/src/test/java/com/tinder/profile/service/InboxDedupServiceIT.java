@@ -50,6 +50,18 @@ class InboxDedupServiceIT extends BaseIT {
         }
 
         @Test
+        @DisplayName("different event ids are registered independently")
+        void distinctEventIds_BothPersisted() {
+            UUID otherEventId = UUID.randomUUID();
+
+            assertAll(
+                    () -> assertTrue(inboxDedupService.tryRegister(eventId)),
+                    () -> assertTrue(inboxDedupService.tryRegister(otherEventId)),
+                    () -> assertEquals(2, inboxEventRepository.count())
+            );
+        }
+
+        @Test
         @DisplayName("returns false on duplicate without creating second row")
         void duplicateCall_ReturnsFalse() {
             assertTrue(inboxDedupService.tryRegister(eventId));
