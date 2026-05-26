@@ -21,7 +21,7 @@ public class ChatCreationService implements CreateChatUseCase {
     @Override
     @Transactional
     public void createChat(UUID user1Id, UUID user2Id) {
-        Chat chat = Chat.createNewChat(user1Id, user2Id);
+        Chat chat = Chat.createNewChat(UUID.randomUUID(), user1Id, user2Id);
         chat.addParticipant(new ChatParticipant(chat, user1Id));
         chat.addParticipant(new ChatParticipant(chat, user2Id));
 

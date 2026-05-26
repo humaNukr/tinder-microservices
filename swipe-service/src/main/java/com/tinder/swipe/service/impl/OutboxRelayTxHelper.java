@@ -16,12 +16,20 @@ public class OutboxRelayTxHelper {
 
     @Transactional
     public List<OutboxEvent> findAndLockUnprocessed(int limit) {
-        return outboxRepository.findAndLockUnprocessedEvents(limit);
+        List<OutboxEvent> events = outboxRepository.findAndLockUnprocessedEvents(limit);
+        if (events.isEmpty()) {
+            return events;
+        }
+        events.forEach(event -> event.setSent(true));
+        return outboxRepository.saveAll(events);
     }
 
     @Transactional
-    public void markAsSent(List<OutboxEvent> events) {
-        events.forEach(event -> event.setSent(true));
-        outboxRepository.saveAll(events);
+    public void markAsFailed(List<OutboxEvent> failedEvents) {
+        if (failedEvents.isEmpty()) {
+            return;
+        }
+        failedEvents.forEach(event -> event.setSent(false));
+        outboxRepository.saveAll(failedEvents);
     }
 }

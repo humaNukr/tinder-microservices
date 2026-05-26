@@ -37,6 +37,8 @@ public class OtpServiceImpl implements OtpService {
 
 	@Override
 	public boolean validateOtp(String identifier, String code) {
+		otpStorage.checkAndIncrementVerificationAttempts(identifier);
+
 		String savedCode = otpStorage.getOtp(identifier);
 
 		if (savedCode == null || code == null) {

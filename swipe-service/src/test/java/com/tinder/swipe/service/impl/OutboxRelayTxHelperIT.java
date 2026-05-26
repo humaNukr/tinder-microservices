@@ -46,21 +46,23 @@ class OutboxRelayTxHelperIT extends BaseIT {
         var locked = outboxRelayTxHelper.findAndLockUnprocessed(10);
 
         assertEquals(1, locked.size());
-        assertFalse(locked.getFirst().isSent());
+        assertTrue(locked.getFirst().isSent());
     }
 
     @Test
-    @DisplayName("markAsSent() persists sent flag")
-    void markAsSent_SentEvents_UpdatesDatabase() {
+    @DisplayName("markAsFailed() reverts sent flag so event can be retried")
+    void markAsFailed_FailedEvents_RevertsToPending() {
         OutboxEvent event = outboxRepository.save(new OutboxEvent(
                 "swipe-events-test",
                 SwipeTestFixtures.swipeCreatedEvent(
                         SwipeTestFixtures.USER_ONE, SwipeTestFixtures.USER_TWO, true),
                 LocalDateTime.now()));
+        event.setSent(true);
+        outboxRepository.save(event);
 
-        outboxRelayTxHelper.markAsSent(java.util.List.of(event));
+        outboxRelayTxHelper.markAsFailed(java.util.List.of(event));
 
-        assertTrue(outboxRepository.findById(event.getId()).orElseThrow().isSent());
+        assertFalse(outboxRepository.findById(event.getId()).orElseThrow().isSent());
     }
 
     @Test

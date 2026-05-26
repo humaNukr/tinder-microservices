@@ -39,10 +39,10 @@ public class OutboxRelayWorker {
                                 event.getTopic(),
                                 String.valueOf(event.getId()),
                                 event.getPayload())
-                        .thenApply(sendResult -> event)
+                        .thenApply(sendResult -> (OutboxEvent) null)
                         .exceptionally(ex -> {
                             log.error("Failed to send event {}", event.getId(), ex);
-                            return null;
+                            return event;
                         }))
                 .toList();
 
@@ -56,16 +56,15 @@ public class OutboxRelayWorker {
             log.error("Unexpected error while waiting for Kafka batch.", e);
         }
 
-        List<OutboxEvent> successfulEvents = futures.stream()
+        List<OutboxEvent> failedEvents = futures.stream()
                 .filter(CompletableFuture::isDone)
-                .filter(future -> !future.isCompletedExceptionally())
                 .map(CompletableFuture::join)
                 .filter(Objects::nonNull)
                 .toList();
 
-        if (!successfulEvents.isEmpty()) {
-            outboxRelayTxHelper.markAsSent(successfulEvents);
-            log.debug("Successfully processed and saved {}/{} events", successfulEvents.size(), events.size());
+        if (!failedEvents.isEmpty()) {
+            outboxRelayTxHelper.markAsFailed(failedEvents);
+            log.debug("Reverted {} failed events back to pending", failedEvents.size());
         }
     }
 }

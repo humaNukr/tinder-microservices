@@ -41,19 +41,19 @@ class OutboxRelayWorkerTest {
 
     @Test
     @DisplayName("processOutboxEvents() does nothing when queue is empty")
-    void processOutboxEvents_NoEvents_SkipsKafkaAndMarkAsSent() {
+    void processOutboxEvents_NoEvents_SkipsKafkaAndMarkAsFailed() {
         when(outboxSchedulerProperties.batchSize()).thenReturn(10);
         when(outboxRelayTxHelper.findAndLockUnprocessed(10)).thenReturn(List.of());
 
         outboxRelayWorker.processOutboxEvents();
 
         verify(kafkaTemplate, never()).send(anyString(), anyString(), any());
-        verify(outboxRelayTxHelper, never()).markAsSent(anyList());
+        verify(outboxRelayTxHelper, never()).markAsFailed(anyList());
     }
 
     @Test
-    @DisplayName("processOutboxEvents() marks only successfully sent events")
-    void processOutboxEvents_PartialFailure_MarksOnlySuccessful() {
+    @DisplayName("processOutboxEvents() reverts only failed events to pending")
+    void processOutboxEvents_PartialFailure_MarksOnlyFailed() {
         OutboxEvent successEvent = new OutboxEvent("topic-ok", "{}", LocalDateTime.now());
         OutboxEvent failEvent = new OutboxEvent("topic-fail", "{}", LocalDateTime.now());
 
@@ -68,6 +68,6 @@ class OutboxRelayWorkerTest {
 
         outboxRelayWorker.processOutboxEvents();
 
-        verify(outboxRelayTxHelper).markAsSent(List.of(successEvent));
+        verify(outboxRelayTxHelper).markAsFailed(List.of(failEvent));
     }
 }

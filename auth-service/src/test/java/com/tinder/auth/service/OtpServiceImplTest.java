@@ -94,7 +94,10 @@ class OtpServiceImplTest {
 
 			boolean result = otpService.validateOtp(destination, validCode);
 
-			assertAll(() -> assertTrue(result), () -> verify(otpStorage).deleteOtp(destination));
+			assertAll(
+					() -> assertTrue(result),
+					() -> verify(otpStorage).checkAndIncrementVerificationAttempts(destination),
+					() -> verify(otpStorage).deleteOtp(destination));
 		}
 
 		@Test
@@ -105,6 +108,7 @@ class OtpServiceImplTest {
 
             assertAll(
                     () -> assertFalse(result),
+                    () -> verify(otpStorage).checkAndIncrementVerificationAttempts(destination),
                     () -> verify(otpStorage, never()).deleteOtp(anyString())
             );
         }
@@ -117,6 +121,7 @@ class OtpServiceImplTest {
 
             assertAll(
                     () -> assertFalse(result),
+                    () -> verify(otpStorage).checkAndIncrementVerificationAttempts(destination),
                     () -> verify(otpStorage, never()).deleteOtp(anyString())
             );
         }

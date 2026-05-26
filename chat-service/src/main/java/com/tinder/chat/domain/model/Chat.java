@@ -24,14 +24,14 @@ public class Chat {
 
     private Instant createdAt;
 
-    public static Chat createNewChat(UUID userA, UUID userB) {
+    public static Chat createNewChat(UUID id, UUID userA, UUID userB) {
         boolean isALessThanB = userA.toString().compareTo(userB.toString()) < 0;
 
         UUID firstUser = isALessThanB ? userA : userB;
         UUID secondUser = isALessThanB ? userB : userA;
 
         return Chat.builder()
-                .id(UUID.randomUUID())
+                .id(id)
                 .user1Id(firstUser)
                 .user2Id(secondUser)
                 .createdAt(Instant.now())

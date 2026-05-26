@@ -85,6 +85,11 @@ public class SwipeServiceImpl implements SwipeService {
     }
 
 
+    /**
+     * Stable match event id for a user pair (same id regardless of who swiped last).
+     * Uses {@link UUID#nameUUIDFromBytes} (name-based UUID from MD5), not random UUID v4.
+     * Enables inbox dedup across swipe/chat/notification when the same match is published twice.
+     */
     private UUID generateDeterministicMatchId(UUID id1, UUID id2) {
         String pairKey = isFirstUser(id1, id2)
                 ? id1.toString() + "_" + id2.toString()

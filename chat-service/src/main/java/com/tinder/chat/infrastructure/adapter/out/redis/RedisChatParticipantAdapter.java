@@ -8,7 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,11 +42,17 @@ public class RedisChatParticipantAdapter implements ChatParticipantPort {
         log.warn("Cache miss for chat {}. Fallback to PostgreSQL", chatId);
 
         Set<UUID> participants = chatPersistencePort.getChatParticipants(chatId);
+        List<UUID> participantList = new ArrayList<>(participants);
+        if (participantList.size() != 2) {
+            log.warn(
+                    "Expected 2 participants for chat {}, found {}. Returning without caching.",
+                    chatId,
+                    participantList.size());
+            return participants;
+        }
 
-        Iterator<UUID> iterator = participants.iterator();
-        UUID user1Id = iterator.next();
-        UUID user2Id = iterator.next();
-
+        UUID user1Id = participantList.get(0);
+        UUID user2Id = participantList.get(1);
         saveParticipants(chatId, user1Id, user2Id);
 
         return Set.of(user1Id, user2Id);

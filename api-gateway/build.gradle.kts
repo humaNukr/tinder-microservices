@@ -5,6 +5,16 @@ plugins {
     id("com.diffplug.spotless") version "6.25.0"
 }
 
+spotless {
+    java {
+        target("src/**/*.java")
+        eclipse()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
 group = "com.tinder"
 version = "0.0.1-SNAPSHOT"
 description = "api-gateway"
