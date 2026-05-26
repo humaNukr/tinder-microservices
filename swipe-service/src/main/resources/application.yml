@@ -28,6 +28,12 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 app:
+  security:
+    gateway-auth:
+      enabled: true
+      header-name: X-Gateway-Authenticated
+      expected-value: "true"
+      user-id-header: X-User-Id
   kafka:
     topics:
       match: match-events

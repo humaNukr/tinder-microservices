@@ -21,6 +21,9 @@ spring:
       enabled: true
 
 app:
+  security:
+    gateway-auth:
+      enabled: false
   kafka:
     topics:
       swipe-events: swipe-events-test

@@ -1,8 +1,8 @@
-package com.tinder.profile.config;
+package com.tinder.feed.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tinder.profile.dto.error.ErrorResponseDto;
-import com.tinder.profile.properties.GatewayAuthProperties;
+import com.tinder.feed.dto.error.ErrorResponseDto;
+import com.tinder.feed.properties.GatewayAuthProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

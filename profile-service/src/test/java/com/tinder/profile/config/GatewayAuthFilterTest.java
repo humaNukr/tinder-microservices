@@ -37,7 +37,8 @@ class GatewayAuthFilterTest {
                 GATEWAY_HEADER,
                 "true",
                 USER_HEADER,
-                "/api/v1/internal/"
+                "/api/v1/internal/",
+                null
         );
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         filter = new GatewayAuthFilter(properties, objectMapper);

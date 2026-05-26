@@ -1,4 +1,4 @@
-package com.tinder.profile.properties;
+package com.tinder.chat.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

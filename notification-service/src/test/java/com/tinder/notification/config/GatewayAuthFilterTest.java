@@ -37,7 +37,9 @@ class GatewayAuthFilterTest {
                 true,
                 "X-Gateway-Authenticated",
                 "true",
-                "X-User-Id"
+                "X-User-Id",
+                null,
+                null
         );
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         filter = new GatewayAuthFilter(properties, objectMapper);

@@ -22,6 +22,12 @@ spring:
       enabled: true
 
 app:
+  security:
+    gateway-auth:
+      enabled: true
+      header-name: X-Gateway-Authenticated
+      expected-value: "true"
+      user-id-header: X-User-Id
   kafka:
     topics:
       swipe-events: swipe-events

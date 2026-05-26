@@ -1,4 +1,4 @@
-package com.tinder.profile.properties;
+package com.tinder.swipe.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

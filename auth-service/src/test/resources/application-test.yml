@@ -1,3 +1,10 @@
+app:
+  security:
+    gateway-auth:
+      enabled: false
+  google:
+    client-id: "test-google-client-id"
+
 spring:
   mail:
     username: "test@example.com"
@@ -7,7 +14,3 @@ jwt:
   secret: c2VjcmV0LWtleS1mb3ItbWljcm9zZXJ2aWNlcy10aW5kZXItY2xvbmUtcHJvamVjdC1tdXN0LWJlLWxvbmc
   access-token-expiration-ms: 3600000
   refresh-token-expiration-ms: 2592000000
-
-app:
-  google:
-    client-id: "test-google-client-id"

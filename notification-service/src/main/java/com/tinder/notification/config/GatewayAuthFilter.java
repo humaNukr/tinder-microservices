@@ -28,7 +28,15 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
             return true;
         }
         String path = request.getRequestURI();
-        return !path.startsWith("/api/");
+        if (!path.startsWith("/api/")) {
+            return true;
+        }
+        String internalPrefix = gatewayAuthProperties.internalPathPrefix();
+        if (internalPrefix != null && !internalPrefix.isBlank() && path.startsWith(internalPrefix)) {
+            return true;
+        }
+        return gatewayAuthProperties.publicPathPrefixes().stream()
+                .anyMatch(prefix -> !prefix.isBlank() && path.startsWith(prefix));
     }
 
     @Override

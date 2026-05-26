@@ -1,5 +1,6 @@
 package com.tinder.swipe.exception;
 
+import com.tinder.swipe.config.GatewayAuthFilter;
 import com.tinder.swipe.controller.SwipeController;
 import com.tinder.swipe.dto.swipe.SwipeRequestDto;
 import com.tinder.swipe.dto.swipe.SwipeResponseDto;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,7 +26,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = SwipeController.class)
+@WebMvcTest(
+        controllers = SwipeController.class,
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ASSIGNABLE_TYPE,
+                classes = GatewayAuthFilter.class
+        )
+)
 @Import(GlobalExceptionHandler.class)
 @DisplayName("GlobalExceptionHandler")
 class GlobalExceptionHandlerTest {
