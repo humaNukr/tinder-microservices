@@ -1,9 +1,11 @@
 package com.tinder.notification.util;
 
+import com.tinder.notification.provider.PushSender;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.kafka.ConfluentKafkaContainer;
@@ -18,6 +20,9 @@ public abstract class BaseIT {
 
     protected static final ConfluentKafkaContainer KAFKA =
             new ConfluentKafkaContainer("confluentinc/cp-kafka:7.4.3");
+
+    @MockitoBean
+    protected PushSender pushSender;
 
     static {
         POSTGRES.start();

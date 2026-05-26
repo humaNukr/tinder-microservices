@@ -2,6 +2,7 @@ package com.tinder.notification.controller;
 
 import com.tinder.notification.dto.SaveTokenRequest;
 import com.tinder.notification.enums.DeviceType;
+import com.tinder.notification.provider.PushSender;
 import com.tinder.notification.repository.DeviceTokenRepository;
 import com.tinder.notification.util.BaseIT;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.UUID;
 

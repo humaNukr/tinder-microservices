@@ -38,9 +38,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Start Infrastructure (Docker Compose)
-        if: matrix.service != 'api-gateway' && matrix.service != 'notification-service'
+        if: matrix.service != 'api-gateway'
+        working-directory: ./
         run: |
           docker compose up -d
+          sleep 25
+
+      - name: Wait for services (Notification Service)
+        if: matrix.service == 'notification-service'
+        run: |
+          echo "Waiting extra time for Kafka and other services..."
           sleep 15
 
       - name: Check Code Style (Spotless)
@@ -49,4 +56,17 @@ jobs:
 
       - name: Build and Test
         working-directory: ./${{ matrix.service }}
-        run: ./gradlew build --stacktrace
+        run: ./gradlew build --stacktrace --continue
+
+      - name: Upload Test Reports (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.service }}
+          path: ./${{ matrix.service }}/build/reports/tests/
+          retention-days: 7
+
+      - name: Show Docker Logs on Failure
+        if: failure()
+        run: docker compose logs
+        working-directory: ./
