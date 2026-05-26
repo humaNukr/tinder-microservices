@@ -6,5 +6,4 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.UUID;
 
 public interface InboxEventRepository extends MongoRepository<InboxEvent, UUID> {
-    boolean existsByEventId(UUID uuid);
 }

@@ -19,6 +19,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,7 +31,8 @@ public class ProfileSearchRepositoryImpl implements ProfileSearchRepository {
     @Override
     public List<ProfileCandidateDto> findCandidates(
             Gender targetGender, LocalDate minBirthDate, LocalDate maxBirthDate,
-            GeoJsonPoint location, Double maxDistanceKm, List<String> userInterests, int limit
+            GeoJsonPoint location, Double maxDistanceKm, List<String> userInterests, int limit,
+            Set<UUID> excludeUserIds
     ) {
 
         NearQuery nearQuery = NearQuery.near(location)
@@ -38,14 +41,18 @@ public class ProfileSearchRepositoryImpl implements ProfileSearchRepository {
 
         GeoNearOperation geoNear = Aggregation.geoNear(nearQuery, "calculatedDistance");
 
-        AggregationOperation match = Aggregation.match(
-                Criteria.where("gender").is(targetGender)
-                        .and("birthDate").gte(minBirthDate).lte(maxBirthDate)
-        );
+        Criteria matchCriteria = Criteria.where("gender").is(targetGender)
+                .and("birthDate").gte(minBirthDate).lte(maxBirthDate);
+        if (excludeUserIds != null && !excludeUserIds.isEmpty()) {
+            matchCriteria.and("userId").nin(excludeUserIds);
+        }
 
+        AggregationOperation match = Aggregation.match(matchCriteria);
+
+        List<String> safeInterests = userInterests == null ? List.of() : userInterests;
         AggregationExpression sharedInterestsCount = ArrayOperators.Size.lengthOfArray(
                 SetOperators.SetIntersection.arrayAsSet("$interests")
-                        .intersects(userInterests.toArray(new String[0]))
+                        .intersects(safeInterests.toArray(new String[0]))
         );
 
         AggregationExpression scoreFormula = ArithmeticOperators.Subtract.valueOf(

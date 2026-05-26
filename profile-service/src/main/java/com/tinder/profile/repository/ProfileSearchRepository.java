@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public interface ProfileSearchRepository {
     List<ProfileCandidateDto> findCandidates(
@@ -15,6 +17,7 @@ public interface ProfileSearchRepository {
             GeoJsonPoint location,
             Double maxDistanceKm,
             List<String> userInterests,
-            int limit
+            int limit,
+            Set<UUID> excludeUserIds
     );
 }

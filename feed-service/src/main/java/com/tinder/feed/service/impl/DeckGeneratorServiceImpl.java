@@ -11,7 +11,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -37,14 +36,10 @@ public class DeckGeneratorServiceImpl implements DeckGeneratorService {
         }
 
         try {
-            List<UUID> mutableCandidates = new ArrayList<>(profileProvider.fetchCandidates(userId));
             Set<UUID> swipedUsersIds = storageService.fetchSwipedUsers(userId);
+            Set<UUID> exclude = swipedUsersIds != null ? swipedUsersIds : Set.of();
 
-            if (swipedUsersIds != null && !swipedUsersIds.isEmpty()) {
-                mutableCandidates.removeAll(swipedUsersIds);
-            }
-
-            List<UUID> batchCandidates = mutableCandidates.stream()
+            List<UUID> batchCandidates = profileProvider.fetchCandidates(userId, exclude).stream()
                     .limit(feedProperties.deckSize())
                     .toList();
 

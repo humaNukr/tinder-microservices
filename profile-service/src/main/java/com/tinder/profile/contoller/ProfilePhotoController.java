@@ -25,7 +25,7 @@ public class ProfilePhotoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public void uploadPhotos(@RequestPart("files") List<MultipartFile> files, @RequestHeader("X-User-Id") String userId) {
+    public void uploadPhotos(@RequestPart("files") List<MultipartFile> files, @RequestHeader("X-User-Id") UUID userId) {
         profilePhotoFacade.uploadAndAttachPhotos(files, userId);
     }
 

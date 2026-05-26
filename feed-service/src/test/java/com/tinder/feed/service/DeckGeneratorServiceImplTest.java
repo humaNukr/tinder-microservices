@@ -79,7 +79,7 @@ class DeckGeneratorServiceImplTest {
 
             assertThrows(DeckGenerationInProgressException.class, () -> generator.generateDeck(userId));
 
-            verify(profileProvider, never()).fetchCandidates(any());
+            verify(profileProvider, never()).fetchCandidates(any(), any());
             verify(storageService, never()).saveNewDeck(any(), any());
         }
 
@@ -87,7 +87,8 @@ class DeckGeneratorServiceImplTest {
         @DisplayName("releases lock in finally block even when profile fetch throws")
         void profileFetchThrows_LockAlwaysReleased() {
             acquireLock();
-            when(profileProvider.fetchCandidates(userId)).thenThrow(new RuntimeException("timeout"));
+            when(storageService.fetchSwipedUsers(userId)).thenReturn(Set.of());
+            when(profileProvider.fetchCandidates(eq(userId), any())).thenThrow(new RuntimeException("timeout"));
 
             try { generator.generateDeck(userId); } catch (Exception ignored) {}
 
@@ -99,8 +100,8 @@ class DeckGeneratorServiceImplTest {
         void successfulGeneration_LockReleased() {
             acquireLock();
             when(feedProperties.deckSize()).thenReturn(10);
-            when(profileProvider.fetchCandidates(userId)).thenReturn(List.of(c1));
             when(storageService.fetchSwipedUsers(userId)).thenReturn(Set.of());
+            when(profileProvider.fetchCandidates(userId, Set.of())).thenReturn(List.of(c1));
 
             generator.generateDeck(userId);
 
@@ -112,8 +113,8 @@ class DeckGeneratorServiceImplTest {
         void lockKey_IsScopedToUserId() {
             acquireLock();
             when(feedProperties.deckSize()).thenReturn(10);
-            when(profileProvider.fetchCandidates(userId)).thenReturn(List.of());
             when(storageService.fetchSwipedUsers(userId)).thenReturn(Set.of());
+            when(profileProvider.fetchCandidates(userId, Set.of())).thenReturn(List.of());
 
             generator.generateDeck(userId);
 
@@ -134,8 +135,8 @@ class DeckGeneratorServiceImplTest {
         @Test
         @DisplayName("saves all candidates when swipe history is empty")
         void emptyHistory_SavesAllCandidates() {
-            when(profileProvider.fetchCandidates(userId)).thenReturn(List.of(c1, c2));
             when(storageService.fetchSwipedUsers(userId)).thenReturn(Set.of());
+            when(profileProvider.fetchCandidates(userId, Set.of())).thenReturn(List.of(c1, c2));
 
             generator.generateDeck(userId);
 
@@ -145,10 +146,10 @@ class DeckGeneratorServiceImplTest {
         }
 
         @Test
-        @DisplayName("removes already-swiped candidates before saving deck")
-        void swipedCandidatesFiltered_SavesOnlyUnseen() {
-            when(profileProvider.fetchCandidates(userId)).thenReturn(List.of(c1, c2, c3));
+        @DisplayName("passes swiped user ids to profile-service for exclusion")
+        void swipedCandidates_ExcludedAtProfileService() {
             when(storageService.fetchSwipedUsers(userId)).thenReturn(Set.of(c1, c3));
+            when(profileProvider.fetchCandidates(userId, Set.of(c1, c3))).thenReturn(List.of(c2));
 
             generator.generateDeck(userId);
 
@@ -158,8 +159,7 @@ class DeckGeneratorServiceImplTest {
             List<UUID> saved = captor.getValue();
             assertAll(
                     () -> assertEquals(1, saved.size()),
-                    () -> assertTrue(saved.contains(c2)),
-                    () -> assertTrue(saved.stream().noneMatch(id -> id.equals(c1) || id.equals(c3)))
+                    () -> assertTrue(saved.contains(c2))
             );
         }
 
@@ -167,8 +167,8 @@ class DeckGeneratorServiceImplTest {
         @DisplayName("truncates to deckSize when candidates exceed configured limit")
         void candidatesExceedDeckSize_TruncatesCorrectly() {
             when(feedProperties.deckSize()).thenReturn(2);
-            when(profileProvider.fetchCandidates(userId)).thenReturn(List.of(c1, c2, c3));
             when(storageService.fetchSwipedUsers(userId)).thenReturn(Set.of());
+            when(profileProvider.fetchCandidates(userId, Set.of())).thenReturn(List.of(c1, c2, c3));
 
             generator.generateDeck(userId);
 
@@ -178,10 +178,10 @@ class DeckGeneratorServiceImplTest {
         }
 
         @Test
-        @DisplayName("calls saveNewDeck with empty list when all candidates are already swiped")
-        void allCandidatesSwiped_SavesEmptyDeck() {
-            when(profileProvider.fetchCandidates(userId)).thenReturn(List.of(c1, c2));
+        @DisplayName("calls saveNewDeck with empty list when profile returns no candidates")
+        void noCandidates_SavesEmptyDeck() {
             when(storageService.fetchSwipedUsers(userId)).thenReturn(Set.of(c1, c2));
+            when(profileProvider.fetchCandidates(userId, Set.of(c1, c2))).thenReturn(List.of());
 
             generator.generateDeck(userId);
 
