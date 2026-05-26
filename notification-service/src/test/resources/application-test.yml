@@ -36,3 +36,6 @@ logging:
   level:
     com.tinder.notification: DEBUG
     org.springframework.kafka: WARN
+
+jwt:
+  secret: ${JWT_SECRET:default-test-secret-key-which-must-be-long-enough}
