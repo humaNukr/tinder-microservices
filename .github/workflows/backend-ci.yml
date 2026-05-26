@@ -8,7 +8,19 @@ on:
 
 jobs:
   build:
+    name: ${{ matrix.service }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - profile-service
+          - swipe-service
+          - feed-service
+          - chat-service
+          - notification-service
+          - api-gateway
 
     steps:
       - name: Checkout code
@@ -22,18 +34,19 @@ jobs:
           cache: 'gradle'
 
       - name: Make gradlew executable
-        working-directory: ./auth-service
+        working-directory: ./${{ matrix.service }}
         run: chmod +x ./gradlew
 
       - name: Start Infrastructure (Docker Compose)
+        if: matrix.service != 'api-gateway'
         run: |
           docker compose up -d
-          sleep 10
+          sleep 15
 
       - name: Check Code Style (Spotless)
-        working-directory: ./auth-service
+        working-directory: ./${{ matrix.service }}
         run: ./gradlew spotlessCheck
 
       - name: Build and Test
-        working-directory: ./auth-service
+        working-directory: ./${{ matrix.service }}
         run: ./gradlew build

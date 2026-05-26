@@ -7,6 +7,11 @@ spring:
       enabled: false
 
   kafka:
+    listener:
+      auto-startup: false
+    consumer:
+      group-id: swipe-service-test-group
+      auto-offset-reset: earliest
     producer:
       properties:
         spring.json.add.type.headers: false
@@ -28,6 +33,7 @@ app:
     topics:
       match: match-events-test
       swipe: swipe-events-test
+      user-activity: user-activity-events-test
   swipe:
     rate-limit:
       max-likes-per-day: 3

@@ -9,7 +9,6 @@ spring:
     bootstrap-servers: localhost:9092
     consumer:
       auto-offset-reset: earliest
-
   jpa:
     hibernate:
       ddl-auto: none
@@ -29,6 +28,7 @@ app:
     topics:
       message-events: message-events-test
       match-events: match-events-test
+      user-activity: user-activity-events-test
     consumer-groups:
       notification-service: notification-service-test-group
 

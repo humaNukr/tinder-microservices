@@ -3,6 +3,7 @@ package com.tinder.feed.listener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.feed.event.ActivityType;
 import com.tinder.feed.event.UserActivityEvent;
+import com.tinder.feed.processor.AccountDeletionProcessor;
 import com.tinder.feed.service.impl.AsyncDeckGenerator;
 import com.tinder.feed.service.interfaces.FeedStorageService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class UserActivityListener {
 
     private final AsyncDeckGenerator asyncDeckGenerator;
     private final FeedStorageService feedStorageService;
+    private final AccountDeletionProcessor accountDeletionProcessor;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "${app.kafka.topics.user-activity}", groupId = "${spring.kafka.consumer.group-id}")
@@ -34,6 +36,10 @@ public class UserActivityListener {
         if (event.type() == ActivityType.LOGIN) {
             log.info("Cache warming triggered for user {} due to activity {}", event.userId(), event.type());
             asyncDeckGenerator.generateDeckAsync(event.userId());
+        }
+
+        if (event.type() == ActivityType.DELETE_ACCOUNT) {
+            accountDeletionProcessor.process(event);
         }
     }
 }

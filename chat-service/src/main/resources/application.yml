@@ -43,6 +43,7 @@ app:
       message-events: message-events
       minio-chat-media-events: minio-chat-media-events
       user-presence-events: user-presence-events
+      user-activity: user-activity-events
     consumer-groups:
       chat-service: chat-service-group
 

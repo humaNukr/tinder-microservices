@@ -19,6 +19,8 @@ public interface FeedStorageService {
 
     void deleteDeck(UUID userId);
 
+    void deleteUserFeedData(UUID userId);
+
     List<ProfileResponse> getCachedProfiles(List<UUID> usersIds);
 
     void cacheProfiles(List<ProfileResponse> profiles);

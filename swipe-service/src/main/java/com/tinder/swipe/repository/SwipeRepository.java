@@ -5,6 +5,7 @@ import com.tinder.swipe.dto.swipe.SwipeStatusProjection;
 import com.tinder.swipe.entity.Swipe;
 import com.tinder.swipe.entity.SwipeId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -43,4 +44,10 @@ public interface SwipeRepository extends JpaRepository<Swipe, SwipeId> {
             @Param("user1Id") UUID user1Id,
             @Param("user2Id") UUID user2Id,
             @Param("isLiked") Boolean isLiked);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(
+            value = "DELETE FROM swipes WHERE user1_id = :userId OR user2_id = :userId",
+            nativeQuery = true)
+    int deleteAllForUser(@Param("userId") UUID userId);
 }

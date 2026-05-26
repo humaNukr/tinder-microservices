@@ -40,5 +40,6 @@ app:
     topics:
       message-events: message-events
       match-events: match-events
+      user-activity: user-activity-events
     consumer-groups:
       notification-service: notification-group

@@ -23,6 +23,11 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      group-id: swipe-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -38,6 +43,7 @@ app:
     topics:
       match: match-events
       swipe: swipe-events
+      user-activity: user-activity-events
   swipe:
     rate-limit:
       max-likes-per-day: 100

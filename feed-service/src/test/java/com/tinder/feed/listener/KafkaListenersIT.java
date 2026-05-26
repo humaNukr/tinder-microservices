@@ -103,6 +103,28 @@ class KafkaListenersIT extends BaseIT {
     }
 
     @Test
+    @DisplayName("DELETE_ACCOUNT clears deck, history and profile cache")
+    void deleteAccount_ClearsRedisKeys() throws Exception {
+        String deckKey = "user:" + userId + ":deck";
+        String historyKey = "user:" + userId + ":history";
+        String profileKey = "user:" + userId + ":profile";
+
+        redisTemplate.opsForList().rightPush(deckKey, candidate1.toString());
+        redisTemplate.opsForSet().add(historyKey, candidate2.toString());
+        redisTemplate.opsForValue().set(profileKey, "{}");
+
+        UserActivityEvent event = new UserActivityEvent(
+                UUID.randomUUID(), userId, ActivityType.DELETE_ACCOUNT, Instant.now());
+        kafkaTemplate.send(userActivityTopic, userId.toString(), objectMapper.writeValueAsString(event)).get();
+
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
+            assertTrue(Boolean.FALSE.equals(redisTemplate.hasKey(deckKey)));
+            assertTrue(Boolean.FALSE.equals(redisTemplate.hasKey(historyKey)));
+            assertTrue(Boolean.FALSE.equals(redisTemplate.hasKey(profileKey)));
+        });
+    }
+
+    @Test
     @DisplayName("Consumes swipe and saves to Redis history")
     void swipeEvent_SavesToHistorySet() throws Exception {
         UUID swipedId = UUID.randomUUID();

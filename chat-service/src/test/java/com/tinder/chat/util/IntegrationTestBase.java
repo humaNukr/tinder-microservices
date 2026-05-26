@@ -30,7 +30,9 @@ import org.testcontainers.utility.DockerImageName;
         "app.kafka.topics.message-events=message-events",
         "app.kafka.topics.minio-chat-media-events=minio-chat-media-events",
         "app.kafka.topics.user-presence-events=user-presence-events",
-        "spring.kafka.consumer.auto-offset-reset=earliest"
+        "app.kafka.topics.user-activity=user-activity-events-test",
+        "spring.kafka.consumer.auto-offset-reset=earliest",
+        "spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.StringSerializer"
 })
 public abstract class IntegrationTestBase {
 

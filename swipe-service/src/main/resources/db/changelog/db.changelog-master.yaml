@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/02-create-outbox-events-table.sql
   - include:
       file: db/changelog/changes/03-create-shedlock-table.sql
+  - include:
+      file: db/changelog/changes/04-create-inbox-events-table.sql

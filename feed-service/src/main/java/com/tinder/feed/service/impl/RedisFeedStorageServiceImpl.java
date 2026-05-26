@@ -80,6 +80,15 @@ public class RedisFeedStorageServiceImpl implements FeedStorageService {
     }
 
     @Override
+    public void deleteUserFeedData(UUID userId) {
+        redisTemplate.delete(List.of(
+                "user:" + userId + ":deck",
+                "user:" + userId + ":history",
+                "user:" + userId + ":profile"));
+        log.info("Deleted feed Redis keys for user {}", userId);
+    }
+
+    @Override
     public List<ProfileResponse> getCachedProfiles(List<UUID> usersIds) {
         if (usersIds == null || usersIds.isEmpty()) return new ArrayList<>();
 
