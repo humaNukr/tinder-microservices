@@ -76,7 +76,6 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Centralized authentication via JWT validation
   - Dynamic request routing to microservices based on paths
   - Rate limiting using Redis (prevents abuse)
-  - Circuit breakers with Resilience4j (fault tolerance)
   - Request/response logging and monitoring
 - **Configuration**: Route definitions for each microservice, JWT public key validation
 - **Security**: Validates JWT tokens before forwarding requests to downstream services
@@ -108,7 +107,8 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Message persistence with read receipts
   - Media file upload (images, videos) via MinIO
   - Kafka events for new message notifications
-  - Message pagination for history
+  - **Cursor-based (Keyset) Pagination** for message history - no performance degradation on large datasets, ideal for infinite scroll
+  - **CQRS Pattern**: Clear separation between QueryService (e.g., ChatListQueryService for reading) and UseCase (e.g., SendMessageUseCase for commands)
   - Typing indicators
   - Online/offline status tracking
   - Conversation room management
@@ -129,7 +129,6 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Age and preference matching
   - Consumes profile updates from Kafka for cache invalidation
   - Pagination support for large feeds
-  - A/B testing ready architecture
 - **Caching Strategy**:
   - Feed results cached in Redis with TTL
   - Cache invalidated on profile updates via Kafka events
@@ -162,6 +161,7 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Like/Dislike (Swipe) functionality
   - Mutual match detection algorithm
   - Distributed locking with ShedLock (prevents duplicate matches)
+  - **Product Rate Limiting**: SwipeRateLimiterService enforces swipe limits per user (business logic for premium monetization)
   - Swipe statistics and analytics
   - Undo functionality (time-limited)
   - Swipe history tracking
@@ -230,7 +230,8 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
 - **MinIO 9.0** - S3-compatible object storage
   - Media file storage (images, videos)
   - Bucket-based organization
-  - Event notifications to Kafka on file uploads
+  - **Event-Driven Storage**: MinIO acts as Event Producer, automatically publishing events to Kafka on file uploads via MinioMediaEventKafkaAdapter
+  - Asynchronous media processing pipeline: Upload → MinIO Event → Kafka → Chat Service consumes → Attach to message
   - MinIO Client (mc) for management operations
 
 ### Security & Authentication
@@ -251,10 +252,6 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Prevents duplicate scheduled task execution
   - JDBC-based lock storage
   - Lock expiration handling
-- **Resilience4j 2.4.0** - Fault tolerance patterns
-  - Circuit breakers for external service calls
-  - Retry mechanisms with exponential backoff
-  - Rate limiting
   - Bulkhead patterns
 - **Spring Retry** - Declarative retry support
 - **Hypersistence Utils 3.9.4** - Hibernate utilities
@@ -324,25 +321,39 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
 
 ### Architectural Patterns
 
-1. **Microservices Architecture**
+1. **Hexagonal Architecture (Ports and Adapters)**
+   - Clean separation between domain logic and external concerns
+   - Application layer organized into ports (in/out) for input/output
+   - Infrastructure adapters implement ports (REST, Kafka, Database)
+   - Domain layer remains isolated from frameworks and databases
+   - Example structure in chat-service: `application/port/in`, `application/port/out`, `infrastructure/adapter`, `domain/model`
+
+2. **Domain-Driven Design (DDD)**
+   - Rich domain models with business logic encapsulation
+   - Bounded contexts per microservice (Chat, Swipe, Profile, etc.)
+   - Domain events for cross-context communication
+   - Aggregates and value objects for complex domain modeling
+
+3. **Microservices Architecture**
    - Each service is independently deployable
    - Services communicate via well-defined APIs
    - Database-per-service pattern for data autonomy
    - Horizontal scaling per service based on load
 
-2. **API Gateway Pattern**
+4. **API Gateway Pattern**
    - Single entry point for all client requests
    - Centralized authentication and authorization
    - Request routing and load balancing
-   - Rate limiting and circuit breaking
+   - Rate limiting
 
-3. **Event-Driven Architecture**
+5. **Event-Driven Architecture**
    - Asynchronous communication via Kafka
    - Loose coupling between services
    - Event sourcing for audit trails
    - Eventually consistent data across services
+   - Distributed Saga for account deletion (GDPR compliance)
 
-4. **CQRS (Command Query Responsibility Segregation)**
+6. **CQRS (Command Query Responsibility Segregation)**
    - Separate read and write models in some services
    - Optimized read models for feed generation
    - Write models for data consistency
@@ -984,6 +995,13 @@ This project was built focusing on distributed systems patterns and production r
 
 ## 🚀 Quick Start
 
+### Docker Compose Files
+
+This repository includes two Docker Compose files:
+
+- **docker-compose.yml** - Starts infrastructure only (databases, Kafka, Redis, MinIO) for convenient development in IDE without running services in containers
+- **docker-compose.full.yml** - Deploys the entire microservices ecosystem in containers (all services + infrastructure) for quick demo or evaluation
+
 ### Option 1: Quick Demo (One Command)
 
 For a quick demo or evaluation without installing Java/Gradle locally, use the full Docker Compose setup:
@@ -1221,10 +1239,9 @@ Testcontainers spin up real database and Kafka instances for testing, ensuring t
 1. **Distributed Transactions**: Event-driven architecture with Kafka for eventual consistency
 2. **Real-time Communication**: WebSocket for instant messaging
 3. **Scalability**: Each service can be scaled independently
-4. **Fault Tolerance**: Circuit breakers with Resilience4j
-5. **Data Consistency**: Database-per-service pattern with event synchronization
-6. **Media Storage**: MinIO for S3-compatible file storage
-7. **Distributed Locking**: ShedLock prevents duplicate match processing
+4. **Data Consistency**: Database-per-service pattern with event synchronization
+5. **Media Storage**: MinIO for S3-compatible file storage
+6. **Distributed Locking**: ShedLock prevents duplicate match processing
 8. **Caching Strategy**: Redis for frequently accessed data (feed, sessions)
 
 ### Performance Optimizations
@@ -1273,6 +1290,8 @@ Testcontainers spin up real database and Kafka instances for testing, ensuring t
 - [ ] Add monitoring with Prometheus and Grafana
 - [ ] Implement distributed tracing with Jaeger
 - [ ] Add end-to-end tests with Playwright
+- [ ] Implement Circuit Breakers with Resilience4j for fault tolerance
+- [ ] Implement A/B testing framework for feed algorithms
 
 ### Long-term
 - [ ] Add Elasticsearch for advanced search
