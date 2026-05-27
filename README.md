@@ -326,6 +326,7 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
    - Application layer organized into ports (in/out) for input/output
    - Infrastructure adapters implement ports (REST, Kafka, Database)
    - Domain layer remains isolated from frameworks and databases
+   - **Applied to Chat Service**: Chosen for Chat Service due to complex I/O operations (WebSocket, Kafka, MinIO, PostgreSQL) and horizontal scaling requirements via Redis Pub/Sub. Other services have simpler I/O patterns and don't require this architectural overhead
    - Example structure in chat-service: `application/port/in`, `application/port/out`, `infrastructure/adapter`, `domain/model`
 
 2. **Domain-Driven Design (DDD)**
