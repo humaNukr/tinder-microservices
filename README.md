@@ -202,7 +202,6 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
 - **Spring WebSocket** - WebSocket support with STOMP messaging
 - **Spring Mail** - Email sending with Thymeleaf templates
 - **Spring Validation** - Bean validation (JSR-380)
-- **Spring Boot Actuator** - Production-ready monitoring endpoints
 
 ### Databases & Data Stores
 - **PostgreSQL 15** - Relational databases (auth, chat, swipe, notification)
