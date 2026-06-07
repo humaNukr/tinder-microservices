@@ -6,6 +6,7 @@ import com.tinder.auth.publisher.MessageBroker;
 import com.tinder.auth.service.interfaces.OutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +26,7 @@ public class OutboxRelayWorker {
 	private final OutboxSchedulerProperties properties;
 
 	@Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")
+	@SchedulerLock(name = "outboxRelay", lockAtLeastFor = "2s", lockAtMostFor = "10m")
 	public void processOutboxEvents() {
 
 		List<OutboxEvent> events = outboxService.fetchAndLock(properties.batchSize());

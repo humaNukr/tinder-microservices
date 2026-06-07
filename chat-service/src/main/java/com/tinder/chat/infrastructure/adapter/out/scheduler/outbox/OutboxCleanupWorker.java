@@ -3,6 +3,7 @@ package com.tinder.chat.infrastructure.adapter.out.scheduler.outbox;
 import com.tinder.chat.infrastructure.adapter.out.persistence.outbox.OutboxJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ public class OutboxCleanupWorker {
     private final OutboxJpaRepository outboxRepository;
 
     @Scheduled(cron = "${app.outbox.scheduler.cleanup-cron}")
+    @SchedulerLock(name = "outboxCleanup", lockAtLeastFor = "1m", lockAtMostFor = "30m")
     @Transactional
     public void cleanupOutbox() {
         LocalDateTime threshold = LocalDateTime.now().minusDays(7);

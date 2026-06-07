@@ -3,6 +3,7 @@ package com.tinder.chat.infrastructure.adapter.out.scheduler.inbox;
 import com.tinder.chat.infrastructure.adapter.out.persistence.inbox.InboxEventJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ public class InboxCleanupWorker {
     private final InboxEventJpaRepository inboxRepository;
 
     @Scheduled(cron = "${app.inbox.scheduler.cleanup-cron}")
+    @SchedulerLock(name = "inboxCleanup", lockAtLeastFor = "1m", lockAtMostFor = "30m")
     @Transactional
     public void cleanupInbox() {
         Instant threshold = Instant.now().minus(7, ChronoUnit.DAYS);

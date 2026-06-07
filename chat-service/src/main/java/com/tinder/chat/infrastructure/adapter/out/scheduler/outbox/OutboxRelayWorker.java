@@ -6,6 +6,7 @@ import com.tinder.chat.infrastructure.adapter.out.scheduler.outbox.port.OutboxSt
 import com.tinder.chat.infrastructure.config.properties.OutboxSchedulerProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ public class OutboxRelayWorker {
     private final OutboxSchedulerProperties properties;
 
     @Scheduled(fixedDelayString = "${app.outbox.scheduler.fixed-delay}")
+    @SchedulerLock(name = "outboxRelay", lockAtLeastFor = "2s", lockAtMostFor = "10m")
     public void processOutboxEvents() {
 
         List<OutboxEventEntity> events = storagePort.fetchAndLock(properties.batchSize());
