@@ -44,7 +44,7 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
        ▼                                                             ▼
 ┌──────────────────┐              ┌──────────────────┐              ┌──────────────────┐
 │   Auth Service   │              │  Profile Service │              │  Swipe Service   │
-│   (Port 8081)    │              │   (Port 8084)    │              │   (Port 8085)    │
+│   (Port 8081)    │              │   (Port 8082)    │              │   (Port 8083)    │
 │   PostgreSQL     │              │   MongoDB        │              │   PostgreSQL     │
 └──────────────────┘              └──────────────────┘              └──────────────────┘
        │                                                             │
@@ -52,8 +52,8 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
        ▼                                                             ▼
 ┌──────────────────┐              ┌──────────────────┐              ┌──────────────────┐
 │   Chat Service   │              │   Feed Service   │              │  Notification    │
-│   (Port 8082)    │              │   (Port 8083)    │              │   Service        │
-│   PostgreSQL     │              │   Redis Cache    │              │   (Port 8086)    │
+│   (Port 8084)    │              │   (Port 8086)    │              │   Service        │
+│   PostgreSQL     │              │   Redis Cache    │              │   (Port 8085)    │
 │   WebSocket      │              │                  │              │   PostgreSQL     │
 └──────────────────┘              └──────────────────┘              └──────────────────┘
        │                                                             │
@@ -98,7 +98,43 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - `UserDeleted` - When account is deleted
 - **Security**: Password strength validation, email verification required, secure token storage
 
-### 3. Chat Service (Port 8082)
+### 3. Profile Service (Port 8082)
+- **Responsibility**: User profile management, photo handling, preferences
+- **Database**: MongoDB 7.0 (flexible schema for evolving profile data)
+- **Tech Stack**: Spring Data MongoDB, MinIO, Spring Kafka, MapStruct
+- **Key Features**:
+  - Profile CRUD operations with validation
+  - Photo upload/management via MinIO
+  - Profile preferences (age range, distance, interests, gender)
+  - Geo-location support with GeoJSON
+  - Profile visibility settings
+  - Photo moderation ready architecture
+  - Interest-based matching tags
+- **Events**:
+  - Publishes: `ProfileCreated`, `ProfileUpdated`, `ProfileDeleted`
+  - Consumes: `UserCreated` (creates initial profile)
+- **Data Model**: Flexible MongoDB schema with embedded arrays for photos/interests
+- **Security**: Profile ownership validation, photo upload limits, content type validation
+
+### 4. Swipe Service (Port 8083)
+- **Responsibility**: Swipe mechanics, match detection, statistics
+- **Database**: PostgreSQL 15 with Liquibase migrations
+- **Tech Stack**: Spring Data JPA, ShedLock, Spring Kafka, Hypersistence Utils
+- **Key Features**:
+  - Like/Dislike (Swipe) functionality
+  - Mutual match detection algorithm
+  - Distributed locking with ShedLock (prevents duplicate matches)
+  - **Product Rate Limiting**: SwipeRateLimiterService enforces swipe limits per user (business logic for premium monetization)
+  - Swipe statistics and analytics
+  - Undo functionality (time-limited)
+  - Swipe history tracking
+- **Events**:
+  - Publishes: `SwipeRecorded`, `UserMatched`, `MatchRevoked`
+  - Consumes: `UserDeleted` (cleans up swipe data)
+- **Concurrency Control**: ShedLock ensures only one instance processes match detection
+- **Performance**: Batch processing for match detection, database indexing on user pairs
+
+### 5. Chat Service (Port 8084)
 - **Responsibility**: Real-time messaging, media handling, conversation management
 - **Database**: PostgreSQL 15 with Liquibase migrations
 - **Tech Stack**: Spring WebSocket, STOMP messaging, MinIO, Spring Kafka, Redis
@@ -118,60 +154,7 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
 - **Performance**: Redis for caching active sessions, message batching
 - **Security**: JWT validation for WebSocket connections, file type validation
 
-### 4. Feed Service (Port 8083)
-- **Responsibility**: Personalized feed generation, user recommendations
-- **Database**: Redis (no persistent storage - ephemeral cache)
-- **Tech Stack**: Spring Data Redis, Spring Kafka, REST Client (ProfileRestAdapter)
-- **Key Features**:
-  - Generates personalized user feed based on preferences
-  - Redis caching for high-performance feed generation
-  - Geographic filtering (distance-based)
-  - Age and preference matching
-  - Consumes profile updates from Kafka for cache invalidation
-  - Pagination support for large feeds
-- **Caching Strategy**:
-  - Feed results cached in Redis with TTL
-  - Cache invalidated on profile updates via Kafka events
-  - User-specific cache keys
-- **Performance**: Sub-second feed generation, Redis pipelining
-
-### 5. Profile Service (Port 8084)
-- **Responsibility**: User profile management, photo handling, preferences
-- **Database**: MongoDB 7.0 (flexible schema for evolving profile data)
-- **Tech Stack**: Spring Data MongoDB, MinIO, Spring Kafka, MapStruct
-- **Key Features**:
-  - Profile CRUD operations with validation
-  - Photo upload/management via MinIO
-  - Profile preferences (age range, distance, interests, gender)
-  - Geo-location support with GeoJSON
-  - Profile visibility settings
-  - Photo moderation ready architecture
-  - Interest-based matching tags
-- **Events**:
-  - Publishes: `ProfileCreated`, `ProfileUpdated`, `ProfileDeleted`
-  - Consumes: `UserCreated` (creates initial profile)
-- **Data Model**: Flexible MongoDB schema with embedded arrays for photos/interests
-- **Security**: Profile ownership validation, photo upload limits, content type validation
-
-### 6. Swipe Service (Port 8085)
-- **Responsibility**: Swipe mechanics, match detection, statistics
-- **Database**: PostgreSQL 15 with Liquibase migrations
-- **Tech Stack**: Spring Data JPA, ShedLock, Spring Kafka, Hypersistence Utils
-- **Key Features**:
-  - Like/Dislike (Swipe) functionality
-  - Mutual match detection algorithm
-  - Distributed locking with ShedLock (prevents duplicate matches)
-  - **Product Rate Limiting**: SwipeRateLimiterService enforces swipe limits per user (business logic for premium monetization)
-  - Swipe statistics and analytics
-  - Undo functionality (time-limited)
-  - Swipe history tracking
-- **Events**:
-  - Publishes: `SwipeRecorded`, `UserMatched`, `MatchRevoked`
-  - Consumes: `UserDeleted` (cleans up swipe data)
-- **Concurrency Control**: ShedLock ensures only one instance processes match detection
-- **Performance**: Batch processing for match detection, database indexing on user pairs
-
-### 7. Notification Service (Port 8086)
+### 6. Notification Service (Port 8085)
 - **Responsibility**: Push notifications, notification preferences
 - **Database**: PostgreSQL 15 with Liquibase migrations
 - **Tech Stack**: Firebase Admin SDK, Spring Kafka, MapStruct
@@ -187,6 +170,23 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Consumes: `UserMatched`, `MessageSent`, `SwipeRecorded`
   - Publishes: `NotificationSent`, `NotificationFailed`
 - **Reliability**: Retry mechanism with exponential backoff, dead letter queue
+
+### 7. Feed Service (Port 8086)
+- **Responsibility**: Personalized feed generation, user recommendations
+- **Database**: Redis (no persistent storage - ephemeral cache)
+- **Tech Stack**: Spring Data Redis, Spring Kafka, REST Client (ProfileRestAdapter)
+- **Key Features**:
+  - Generates personalized user feed based on preferences
+  - Redis caching for high-performance feed generation
+  - Geographic filtering (distance-based)
+  - Age and preference matching
+  - Consumes profile updates from Kafka for cache invalidation
+  - Pagination support for large feeds
+- **Caching Strategy**:
+  - Feed results cached in Redis with TTL
+  - Cache invalidated on profile updates via Kafka events
+  - User-specific cache keys
+- **Performance**: Sub-second feed generation, Redis pipelining
 
 ## 🛠️ Technology Stack
 
@@ -304,6 +304,17 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Health checks
   - Metrics (Micrometer)
   - Info endpoints
+- **Micrometer Tracing** - Distributed tracing
+  - Automatic trace propagation across services
+  - Integration with Zipkin for trace visualization
+  - Span timing and performance metrics
+  - Uses Brave tracer implementation
+  - Used in: all services
+- **Zipkin** - Distributed tracing system
+  - Collects and visualizes trace data
+  - Service dependency mapping
+  - Performance analysis and bottleneck identification
+  - Available at http://localhost:9411
 - **Micrometer** - Metrics collection
   - Prometheus metrics format
   - Custom metrics support
@@ -864,14 +875,6 @@ device_tokens (id, user_id, token, platform, created_at)
 - **Loki**: Grafana Loki for log aggregation
 - **Cloud Logging**: Cloud-based solutions
 
-### Distributed Tracing (Future)
-
-#### Jaeger/Zipkin Integration
-- **Trace Context**: Propagate trace IDs across services
-- **Span Tracking**: Individual operation timing
-- **Service Map**: Visualize service dependencies
-- **Performance Analysis**: Identify bottlenecks
-
 ### Alerting (Future)
 
 #### Alert Conditions
@@ -1301,7 +1304,6 @@ Coverage measured via JaCoCo. Critical business logic and domain layer maintain 
 
 ### Short-term
 - [ ] Add monitoring with Prometheus and Grafana
-- [ ] Implement distributed tracing with Jaeger
 - [ ] Add end-to-end tests with Playwright
 - [ ] Implement A/B testing framework for feed algorithms
 
