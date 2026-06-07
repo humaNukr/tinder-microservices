@@ -44,3 +44,25 @@ app:
     deck-size: 100         # Number of cards kept in Redis after generation
     fetch-limit: 500       # Number of profiles requested from profile-service for selection
     refill-threshold: 20   # Threshold: if fewer than 20 cards remain in the deck, start background refill
+
+resilience4j:
+  retry:
+    instances:
+      profileService:
+        max-attempts: 3
+        wait-duration: 500ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.HttpServerErrorException
+
+  circuitbreaker:
+    instances:
+      profileService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true

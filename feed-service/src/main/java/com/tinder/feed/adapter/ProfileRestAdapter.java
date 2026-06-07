@@ -3,6 +3,8 @@ package com.tinder.feed.adapter;
 import com.tinder.feed.dto.ProfileResponse;
 import com.tinder.feed.properties.FeedProperties;
 import com.tinder.feed.service.interfaces.ProfileProvider;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,13 +36,26 @@ public class ProfileRestAdapter implements ProfileProvider {
     }
 
     @Override
+    @Retry(name = "profileService", fallbackMethod = "fallbackBatchProfiles")
+    @CircuitBreaker(name = "profileService", fallbackMethod = "fallbackBatchProfiles")
     public List<ProfileResponse> batchProfiles(List<UUID> ids) {
-        try {
-            log.info("Fetching batch of profiles for ids {}", ids);
-            return profileClient.batchProfiles(ids);
-        } catch (RestClientException e) {
-            log.error("Error while fetching batch of profiles for ids {}", ids, e);
-            return Collections.emptyList();
-        }
+        log.info("Fetching batch of profiles for ids {}", ids);
+        return profileClient.batchProfiles(ids);
+    }
+
+    private List<ProfileResponse> fallbackBatchProfiles(List<UUID> ids, Exception e) {
+        log.warn("Profile Service is DOWN! Triggering fallback for {} profiles. Reason: {}", ids.size(), e.getMessage());
+
+        return ids.stream()
+                .map(id -> new ProfileResponse(
+                        id,
+                        "Unknown User",
+                        0,
+                        "UNKNOWN",
+                        "Profile is unavailable",
+                        Collections.emptyList(),
+                        List.of("media/default-avatar.png")
+                ))
+                .toList();
     }
 }
