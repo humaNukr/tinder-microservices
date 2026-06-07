@@ -5,6 +5,15 @@ spring:
   application:
     name: auth-service
 
+  management:
+    tracing:
+      enabled: true
+      sampling:
+        probability: 1.0
+    zipkin:
+      tracing:
+        endpoint: ${ZIPKIN_URL:http://localhost:9411/api/v2/spans}
+
   datasource:
     url: jdbc:postgresql://localhost:5432/auth_db
     username: user

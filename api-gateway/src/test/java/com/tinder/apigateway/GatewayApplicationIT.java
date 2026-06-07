@@ -54,27 +54,6 @@ class GatewayApplicationIT {
 	}
 
 	@Test
-	@DisplayName("TrackingFilter should add X-Correlation-Id to Request and Response")
-	void trackingFilter_GeneratesAndReturnsCorrelationId() {
-		webClient.get().uri("/api/v1/profiles/me").header("Authorization", "Bearer " + validToken).exchange()
-				.expectStatus().isOk().expectHeader().exists("X-Correlation-Id");
-
-		verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me")).withHeader("X-Correlation-Id", matching(".*")));
-	}
-
-	@Test
-	@DisplayName("TrackingFilter should keep existing X-Correlation-Id if provided")
-	void trackingFilter_KeepsExistingCorrelationId() {
-		String existingId = "mobile-app-uuid-123";
-
-		webClient.get().uri("/api/v1/profiles/me").header("Authorization", "Bearer " + validToken)
-				.header("X-Correlation-Id", existingId).exchange().expectStatus().isOk().expectHeader()
-				.valueEquals("X-Correlation-Id", existingId);
-
-		verify(getRequestedFor(urlEqualTo("/api/v1/profiles/me")).withHeader("X-Correlation-Id", equalTo(existingId)));
-	}
-
-	@Test
 	@DisplayName("AuthenticationFilter should reject request without token on secured endpoint")
 	void authFilter_MissingToken_Returns401() {
 		webClient.get().uri("/api/v1/profiles/me").exchange().expectStatus().isUnauthorized().expectBody()

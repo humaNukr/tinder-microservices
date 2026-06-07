@@ -1300,11 +1300,9 @@ Coverage measured via JaCoCo. Critical business logic and domain layer maintain 
 ## 🚧 Future Improvements
 
 ### Short-term
-- [ ] Implement rate limiting per user
 - [ ] Add monitoring with Prometheus and Grafana
 - [ ] Implement distributed tracing with Jaeger
 - [ ] Add end-to-end tests with Playwright
-- [ ] Implement Circuit Breakers with Resilience4j for fault tolerance
 - [ ] Implement A/B testing framework for feed algorithms
 
 ### Long-term
