@@ -68,3 +68,7 @@ tasks.jacocoTestReport {
         html.required = true
     }
 }
+
+tasks.withType<JavaExec> {
+    jvmArgs = listOf("-Dfile.encoding=UTF-8")
+}

@@ -304,6 +304,7 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Health checks
   - Metrics (Micrometer)
   - Info endpoints
+  - Prometheus metrics endpoint at /actuator/prometheus
 - **Micrometer Tracing** - Distributed tracing
   - Automatic trace propagation across services
   - Integration with Zipkin for trace visualization
@@ -315,9 +316,16 @@ For detailed architecture diagrams, data flows, and deployment architecture, see
   - Service dependency mapping
   - Performance analysis and bottleneck identification
   - Available at http://localhost:9411
-- **Micrometer** - Metrics collection
-  - Prometheus metrics format
-  - Custom metrics support
+- **Prometheus** - Metrics collection and monitoring
+  - Scrapes metrics from all services every 15 seconds
+  - Time-series database for metric storage
+  - PromQL for flexible querying
+  - Available at http://localhost:9090
+- **Grafana** - Visualization and dashboards
+  - Beautiful dashboards for metrics visualization
+  - Alerting and notification
+  - Pre-built dashboards for JVM, HTTP, Kafka
+  - Available at http://localhost:3000 (admin/admin)
 - **Kafka UI** - Kafka topic and consumer monitoring
 - **MinIO Console** - Object storage management UI
 
@@ -1303,7 +1311,6 @@ Coverage measured via JaCoCo. Critical business logic and domain layer maintain 
 ## 🚧 Future Improvements
 
 ### Short-term
-- [ ] Add monitoring with Prometheus and Grafana
 - [ ] Add end-to-end tests with Playwright
 - [ ] Implement A/B testing framework for feed algorithms
 
