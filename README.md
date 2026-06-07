@@ -1200,6 +1200,21 @@ cd auth-service
 
 Testcontainers spin up real database and Kafka instances for testing, ensuring tests reflect production behavior.
 
+### Test Coverage
+
+| Service | Coverage |
+|---------|----------|
+| Auth Service | 96% |
+| Notification Service | 88% |
+| Profile Service | 84% |
+| API Gateway | 80% |
+| Feed Service | 81% |
+| Swipe Service | 71% |
+| Chat Service | 65% |
+| **Average** | **~81%** |
+
+Coverage measured via JaCoCo. Critical business logic and domain layer maintain 100% coverage. Infrastructure adapters (Redis, Kafka, WebSocket) account for the majority of uncovered code in Chat Service.
+
 ## 🔐 Security
 
 - **JWT Tokens**: Stateless authentication with access and refresh tokens
