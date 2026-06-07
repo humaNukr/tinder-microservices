@@ -26,6 +26,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.4.0")
     implementation("org.springframework.boot:spring-boot-starter-aop")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
     implementation("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.kafka:spring-kafka-test")

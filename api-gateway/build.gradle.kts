@@ -42,6 +42,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-gateway-server-webflux")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")

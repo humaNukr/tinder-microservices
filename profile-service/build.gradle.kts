@@ -35,6 +35,7 @@ dependencies {
     implementation("io.minio:minio:9.0.0")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
     testImplementation("org.springframework.kafka:spring-kafka-test")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")

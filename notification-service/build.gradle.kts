@@ -28,6 +28,7 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.6.3")
     implementation("org.liquibase:liquibase-core")
     implementation("com.google.firebase:firebase-admin:9.8.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")

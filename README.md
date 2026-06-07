@@ -1300,7 +1300,6 @@ Coverage measured via JaCoCo. Critical business logic and domain layer maintain 
 ## 🚧 Future Improvements
 
 ### Short-term
-- [ ] Add API documentation with SpringDoc/OpenAPI
 - [ ] Implement rate limiting per user
 - [ ] Add monitoring with Prometheus and Grafana
 - [ ] Implement distributed tracing with Jaeger

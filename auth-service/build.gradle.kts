@@ -48,6 +48,7 @@ dependencies {
     implementation("org.liquibase:liquibase-core")
     implementation("com.google.api-client:google-api-client:2.9.0")
     implementation("io.hypersistence:hypersistence-utils-hibernate-60:3.9.4")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
     testImplementation("org.springframework.kafka:spring-kafka-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")

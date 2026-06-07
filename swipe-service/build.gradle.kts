@@ -36,6 +36,7 @@ dependencies {
     implementation("org.liquibase:liquibase-core")
     implementation("io.hypersistence:hypersistence-utils-hibernate-60:3.9.4")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
