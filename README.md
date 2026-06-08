@@ -1310,14 +1310,15 @@ Coverage measured via JaCoCo. Critical business logic and domain layer maintain 
 
 ## 🚧 Future Improvements
 
-### Short-term
-- [ ] Add end-to-end tests with Playwright
-- [ ] Implement A/B testing framework for feed algorithms
-
-### Long-term
-- [ ] Add Elasticsearch for advanced search
-- [ ] Implement GraphQL API gateway
-- [ ] Implement service mesh with Istio
+- [ ] Contract testing between services with Pact
+  (currently integration tests are per-service only)
+- [ ] Kubernetes deployment with HPA for horizontal
+  autoscaling (architecture already prepared —
+  stateless services, Redis Pub/Sub for WebSocket)
+- [ ] Service mesh with Istio for mTLS between services
+  and advanced traffic management
+- [ ] Elasticsearch for full-text profile search
+  as a complement to MongoDB geo-queries
 
 ## 📄 License
 
@@ -1335,9 +1336,5 @@ Building this distributed microservices architecture was a significant step forw
 6. **Distributed Locking**: Implementing ShedLock to prevent duplicate scheduled task execution across multiple service instances, which is critical for match detection logic.
 7. **Hybrid Communication**: Recognizing that not all inter-service communication should be asynchronous - some operations require synchronous REST calls for real-time data consistency (e.g., feed generation).
 8. **Container Orchestration**: Gaining hands-on experience with Docker Compose for multi-service orchestration, understanding service dependencies, health checks, and network isolation.
-
-## 👤 Author
-
-Built as a portfolio project demonstrating microservices architecture, event-driven design, and modern Spring Boot practices.
 
 *Developed by **Artem Hrytsenko***
