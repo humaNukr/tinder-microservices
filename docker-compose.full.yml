@@ -10,8 +10,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_REDIS_HOST=shared_redis
-      - SPRING_REDIS_PORT=6379
+      - JWT_SECRET=c3VwZXJzZWNyZXRrZXlmb3Jqd3R0b2tlbmdlbmVyYXRpb24xMjM0NTY3ODkw
+      - SPRING_DATA_REDIS_HOST=shared_redis
+      - SPRING_DATA_REDIS_PORT=6379
     depends_on:
       - shared_redis
     networks:
@@ -24,12 +25,15 @@ services:
     container_name: auth-service
     ports:
       - "8081:8081"
+    env_file:
+      - .env
     environment:
+      - JWT_SECRET=c3VwZXJzZWNyZXRrZXlmb3Jqd3R0b2tlbmdlbmVyYXRpb24xMjM0NTY3ODkw
       - SPRING_DATASOURCE_URL=jdbc:postgresql://auth_postgres:5432/auth_db
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
-      - SPRING_REDIS_HOST=shared_redis
-      - SPRING_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_HOST=shared_redis
+      - SPRING_DATA_REDIS_PORT=6379
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
     depends_on:
       - auth_postgres
@@ -46,16 +50,16 @@ services:
     ports:
       - "8082:8082"
     environment:
+      - JWT_SECRET=c3VwZXJzZWNyZXRrZXlmb3Jqd3R0b2tlbmdlbmVyYXRpb24xMjM0NTY3ODkw
       - SPRING_DATASOURCE_URL=jdbc:postgresql://chat_postgres:5432/chat_db
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
-      - SPRING_REDIS_HOST=shared_redis
-      - SPRING_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_HOST=shared_redis
+      - SPRING_DATA_REDIS_PORT=6379
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
-      - MINIO_ENDPOINT=shared_minio
-      - MINIO_PORT=9000
-      - MINIO_ACCESS_KEY=admin
-      - MINIO_SECRET_KEY=password123
+      - APP_MINIO_URL=http://shared-minio:9000
+      - APP_MINIO_ACCESS_KEY=admin
+      - APP_MINIO_SECRET_KEY=password123
     depends_on:
       - chat_postgres
       - shared_redis
@@ -72,8 +76,9 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - SPRING_REDIS_HOST=shared_redis
-      - SPRING_REDIS_PORT=6379
+      - JWT_SECRET=c3VwZXJzZWNyZXRrZXlmb3Jqd3R0b2tlbmdlbmVyYXRpb24xMjM0NTY3ODkw
+      - SPRING_DATA_REDIS_HOST=shared_redis
+      - SPRING_DATA_REDIS_PORT=6379
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
     depends_on:
       - shared_redis
@@ -89,12 +94,12 @@ services:
     ports:
       - "8084:8084"
     environment:
+      - JWT_SECRET=c3VwZXJzZWNyZXRrZXlmb3Jqd3R0b2tlbmdlbmVyYXRpb24xMjM0NTY3ODkw
       - SPRING_DATA_MONGODB_URI=mongodb://admin:password@profile_mongodb:27017/profile_db?authSource=admin
-      - SPRING_REDIS_HOST=shared_redis
-      - SPRING_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_HOST=shared_redis
+      - SPRING_DATA_REDIS_PORT=6379
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
-      - MINIO_ENDPOINT=shared_minio
-      - MINIO_PORT=9000
+      - MINIO_URL=http://shared-minio:9000
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=password123
     depends_on:
@@ -113,11 +118,12 @@ services:
     ports:
       - "8085:8085"
     environment:
+      - JWT_SECRET=c3VwZXJzZWNyZXRrZXlmb3Jqd3R0b2tlbmdlbmVyYXRpb24xMjM0NTY3ODkw
       - SPRING_DATASOURCE_URL=jdbc:postgresql://swipe_postgres:5432/swipe_db
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
-      - SPRING_REDIS_HOST=shared_redis
-      - SPRING_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_HOST=shared_redis
+      - SPRING_DATA_REDIS_PORT=6379
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=shared_kafka:29092
     depends_on:
       - swipe_postgres
@@ -134,6 +140,7 @@ services:
     ports:
       - "8086:8086"
     environment:
+      - JWT_SECRET=c3VwZXJzZWNyZXRrZXlmb3Jqd3R0b2tlbmdlbmVyYXRpb24xMjM0NTY3ODkw
       - SPRING_DATASOURCE_URL=jdbc:postgresql://notification_postgres:5432/notification_db
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
@@ -262,6 +269,7 @@ services:
       done;
       echo 'MinIO is up! Configuring bucket and events...';
       /usr/bin/mc mb myminio/tinder-chat-media --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/tinder-chat-media;
       /usr/bin/mc event add myminio/tinder-chat-media arn:minio:sqs::1:kafka --event put;
       echo 'MinIO initialization complete.';
       exit 0;
@@ -331,7 +339,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     volumes:
       - grafana-data:/var/lib/grafana
     environment:

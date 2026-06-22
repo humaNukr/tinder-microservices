@@ -117,7 +117,7 @@ app:
 
   services:
     profile:
-      url: http://localhost:8082
+      url: http://profile-service:8082
 
 resilience4j:
   retry:

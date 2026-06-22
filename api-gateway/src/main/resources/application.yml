@@ -21,6 +21,9 @@ spring:
       export:
         prometheus:
           enabled: true
+          
+  codec:
+    max-in-memory-size: 10MB
 
   cloud:
     gateway:
@@ -30,14 +33,21 @@ spring:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
           routes:
             - id: public-media-route
-              uri: http://localhost:9000
+              uri: http://shared-minio:9000
               predicates:
                 - Path=/media/**
               filters:
                 - RewritePath=/media/(?<segment>.*), /tinder-media/$\{segment}
 
+            - id: public-chat-media-route
+              uri: http://shared-minio:9000
+              predicates:
+                - Path=/chat-media/**
+              filters:
+                - RewritePath=/chat-media/(?<segment>.*), /tinder-chat-media/$\{segment}
+
             - id: auth-service
-              uri: http://localhost:8081
+              uri: http://auth-service:8081
               predicates:
                 - Path=/api/v1/auth/**
               filters:
@@ -48,27 +58,27 @@ spring:
                     key-resolver: "#{@ipKeyResolver}"
 
             - id: profile-service
-              uri: http://localhost:8082
+              uri: http://profile-service:8082
               predicates:
                 - Path=/api/v1/profiles,/api/v1/profiles/**
 
             - id: swipe-service
-              uri: http://localhost:8083
+              uri: http://swipe-service:8083
               predicates:
                 - Path=/api/v1/swipes,/api/v1/swipes/**
 
             - id: chat-service
-              uri: http://localhost:8084
+              uri: http://chat-service:8084
               predicates:
                 - Path=/ws/chat/**,/api/v1/chats,/api/v1/chats/**
 
             - id: notification-service
-              uri: http://localhost:8085
+              uri: http://notification-service:8085
               predicates:
                 - Path=/api/v1/notifications,/api/v1/notifications/**
 
             - id: feed-service
-              uri: http://localhost:8086
+              uri: http://feed-service:8086
               predicates:
                 - Path=/api/v1/feed,/api/v1/feed/**
 

@@ -6,8 +6,10 @@ import com.tinder.chat.infrastructure.adapter.out.persistence.entity.ChatJpaEnti
 import com.tinder.chat.infrastructure.adapter.out.persistence.entity.ChatParticipantId;
 import com.tinder.chat.infrastructure.adapter.out.persistence.entity.ChatParticipantJpaEntity;
 import com.tinder.chat.infrastructure.config.MapperConfig;
+import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.util.UUID;
 
@@ -33,4 +35,13 @@ public interface ChatEntityMapper {
         UUID chatId = domain.getChat() != null ? domain.getChat().getId() : null;
         return new ChatParticipantId(chatId, domain.getUserId());
     }
-}
+
+    @AfterMapping
+    default void setParticipantBackReferences(@MappingTarget ChatJpaEntity entity) {
+        if (entity.getParticipants() != null) {
+            for (ChatParticipantJpaEntity participant : entity.getParticipants()) {
+                participant.setChat(entity);
+            }
+        }
+    }
+}

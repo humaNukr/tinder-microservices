@@ -12,6 +12,7 @@ public record MessageResponseDto(
         String content,
         List<ReactionInfoDto> reactions,
         Instant createdAt,
+        Instant editedAt,
         Instant deletedAt
 ) {
 }

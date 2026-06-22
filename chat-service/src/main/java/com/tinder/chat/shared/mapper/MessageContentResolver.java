@@ -20,7 +20,7 @@ public class MessageContentResolver {
 
         if (message.getContentType() != MessageContentType.TEXT) {
             String fileNameWithExt = Paths.get(message.getContent()).getFileName().toString();
-            return String.format("/api/v1/chats/%s/media/%s", message.getChatId(), fileNameWithExt);
+            return String.format("chats/%s/%s", message.getChatId(), fileNameWithExt);
         }
 
         return message.getContent();

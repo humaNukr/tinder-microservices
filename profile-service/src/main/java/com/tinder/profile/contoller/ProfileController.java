@@ -18,6 +18,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 import java.util.UUID;
 
@@ -40,6 +44,15 @@ public class ProfileController {
     @ResponseStatus(HttpStatus.OK)
     public ProfileResponse getProfile(@RequestHeader("X-User-Id") UUID userId) {
         return profileService.getMyProfile(userId);
+    }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public ProfileResponse getProfileById(@PathVariable UUID id) {
+        return profileService.getBatchProfiles(List.of(id))
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
     }
 
     @GetMapping("/me/preferences")

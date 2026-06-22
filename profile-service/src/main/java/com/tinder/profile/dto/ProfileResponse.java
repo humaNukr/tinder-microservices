@@ -12,6 +12,7 @@ public record ProfileResponse(
         Gender gender,
         String bio,
         List<String> interests,
-        List<String> photos
+        List<String> photos,
+        java.time.Instant lastSeen
 ) {
 }

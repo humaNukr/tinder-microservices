@@ -17,8 +17,20 @@ public class GoogleConfig {
 	private final GoogleProperties properties;
 
 	@Bean
-	public GoogleIdTokenVerifier googleIdTokenVerifier() {
-		return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+	public com.google.api.client.http.HttpTransport httpTransport() {
+		return new NetHttpTransport();
+	}
+
+	@Bean
+	public com.google.api.client.json.JsonFactory jsonFactory() {
+		return new GsonFactory();
+	}
+
+	@Bean
+	public GoogleIdTokenVerifier googleIdTokenVerifier(
+			com.google.api.client.http.HttpTransport transport,
+			com.google.api.client.json.JsonFactory jsonFactory) {
+		return new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
 				.setAudience(Collections.singletonList(properties.clientId())).build();
 	}
 }

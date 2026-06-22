@@ -17,6 +17,7 @@ public record MessageEventDto(
         String content,
         List<ReactionInfoDto> reactions,
         Instant createdAt,
+        Instant editedAt,
         Instant deletedAt
 ) {
 }

@@ -21,7 +21,7 @@ public interface AccountDeletionJpaRepository extends JpaRepository<ChatJpaEntit
                             FROM messages m
                             INNER JOIN chats c ON m.chat_id = c.id
                             WHERE (c.user1_id = :userId OR c.user2_id = :userId)
-                              AND m.content_type IN ('IMAGE', 'VIDEO', 'AUDIO')
+                              AND m.content_type IN ('IMAGE', 'VIDEO', 'AUDIO', 'FILE')
                             """,
             nativeQuery = true)
     List<String> findMediaObjectKeysByUserId(@Param("userId") UUID userId);

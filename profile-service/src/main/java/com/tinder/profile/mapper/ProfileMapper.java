@@ -33,6 +33,7 @@ public abstract class ProfileMapper {
 
     @Mapping(target = "age", source = "birthDate", qualifiedByName = "calculateAge")
     @Mapping(target = "photos", qualifiedByName = "buildPublicUrls")
+    @Mapping(target = "lastSeen", expression = "java(profile.getLastSeen() != null ? profile.getLastSeen().toInstant(java.time.ZoneOffset.UTC) : null)")
     public abstract ProfileResponse toDto(Profile profile);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

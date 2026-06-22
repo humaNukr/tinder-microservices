@@ -38,13 +38,21 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
 		if (validator.isSecured.test(request)) {
 
-			if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+			String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+			
+			if (authHeader == null) {
+				String tokenParam = request.getQueryParams().getFirst("token");
+				if (tokenParam != null) {
+					authHeader = "Bearer " + tokenParam;
+				}
+			}
+
+			if (authHeader == null) {
 				log.warn("Missing Authorization header for path: {}", request.getURI().getPath());
 				return onError(exchange, HttpStatus.UNAUTHORIZED, "Authorization header is missing");
 			}
 
-			String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			if (!authHeader.startsWith("Bearer ")) {
 				log.warn("Invalid Authorization header format for path: {}", request.getURI().getPath());
 				return onError(exchange, HttpStatus.UNAUTHORIZED, "Invalid authorization header format");
 			}
