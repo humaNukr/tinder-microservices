@@ -3,7 +3,7 @@ package com.tinder.profile.processor;
 import com.tinder.profile.event.ActivityType;
 import com.tinder.profile.event.UserActivityEvent;
 import com.tinder.profile.service.impl.InboxDedupService;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileCoreService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class UserActivityProcessorTest {
     private InboxDedupService inboxDedupService;
 
     @Mock
-    private ProfileService profileService;
+    private ProfileCoreService profileCoreService;
 
     @InjectMocks
     private UserActivityProcessor processor;
@@ -48,7 +48,7 @@ class UserActivityProcessorTest {
 
             processor.deleteProfileData(event);
 
-            verify(profileService).deleteAccountData(userId);
+            verify(profileCoreService).deleteAccountData(userId);
         }
 
         @Test
@@ -62,7 +62,7 @@ class UserActivityProcessorTest {
 
             processor.deleteProfileData(event);
 
-            verify(profileService, never()).deleteAccountData(event.userId());
+            verify(profileCoreService, never()).deleteAccountData(event.userId());
         }
     }
 }

@@ -6,13 +6,16 @@ import com.tinder.profile.dto.ProfileResponse;
 import com.tinder.profile.dto.UpdatePreferencesRequest;
 import com.tinder.profile.dto.UpdateProfileRequest;
 import com.tinder.profile.dto.UserPreferencesResponse;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileCoreService;
+import com.tinder.profile.service.interfaces.ProfileLocationService;
+import com.tinder.profile.service.interfaces.ProfilePhotoFacade;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,7 +32,9 @@ import java.util.UUID;
 @RequestMapping("/api/v1/profiles")
 @RequiredArgsConstructor
 public class ProfileController {
-    private final ProfileService profileService;
+    private final ProfileCoreService profileCoreService;
+    private final ProfileLocationService profileLocationService;
+    private final ProfilePhotoFacade profilePhotoFacade;
 
     @PostMapping("/onboarding")
     @ResponseStatus(HttpStatus.CREATED)
@@ -37,19 +42,19 @@ public class ProfileController {
             @RequestBody @Valid CreateProfileRequest request,
             @RequestHeader("X-User-Id") UUID userId
     ) {
-        return profileService.createProfile(userId, request);
+        return profileCoreService.createProfile(userId, request);
     }
 
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
     public ProfileResponse getProfile(@RequestHeader("X-User-Id") UUID userId) {
-        return profileService.getMyProfile(userId);
+        return profileCoreService.getMyProfile(userId);
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public ProfileResponse getProfileById(@PathVariable UUID id) {
-        return profileService.getBatchProfiles(List.of(id))
+        return profileCoreService.getBatchProfiles(List.of(id))
                 .stream()
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
@@ -58,7 +63,7 @@ public class ProfileController {
     @GetMapping("/me/preferences")
     @ResponseStatus(HttpStatus.OK)
     public UserPreferencesResponse getMyPreferences(@RequestHeader("X-User-Id") UUID userId) {
-        return profileService.getMyPreferences(userId);
+        return profileCoreService.getMyPreferences(userId);
     }
 
     @PatchMapping("/me/preferences")
@@ -67,7 +72,7 @@ public class ProfileController {
             @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid UpdatePreferencesRequest request
     ) {
-        return profileService.updateMyPreferences(userId, request);
+        return profileCoreService.updateMyPreferences(userId, request);
     }
 
     @PatchMapping("/me")
@@ -76,7 +81,7 @@ public class ProfileController {
             @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid UpdateProfileRequest request
     ) {
-        return profileService.updateProfile(userId, request);
+        return profileCoreService.updateProfile(userId, request);
     }
 
 
@@ -86,6 +91,15 @@ public class ProfileController {
             @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid LocationUpdateRequest request
     ) {
-        profileService.updateLocation(userId, request);
+        profileLocationService.updateLocation(userId, request);
+    }
+
+    @PutMapping("/me/photos/reorder")
+    @ResponseStatus(HttpStatus.OK)
+    public void reorderPhotos(
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestBody List<String> photoUrls
+    ) {
+        profilePhotoFacade.reorderPhotos(userId, photoUrls);
     }
 }

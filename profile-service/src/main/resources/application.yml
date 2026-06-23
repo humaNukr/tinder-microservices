@@ -67,6 +67,7 @@ app:
 
   media:
     public-prefix: "/media/"
+    max-size: 5MB
 
 minio:
   url: http://localhost:9000

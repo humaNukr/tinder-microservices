@@ -27,8 +27,7 @@ public class GoogleConfig {
 	}
 
 	@Bean
-	public GoogleIdTokenVerifier googleIdTokenVerifier(
-			com.google.api.client.http.HttpTransport transport,
+	public GoogleIdTokenVerifier googleIdTokenVerifier(com.google.api.client.http.HttpTransport transport,
 			com.google.api.client.json.JsonFactory jsonFactory) {
 		return new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
 				.setAudience(Collections.singletonList(properties.clientId())).build();

@@ -6,7 +6,10 @@ import com.tinder.profile.dto.UpdateProfileRequest;
 import com.tinder.profile.exception.ProfileNotFoundException;
 import com.tinder.profile.repository.ProfileRepository;
 import com.tinder.profile.service.interfaces.ProfileCacheService;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileCoreService;
+import com.tinder.profile.service.interfaces.ProfileFeedService;
+import com.tinder.profile.service.interfaces.ProfileLocationService;
+import com.tinder.profile.service.interfaces.ProfilePhotoService;
 import com.tinder.profile.util.BaseIT;
 import com.tinder.profile.util.ProfileTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +32,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ProfileServiceIT extends BaseIT {
 
     @Autowired
-    private ProfileService profileService;
+    private ProfileCoreService profileCoreService;
+    
+    @Autowired
+    private ProfileLocationService profileLocationService;
+    
+    @Autowired
+    private ProfileFeedService profileFeedService;
 
     @Autowired
     private ProfileRepository profileRepository;
@@ -53,7 +62,7 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("persists profile with default preferences")
         void validRequest_SavesProfile() {
-            ProfileResponse response = profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            ProfileResponse response = profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
 
             Profile saved = profileRepository.findByUserId(userId).orElseThrow();
 
@@ -69,10 +78,10 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("throws when profile already exists")
         void duplicate_Throws() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
 
             assertThrows(IllegalStateException.class,
-                    () -> profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest()));
+                    () -> profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest()));
         }
     }
 
@@ -85,7 +94,7 @@ class ProfileServiceIT extends BaseIT {
         void existingProfile_ReturnsDto() {
             ProfileTestFixtures.seedProfile(profileRepository, userId);
 
-            ProfileResponse response = profileService.getMyProfile(userId);
+            ProfileResponse response = profileCoreService.getMyProfile(userId);
 
             assertEquals("Alex", response.name());
         }
@@ -93,12 +102,12 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("uses cache on second read")
         void secondRead_UsesCache() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
 
-            profileService.getMyProfile(userId);
+            profileCoreService.getMyProfile(userId);
             profileRepository.deleteAll();
 
-            ProfileResponse cached = profileService.getMyProfile(userId);
+            ProfileResponse cached = profileCoreService.getMyProfile(userId);
 
             assertEquals(userId, cached.userId());
             assertFalse(profileRepository.existsByUserId(userId));
@@ -112,10 +121,10 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("updates name and bio")
         void validUpdate_PersistsChanges() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
             UpdateProfileRequest update = ProfileTestFixtures.updateProfileRequest();
 
-            ProfileResponse response = profileService.updateProfile(userId, update);
+            ProfileResponse response = profileCoreService.updateProfile(userId, update);
 
             assertAll(
                     () -> assertEquals("Alex Updated", response.name()),
@@ -131,9 +140,9 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("sets geo location on profile")
         void validCoords_SetsLocation() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
 
-            profileService.updateLocation(userId, ProfileTestFixtures.locationRequest());
+            profileLocationService.updateLocation(userId, ProfileTestFixtures.locationRequest());
 
             Profile saved = profileRepository.findByUserId(userId).orElseThrow();
             assertAll(
@@ -151,10 +160,10 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("removes profile and evicts cache")
         void existingProfile_Deleted() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
-            profileService.getMyProfile(userId);
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileCoreService.getMyProfile(userId);
 
-            profileService.deleteProfile(userId);
+            profileCoreService.deleteProfile(userId);
 
             assertAll(
                     () -> assertFalse(profileRepository.existsByUserId(userId)),
@@ -170,22 +179,22 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("throws when location missing")
         void noLocation_Throws() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
 
             assertThrows(IllegalStateException.class,
-                    () -> profileService.getCandidatesForFeed(userId, 10, Set.of()));
+                    () -> profileFeedService.getCandidatesForFeed(userId, 10, Set.of()));
         }
 
         @Test
         @DisplayName("excludes searcher and provided ids")
         void withLocation_ExcludesSelf() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
-            profileService.updateLocation(userId, ProfileTestFixtures.locationRequest());
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileLocationService.updateLocation(userId, ProfileTestFixtures.locationRequest());
 
             UUID other = UUID.randomUUID();
             ProfileTestFixtures.seedProfile(profileRepository, other, true);
 
-            List<UUID> candidates = profileService.getCandidatesForFeed(userId, 10, Set.of());
+            List<UUID> candidates = profileFeedService.getCandidatesForFeed(userId, 10, Set.of());
 
             assertFalse(candidates.contains(userId));
         }
@@ -202,7 +211,7 @@ class ProfileServiceIT extends BaseIT {
             UUID other = UUID.randomUUID();
             ProfileTestFixtures.seedProfile(profileRepository, other);
 
-            List<ProfileResponse> batch = profileService.getBatchProfiles(List.of(userId, other));
+            List<ProfileResponse> batch = profileCoreService.getBatchProfiles(List.of(userId, other));
 
             assertEquals(2, batch.size());
         }
@@ -215,9 +224,9 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("updates lastSeen timestamp")
         void validTimestamp_UpdatesField() {
-            profileService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
+            profileCoreService.createProfile(userId, ProfileTestFixtures.validCreateRequest());
 
-            profileService.updateLastSeen(userId, java.time.Instant.parse("2026-01-15T10:00:00Z"));
+            profileLocationService.updateLastSeen(userId, java.time.Instant.parse("2026-01-15T10:00:00Z"));
 
             Profile saved = profileRepository.findByUserId(userId).orElseThrow();
             assertTrue(saved.getLastSeen() != null);
@@ -231,7 +240,7 @@ class ProfileServiceIT extends BaseIT {
         @Test
         @DisplayName("throws ProfileNotFoundException for unknown user")
         void unknownUser_Throws() {
-            assertThrows(ProfileNotFoundException.class, () -> profileService.getMyPreferences(userId));
+            assertThrows(ProfileNotFoundException.class, () -> profileCoreService.getMyPreferences(userId));
         }
     }
 }

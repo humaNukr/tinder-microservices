@@ -1,7 +1,8 @@
 package com.tinder.profile.contoller;
 
 import com.tinder.profile.dto.ProfileResponse;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileCoreService;
+import com.tinder.profile.service.interfaces.ProfileFeedService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InternalProfileController {
 
-    private final ProfileService profileService;
+    private final ProfileFeedService profileFeedService;
+    private final ProfileCoreService profileCoreService;
 
     @GetMapping("/candidates")
     @ResponseStatus(HttpStatus.OK)
@@ -31,12 +33,12 @@ public class InternalProfileController {
             @RequestParam(required = false) List<UUID> excludeUserIds
     ) {
         List<UUID> exclude = excludeUserIds != null ? excludeUserIds : Collections.emptyList();
-        return profileService.getCandidatesForFeed(userId, limit, exclude);
+        return profileFeedService.getCandidatesForFeed(userId, limit, exclude);
     }
 
     @PostMapping("/batch")
     @ResponseStatus(HttpStatus.OK)
     public List<ProfileResponse> getBatchProfiles(@RequestBody List<UUID> ids) {
-        return profileService.getBatchProfiles(ids);
+        return profileCoreService.getBatchProfiles(ids);
     }
 }

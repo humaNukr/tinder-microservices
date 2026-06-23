@@ -3,7 +3,7 @@ package com.tinder.profile.listener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tinder.profile.event.UserPresenceEvent;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileLocationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verify;
 class UserPresenceListenerTest {
 
     @Mock
-    private ProfileService profileService;
+    private ProfileLocationService profileLocationService;
 
     private UserPresenceListener listener;
     private ObjectMapper objectMapper;
@@ -32,7 +32,7 @@ class UserPresenceListenerTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        listener = new UserPresenceListener(profileService, objectMapper);
+        listener = new UserPresenceListener(profileLocationService, objectMapper);
     }
 
     private String toJson(UserPresenceEvent event) throws Exception {
@@ -52,7 +52,7 @@ class UserPresenceListenerTest {
 
             listener.handlePresenceEvent(toJson(event));
 
-            verify(profileService).updateLastSeen(userId, ts);
+            verify(profileLocationService).updateLastSeen(userId, ts);
         }
 
         @Test
@@ -60,7 +60,7 @@ class UserPresenceListenerTest {
         void serviceFailure_Propagates() throws Exception {
             UUID userId = UUID.randomUUID();
             UserPresenceEvent event = new UserPresenceEvent(userId, false, Instant.now());
-            doThrow(new RuntimeException("db")).when(profileService).updateLastSeen(userId, event.timestamp());
+            doThrow(new RuntimeException("db")).when(profileLocationService).updateLastSeen(userId, event.timestamp());
 
             assertThrows(RuntimeException.class, () -> listener.handlePresenceEvent(toJson(event)));
         }

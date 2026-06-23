@@ -29,14 +29,9 @@ public class GoogleTokenVerifier implements ExternalTokenVerifier {
 	public String verifyTokenAndGetEmail(String authorizationCode) {
 		try {
 			log.debug("Exchanging authorization code for Google ID token");
-			GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
-					httpTransport, jsonFactory,
-					"https://oauth2.googleapis.com/token",
-					googleProperties.clientId(),
-					googleProperties.clientSecret(),
-					authorizationCode,
-					"postmessage")
-					.execute();
+			GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(httpTransport, jsonFactory,
+					"https://oauth2.googleapis.com/token", googleProperties.clientId(), googleProperties.clientSecret(),
+					authorizationCode, "postmessage").execute();
 
 			String idTokenString = tokenResponse.getIdToken();
 			if (idTokenString == null) {
@@ -51,7 +46,8 @@ public class GoogleTokenVerifier implements ExternalTokenVerifier {
 				GoogleIdToken.Payload payload = idTokenObj.getPayload();
 
 				if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
-					log.warn("Google token verification failed: email {} is not verified by Google", payload.getEmail());
+					log.warn("Google token verification failed: email {} is not verified by Google",
+							payload.getEmail());
 					throw new ExternalAuthVerificationException("Email not verified by Google",
 							ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, null);
 				}
@@ -67,8 +63,8 @@ public class GoogleTokenVerifier implements ExternalTokenVerifier {
 			log.error("Network error while exchanging Google code with Google servers", e);
 			throw new ExternalAuthVerificationException("Network error during verification",
 					ExternalAuthVerificationException.ErrorType.NETWORK_ERROR, e);
-		} catch (Exception e) {
-			log.error("Failed to exchange Google auth code", e);
+		} catch (java.security.GeneralSecurityException e) {
+			log.error("Failed to verify Google ID token signature", e);
 			throw new ExternalAuthVerificationException("Invalid authorization code or signature",
 					ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, e);
 		}

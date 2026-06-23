@@ -2,13 +2,13 @@ name: Backend CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main", "master" ]
 
 jobs:
-  build:
-    name: ${{ matrix.service }}
+  test:
+    name: Test ${{ matrix.service }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -70,3 +70,65 @@ jobs:
         if: failure()
         run: docker compose logs
         working-directory: ./
+
+  build-and-publish:
+    name: Publish ${{ matrix.service }}
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - profile-service
+          - swipe-service
+          - feed-service
+          - chat-service
+          - notification-service
+          - api-gateway
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        working-directory: ./${{ matrix.service }}
+        run: chmod +x ./gradlew
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

@@ -2,7 +2,8 @@ package com.tinder.profile.controller;
 
 import com.tinder.profile.dto.ProfileResponse;
 import com.tinder.profile.repository.ProfileRepository;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileCoreService;
+import com.tinder.profile.service.interfaces.ProfileLocationService;
 import com.tinder.profile.util.BaseIT;
 import com.tinder.profile.util.ProfileTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +35,10 @@ class InternalProfileControllerIT extends BaseIT {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private ProfileService profileService;
+    private ProfileCoreService profileCoreService;
+
+    @Autowired
+    private ProfileLocationService profileLocationService;
 
     @Autowired
     private ProfileRepository profileRepository;
@@ -48,8 +52,8 @@ class InternalProfileControllerIT extends BaseIT {
         searcherId = UUID.randomUUID();
         candidateId = UUID.randomUUID();
 
-        profileService.createProfile(searcherId, ProfileTestFixtures.validCreateRequest());
-        profileService.updateLocation(searcherId, ProfileTestFixtures.locationRequest());
+        profileCoreService.createProfile(searcherId, ProfileTestFixtures.validCreateRequest());
+        profileLocationService.updateLocation(searcherId, ProfileTestFixtures.locationRequest());
         ProfileTestFixtures.seedProfile(profileRepository, candidateId, true);
     }
 
