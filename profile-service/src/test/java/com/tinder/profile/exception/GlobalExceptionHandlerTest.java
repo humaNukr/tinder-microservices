@@ -5,6 +5,7 @@ import com.tinder.profile.contoller.ProfileController;
 import com.tinder.profile.properties.GatewayAuthProperties;
 import com.tinder.profile.service.interfaces.ProfileCoreService;
 import com.tinder.profile.service.interfaces.ProfileLocationService;
+import com.tinder.profile.service.interfaces.ProfilePhotoFacade;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,9 @@ class GlobalExceptionHandlerTest {
 
     @MockitoBean
     private ProfileLocationService profileLocationService;
+
+    @MockitoBean
+    private ProfilePhotoFacade profilePhotoFacade;
 
     @Nested
     @DisplayName("HTTP error mapping")

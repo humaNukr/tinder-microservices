@@ -39,7 +39,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 		if (validator.isSecured.test(request)) {
 
 			String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-			
+
 			if (authHeader == null) {
 				String tokenParam = request.getQueryParams().getFirst("token");
 				if (tokenParam != null) {
