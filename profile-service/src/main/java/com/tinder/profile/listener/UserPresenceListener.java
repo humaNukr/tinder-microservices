@@ -3,7 +3,7 @@ package com.tinder.profile.listener;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinder.profile.event.UserPresenceEvent;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileLocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserPresenceListener {
 
-    private final ProfileService profileService;
+    private final ProfileLocationService profileLocationService;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
@@ -26,6 +26,6 @@ public class UserPresenceListener {
         UserPresenceEvent event = objectMapper.readValue(payload, UserPresenceEvent.class);
         log.debug("Received presence event: user={}, online={}", event.userId(), event.isOnline());
 
-        profileService.updateLastSeen(event.userId(), event.timestamp());
+        profileLocationService.updateLastSeen(event.userId(), event.timestamp());
     }
 }

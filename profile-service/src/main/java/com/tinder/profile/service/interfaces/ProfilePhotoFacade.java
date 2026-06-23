@@ -8,7 +8,7 @@ import java.util.UUID;
 public interface ProfilePhotoFacade {
     void uploadAndAttachPhotos(List<MultipartFile> files, UUID userId);
 
-    void deletePhotos(List<String> photoKeys);
+    void reorderPhotos(UUID userId, List<String> photoUrls);
 
     void deleteSpecificPhotos(List<String> photoUrls, UUID userId);
 }

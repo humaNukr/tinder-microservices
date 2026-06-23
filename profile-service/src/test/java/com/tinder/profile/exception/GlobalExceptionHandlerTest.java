@@ -3,7 +3,8 @@ package com.tinder.profile.exception;
 import com.tinder.profile.config.GatewayAuthFilter;
 import com.tinder.profile.contoller.ProfileController;
 import com.tinder.profile.properties.GatewayAuthProperties;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfileCoreService;
+import com.tinder.profile.service.interfaces.ProfileLocationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,10 @@ class GlobalExceptionHandlerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ProfileService profileService;
+    private ProfileCoreService profileCoreService;
+
+    @MockitoBean
+    private ProfileLocationService profileLocationService;
 
     @Nested
     @DisplayName("HTTP error mapping")
@@ -54,7 +58,7 @@ class GlobalExceptionHandlerTest {
         @DisplayName("returns 404 when profile is not found")
         void profileNotFound_Returns404() throws Exception {
             UUID userId = UUID.randomUUID();
-            when(profileService.getMyProfile(userId))
+            when(profileCoreService.getMyProfile(userId))
                     .thenThrow(new ProfileNotFoundException("not found"));
 
             mockMvc.perform(get("/api/v1/profiles/me").header("X-User-Id", userId))
@@ -92,7 +96,7 @@ class GlobalExceptionHandlerTest {
         @DisplayName("returns 409 on duplicate profile")
         void conflict_Returns409() throws Exception {
             UUID userId = UUID.randomUUID();
-            when(profileService.createProfile(org.mockito.ArgumentMatchers.eq(userId), org.mockito.ArgumentMatchers.any()))
+            when(profileCoreService.createProfile(org.mockito.ArgumentMatchers.eq(userId), org.mockito.ArgumentMatchers.any()))
                     .thenThrow(new IllegalStateException("duplicate"));
 
             mockMvc.perform(post("/api/v1/profiles/onboarding")

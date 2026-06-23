@@ -1,10 +1,13 @@
 package com.tinder.profile.contoller;
 
+import com.tinder.profile.dto.ReorderPhotosRequest;
 import com.tinder.profile.service.interfaces.ProfilePhotoFacade;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +30,15 @@ public class ProfilePhotoController {
     @ResponseStatus(HttpStatus.OK)
     public void uploadPhotos(@RequestPart("files") List<MultipartFile> files, @RequestHeader("X-User-Id") UUID userId) {
         profilePhotoFacade.uploadAndAttachPhotos(files, userId);
+    }
+
+    @PutMapping("/me/photos/reorder")
+    @ResponseStatus(HttpStatus.OK)
+    public void reorderPhotos(
+            @RequestHeader("X-User-Id") UUID userId,
+            @Valid @RequestBody ReorderPhotosRequest request
+    ) {
+        profilePhotoFacade.reorderPhotos(userId, request.photoUrls());
     }
 
     @DeleteMapping

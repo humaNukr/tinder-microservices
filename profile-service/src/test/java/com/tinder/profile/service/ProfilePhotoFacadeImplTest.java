@@ -2,7 +2,7 @@ package com.tinder.profile.service;
 
 import com.tinder.profile.exception.storage.FileUploadException;
 import com.tinder.profile.service.impl.ProfilePhotoFacadeImpl;
-import com.tinder.profile.service.interfaces.ProfileService;
+import com.tinder.profile.service.interfaces.ProfilePhotoService;
 import com.tinder.profile.storage.StorageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,7 +32,7 @@ class ProfilePhotoFacadeImplTest {
     @Mock
     private StorageService storageService;
     @Mock
-    private ProfileService profileService;
+    private ProfilePhotoService profilePhotoService;
     @InjectMocks
     private ProfilePhotoFacadeImpl facade;
 
@@ -49,7 +49,7 @@ class ProfilePhotoFacadeImplTest {
 
             facade.uploadAndAttachPhotos(List.of(file), userId);
 
-            verify(profileService).addPhotosToProfile(userId, List.of("tinder-media/u/photo.jpg"));
+            verify(profilePhotoService).addPhotosToProfile(userId, List.of("tinder-media/u/photo.jpg"));
         }
 
         @Test
@@ -59,7 +59,7 @@ class ProfilePhotoFacadeImplTest {
                     "files", "photo.jpg", "image/jpeg", "bytes".getBytes());
             when(storageService.upload(file, userId)).thenReturn("tinder-media/u/photo.jpg");
             doThrow(new RuntimeException("db error"))
-                    .when(profileService).addPhotosToProfile(eq(userId), any());
+                    .when(profilePhotoService).addPhotosToProfile(eq(userId), any());
 
             assertThrows(FileUploadException.class,
                     () -> facade.uploadAndAttachPhotos(List.of(file), userId));
@@ -76,7 +76,7 @@ class ProfilePhotoFacadeImplTest {
         @DisplayName("deletes only photos removed from profile")
         void removedFromProfile_DeletesFromStorage() {
             List<String> removed = List.of("tinder-media/u/photo.jpg");
-            when(profileService.removePhotosFromProfile(userId, removed)).thenReturn(removed);
+            when(profilePhotoService.removePhotosFromProfile(userId, removed)).thenReturn(removed);
 
             facade.deleteSpecificPhotos(removed, userId);
 
@@ -87,7 +87,7 @@ class ProfilePhotoFacadeImplTest {
         @DisplayName("skips storage delete when nothing was removed")
         void nothingRemoved_SkipsStorage() {
             List<String> requested = List.of("unknown.jpg");
-            when(profileService.removePhotosFromProfile(userId, requested)).thenReturn(List.of());
+            when(profilePhotoService.removePhotosFromProfile(userId, requested)).thenReturn(List.of());
 
             facade.deleteSpecificPhotos(requested, userId);
 
@@ -95,18 +95,5 @@ class ProfilePhotoFacadeImplTest {
         }
     }
 
-    @Nested
-    @DisplayName("deletePhotos()")
-    class DeletePhotos {
 
-        @Test
-        @DisplayName("delegates to storage")
-        void keys_DeletesFromStorage() {
-            List<String> keys = List.of("tinder-media/u/a.jpg");
-
-            facade.deletePhotos(keys);
-
-            verify(storageService).deleteFiles(keys);
-        }
-    }
 }

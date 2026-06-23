@@ -62,7 +62,8 @@ public final class ProfileTestFixtures {
                 Gender.MALE,
                 "Bio",
                 List.of("music"),
-                List.of()
+                List.<String>of(),
+                null
         );
     }
 
