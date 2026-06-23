@@ -1,8 +1,6 @@
 package com.tinder.auth.service;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.tinder.auth.service.impl.GoogleTokenVerifier;
 import com.tinder.auth.util.BaseIT;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,19 +20,13 @@ public class GoogleAuthIT extends BaseIT {
 	private MockMvc mockMvc;
 
 	@MockitoBean
-	private GoogleIdTokenVerifier googleIdTokenVerifier;
+	private GoogleTokenVerifier googleTokenVerifier;
 
 	@Test
 	void authenticateWithGoogle_ShouldReturnTokens_WhenTokenIsValid() throws Exception {
-		GoogleIdToken.Payload payload = new GoogleIdToken.Payload();
-		payload.setEmail("test.senior@gmail.com");
-		payload.setEmailVerified(true);
-
-		JsonWebSignature.Header header = new JsonWebSignature.Header();
-		byte[] signature = new byte[0];
-		GoogleIdToken fakeToken = new GoogleIdToken(header, payload, signature, signature);
-
-		when(googleIdTokenVerifier.verify(anyString())).thenReturn(fakeToken);
+		when(googleTokenVerifier.verifyTokenAndGetEmail(anyString())).thenReturn("test.senior@gmail.com");
+		when(googleTokenVerifier.getSupportedProvider()).thenCallRealMethod();
+		when(googleTokenVerifier.verifyTokenAndGetIdentifier(anyString())).thenCallRealMethod();
 
 		String requestBody = """
 				{

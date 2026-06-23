@@ -63,8 +63,8 @@ public class GoogleTokenVerifier implements ExternalTokenVerifier {
 			log.error("Network error while exchanging Google code with Google servers", e);
 			throw new ExternalAuthVerificationException("Network error during verification",
 					ExternalAuthVerificationException.ErrorType.NETWORK_ERROR, e);
-		} catch (Exception e) {
-			log.error("Failed to exchange Google auth code", e);
+		} catch (java.security.GeneralSecurityException e) {
+			log.error("Failed to verify Google ID token signature", e);
 			throw new ExternalAuthVerificationException("Invalid authorization code or signature",
 					ExternalAuthVerificationException.ErrorType.INVALID_TOKEN, e);
 		}
